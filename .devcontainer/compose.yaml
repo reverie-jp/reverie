@@ -1,0 +1,39 @@
+services:
+  reverie-db:
+    container_name: reverie-db
+    image: postgres:15
+    environment:
+      POSTGRES_USER: reverie
+      POSTGRES_PASSWORD: reverie
+      POSTGRES_DB: reverie_db
+    ports:
+      - 5432:5432
+
+  reverie-api:
+    build:
+      context: .
+    volumes:
+      - ..:/reverie-api:cached
+    ports:
+      - 37611:37611
+      - 50051:50051
+    env_file:
+      - ../.env.development.local
+    command: sleep infinity
+    depends_on:
+      - reverie-db
+
+  reverie-pgadmin:
+    container_name: reverie-pgadmin
+    image: dpage/pgadmin4:9.5
+    ports:
+      - 8888:80
+    volumes:
+      - ./pgadmin.json:/pgadmin4/servers.json
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=reverie@example.com
+      - PGADMIN_DEFAULT_PASSWORD=reverie
+      - PGADMIN_CONFIG_SERVER_MODE=False
+      - PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED=False
+    depends_on:
+      - reverie-db
