@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/reverie-jp/reverie/internal/application/server"
+	"reverie.jp/reverie/internal/application/server"
 )
 
 func main() {

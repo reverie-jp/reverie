@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package user.v1;
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+service UserService {
+  rpc GetUser(GetUserRequest) returns (GetUserResponse) {
+    option (google.api.http) = {
+      get: "/v1/users/{user_id}"
+    };
+  };
+}
+
+message User {
+  string id = 1;
+  string custom_id = 2;
+  string display_name = 3;
+  optional string biography = 4;
+  google.protobuf.Timestamp create_time = 5;
+}
+
+message GetUserRequest {
+  string user_id = 1;
+}
+
+message GetUserResponse {
+  User user = 1;
+}

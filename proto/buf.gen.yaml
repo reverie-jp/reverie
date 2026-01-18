@@ -1,0 +1,29 @@
+version: v2
+managed:
+  enabled: true
+  disable:
+    - file_option: go_package_prefix
+      module: buf.build/googleapis/googleapis
+  override:
+    - file_option: go_package_prefix
+      value: reverie.jp/reverie/internal/gen/pb
+plugins:
+  - remote: buf.build/protocolbuffers/go:v1.36.6
+    out: ../internal/gen/pb
+    opt: paths=source_relative
+  - remote: buf.build/connectrpc/go:v1.18.1
+    out: ../internal/gen/pb
+    opt: paths=source_relative
+  # - remote: buf.build/bufbuild/es:v2.5.2
+  #   out: ../web/path/to/api
+  #   opt: target=ts
+  - remote: buf.build/grpc/go:v1.5.1
+    out: ../internal/gen/pb
+    opt:
+      - paths=source_relative
+  - remote: buf.build/grpc-ecosystem/gateway:v2.26.3
+    out: ../internal/gen/pb
+    opt:
+      - paths=source_relative
+inputs:
+  - directory: .
