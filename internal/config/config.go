@@ -13,15 +13,32 @@ const (
 )
 
 type Config struct {
-	Env Env `env:"ENVIRONMENT"`
+	Env      Env `env:"ENVIRONMENT"`
+	Auth     AuthConfig
+	Database DatabaseConfig
+	Log      LogConfig
+	Server   ServerConfig
 }
 
-func New() (*Config, error) {
-	cfg := &Config{}
+func New() *Config {
+	return &Config{}
+}
 
-	if err := env.Parse(cfg); err != nil {
-		return nil, err
+func (c *Config) LoadFromEnv() error {
+	if err := env.Parse(c); err != nil {
+		return err
 	}
-
-	return cfg, nil
+	if err := env.Parse(&c.Auth); err != nil {
+		return err
+	}
+	if err := env.Parse(&c.Database); err != nil {
+		return err
+	}
+	if err := env.Parse(&c.Log); err != nil {
+		return err
+	}
+	if err := env.Parse(&c.Server); err != nil {
+		return err
+	}
+	return nil
 }

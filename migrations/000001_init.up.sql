@@ -1,0 +1,9 @@
+CREATE DOMAIN ulid AS TEXT CHECK (LENGTH(VALUE) = 26);
+
+CREATE TABLE IF NOT EXISTS users (
+    id ulid PRIMARY KEY,
+    custom_id VARCHAR(15) NOT NULL UNIQUE,
+    display_name VARCHAR(20) NOT NULL DEFAULT 'unknown',
+    biography TEXT DEFAULT NULL,
+    create_time TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
