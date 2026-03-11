@@ -59,8 +59,17 @@
         }
       }
     }
-  }
+  },
 
   // Uncomment to connect as an existing user other than the container default. More info: https://aka.ms/dev-containers-non-root.
-  // "remoteUser": "devcontainer"
+  "remoteUser": "root",
+
+  "mounts": [
+    "source=${localEnv:HOME}/ei/.claude,target=/root/.claude,type=bind",
+    "source=${localEnv:HOME}/e/.claude.json,target=/root/.claude.json,type=bind"
+  ],
+
+  "containerEnv": {
+    "HOME": "/root"
+  }
 }
