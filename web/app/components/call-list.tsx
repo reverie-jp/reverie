@@ -6,6 +6,7 @@ import { JoinCallDialog } from "~/components/join-call-dialog";
 
 export interface CallParticipant {
   name: string;
+  customId: string;
   avatarUrl?: string;
 }
 
@@ -13,6 +14,7 @@ export interface Call {
   id: string;
   name: string;
   type: "audio" | "video";
+  host: string;
   participants: CallParticipant[];
 }
 
