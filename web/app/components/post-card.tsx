@@ -1,9 +1,22 @@
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
+import { Button } from "~/components/ui/button";
+import {
   MessageCircle,
   Repeat2,
   Heart,
   Ellipsis,
+  ShieldBan,
+  UserMinus,
+  Flag,
+  Link2,
+  ClipboardCopy,
 } from "lucide-react";
 
 export interface Post {
@@ -35,7 +48,15 @@ function formatRelativeTime(date: Date): string {
   return `${date.getMonth() + 1}月${date.getDate()}日`;
 }
 
-export function PostCard({ post }: { post: Post }) {
+export function PostCard({
+  post,
+  onReply,
+  onRepost,
+}: {
+  post: Post;
+  onReply?: (post: Post) => void;
+  onRepost?: (post: Post) => void;
+}) {
   const initials = post.author.name.slice(0, 2);
 
   return (
@@ -59,13 +80,19 @@ export function PostCard({ post }: { post: Post }) {
           {post.content}
         </p>
         <div className="flex items-center justify-between mt-2 max-w-xs">
-          <button className="flex items-center gap-1.5 text-muted-foreground hover:text-blue-400 transition-colors group">
+          <button
+            onClick={() => onReply?.(post)}
+            className="flex items-center gap-1.5 text-muted-foreground hover:text-blue-400 transition-colors group"
+          >
             <MessageCircle className="size-4" />
             {post.replyCount > 0 && (
               <span className="text-xs">{post.replyCount}</span>
             )}
           </button>
-          <button className="flex items-center gap-1.5 text-muted-foreground hover:text-green-400 transition-colors group">
+          <button
+            onClick={() => onRepost?.(post)}
+            className="flex items-center gap-1.5 text-muted-foreground hover:text-green-400 transition-colors group"
+          >
             <Repeat2 className="size-4" />
             {post.repostCount > 0 && (
               <span className="text-xs">{post.repostCount}</span>
@@ -77,9 +104,46 @@ export function PostCard({ post }: { post: Post }) {
               <span className="text-xs">{post.likeCount}</span>
             )}
           </button>
-          <button className="text-muted-foreground hover:text-foreground transition-colors">
-            <Ellipsis className="size-4" />
-          </button>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <button className="text-muted-foreground hover:text-foreground transition-colors" />
+              }
+            >
+              <Ellipsis className="size-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-40">
+              <DropdownMenuItem
+                onClick={() =>
+                  navigator.clipboard.writeText(
+                    `${window.location.origin}/posts/${post.id}`
+                  )
+                }
+              >
+                <Link2 className="size-4" />
+                URLをコピー
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => navigator.clipboard.writeText(post.content)}
+              >
+                <ClipboardCopy className="size-4" />
+                テキストをコピー
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                <UserMinus className="size-4" />
+                フォローをやめる
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Flag className="size-4" />
+                通報する
+              </DropdownMenuItem>
+              <DropdownMenuItem className="text-destructive">
+                <ShieldBan className="size-4" />
+                ブロック
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </article>

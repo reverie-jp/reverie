@@ -1,5 +1,5 @@
 import { NavLink } from "react-router";
-import { Home, MessageCircle, Bell, CircleUserRound } from "lucide-react";
+import { Home, Search, MessageCircle, Bell, CircleUserRound } from "lucide-react";
 
 export function BottomNav() {
   return (
@@ -7,6 +7,9 @@ export function BottomNav() {
       <div className="flex items-center justify-around h-full">
         <NavLink to="/" className={navLinkClass}>
           <Home className="size-6" />
+        </NavLink>
+        <NavLink to="/search" className={navLinkClass}>
+          <Search className="size-6" />
         </NavLink>
         <NavLink to="/chat" className={navLinkClass}>
           <MessageCircle className="size-6" />
