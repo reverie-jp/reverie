@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 import { Phone, Video } from "lucide-react";
+import { useCall, type CallVisibility } from "~/components/call-context";
 
 export function CreateCallDialog({
   open,
@@ -24,12 +25,13 @@ export function CreateCallDialog({
   open: boolean;
   onClose: () => void;
 }) {
+  const { createCall } = useCall();
   const [name, setName] = useState("");
   const [type, setType] = useState<"audio" | "video">("audio");
-  const [visibility, setVisibility] = useState("すべてのユーザー");
+  const [visibility, setVisibility] = useState<CallVisibility>("すべてのユーザー");
 
   const handleCreate = () => {
-    // TODO: 通話作成処理
+    createCall(name, type, visibility);
     setName("");
     setType("audio");
     setVisibility("すべてのユーザー");

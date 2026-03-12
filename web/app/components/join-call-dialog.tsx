@@ -17,6 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
 import { Ellipsis, Flag, ShieldBan, Phone, Video } from "lucide-react";
 import type { Call } from "~/components/call-list";
+import { useCall } from "~/components/call-context";
 
 export function JoinCallDialog({
   call,
@@ -25,7 +26,15 @@ export function JoinCallDialog({
   call: Call | null;
   onClose: () => void;
 }) {
+  const { joinCall } = useCall();
   const TypeIcon = call?.type === "video" ? Video : Phone;
+
+  const handleJoin = () => {
+    if (call) {
+      joinCall(call);
+      onClose();
+    }
+  };
 
   return (
     <Dialog
@@ -81,7 +90,7 @@ export function JoinCallDialog({
           </span>
         </div>
         <DialogFooter>
-          <Button className="w-full h-10 gap-2">
+          <Button className="w-full h-10 gap-2" onClick={handleJoin}>
             <TypeIcon className="size-4" />
             この通話に参加する
           </Button>
