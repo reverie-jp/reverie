@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Link } from "react-router";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
-import { ArrowRight, Phone, Video } from "lucide-react";
+import { ArrowRight, Phone, Plus, Video } from "lucide-react";
 import { JoinCallDialog } from "~/components/join-call-dialog";
+import { CreateCallDialog } from "~/components/create-call-dialog";
 
 export interface CallParticipant {
   name: string;
@@ -20,10 +21,22 @@ export interface Call {
 
 export function CallList({ calls, tab = "following" }: { calls: Call[]; tab?: string }) {
   const [selectedCall, setSelectedCall] = useState<Call | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
 
   return (
     <>
       <div className="flex items-center gap-4 px-4 py-5 overflow-x-auto border-b">
+        <button
+          onClick={() => setShowCreate(true)}
+          className="flex flex-col items-center gap-1.5 shrink-0"
+        >
+          <div className="size-14 rounded-full bg-primary/10 flex items-center justify-center text-primary hover:bg-primary/20 transition-colors">
+            <Plus className="size-5" />
+          </div>
+          <span className="text-xs text-muted-foreground whitespace-nowrap">
+            作成
+          </span>
+        </button>
         {calls.map((call) => (
           <CallItem key={call.id} call={call} onTap={setSelectedCall} />
         ))}
@@ -40,6 +53,7 @@ export function CallList({ calls, tab = "following" }: { calls: Call[]; tab?: st
         </Link>
       </div>
       <JoinCallDialog call={selectedCall} onClose={() => setSelectedCall(null)} />
+      <CreateCallDialog open={showCreate} onClose={() => setShowCreate(false)} />
     </>
   );
 }
