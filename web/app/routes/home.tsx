@@ -218,7 +218,7 @@ export default function Home() {
           </div>
         </TabsContent>
         <TabsContent value="public">
-          <CallList calls={sampleCalls} />
+          <CallList calls={sampleCalls} tab="public" />
           <div>
             {publicPosts.map((post) => (
               <PostCard key={post.id} post={post} />

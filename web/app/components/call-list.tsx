@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { Link } from "react-router";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { ArrowRight, Phone, Video } from "lucide-react";
+import { JoinCallDialog } from "~/components/join-call-dialog";
 
 export interface CallParticipant {
   name: string;
@@ -14,32 +16,37 @@ export interface Call {
   participants: CallParticipant[];
 }
 
-export function CallList({ calls }: { calls: Call[] }) {
+export function CallList({ calls, tab = "following" }: { calls: Call[]; tab?: string }) {
+  const [selectedCall, setSelectedCall] = useState<Call | null>(null);
+
   return (
-    <div className="flex items-center gap-4 px-4 py-5 overflow-x-auto border-b">
-      {calls.map((call) => (
-        <CallItem key={call.id} call={call} />
-      ))}
-      <Link
-        to="/calls"
-        className="flex flex-col items-center gap-1.5 shrink-0"
-      >
-        <div className="size-14 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
-          <ArrowRight className="size-5" />
-        </div>
-        <span className="text-xs text-muted-foreground whitespace-nowrap">
-          もっと見る
-        </span>
-      </Link>
-    </div>
+    <>
+      <div className="flex items-center gap-4 px-4 py-5 overflow-x-auto border-b">
+        {calls.map((call) => (
+          <CallItem key={call.id} call={call} onTap={setSelectedCall} />
+        ))}
+        <Link
+          to={`/calls?tab=${tab}`}
+          className="flex flex-col items-center gap-1.5 shrink-0"
+        >
+          <div className="size-14 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
+            <ArrowRight className="size-5" />
+          </div>
+          <span className="text-xs text-muted-foreground whitespace-nowrap">
+            もっと見る
+          </span>
+        </Link>
+      </div>
+      <JoinCallDialog call={selectedCall} onClose={() => setSelectedCall(null)} />
+    </>
   );
 }
 
-function CallItem({ call }: { call: Call }) {
+function CallItem({ call, onTap }: { call: Call; onTap: (call: Call) => void }) {
   const TypeIcon = call.type === "video" ? Video : Phone;
 
   return (
-    <button className="flex flex-col items-center gap-1.5 shrink-0">
+    <button onClick={() => onTap(call)} className="flex flex-col items-center gap-1.5 shrink-0">
       <div className="relative">
         <GroupAvatar participants={call.participants} />
         <div className="absolute -bottom-0.5 -right-0.5 size-5 rounded-full bg-primary flex items-center justify-center">
@@ -51,17 +58,19 @@ function CallItem({ call }: { call: Call }) {
   );
 }
 
-function GroupAvatar({
+export function GroupAvatar({
   participants,
+  className = "size-14",
 }: {
   participants: CallParticipant[];
+  className?: string;
 }) {
   const count = Math.min(participants.length, 4);
 
   if (count <= 1) {
     const p = participants[0];
     return (
-      <Avatar className="size-14 ring-2 ring-primary ring-offset-2 ring-offset-background">
+      <Avatar className={`${className} ring-2 ring-primary ring-offset-2 ring-offset-background`}>
         <AvatarImage src={p?.avatarUrl} alt={p?.name} />
         <AvatarFallback>{p?.name.slice(0, 2)}</AvatarFallback>
       </Avatar>
@@ -69,7 +78,7 @@ function GroupAvatar({
   }
 
   return (
-    <div className="size-14 rounded-full ring-2 ring-primary ring-offset-2 ring-offset-background overflow-hidden relative bg-muted">
+    <div className={`${className} rounded-full ring-2 ring-primary ring-offset-2 ring-offset-background overflow-hidden relative bg-muted`}>
       {count === 2 && (
         <>
           <MiniAvatar participant={participants[0]} className="absolute top-0 left-0 w-1/2 h-full rounded-none" />
