@@ -72,7 +72,7 @@ export function GroupAvatar({
   if (count <= 1) {
     const p = participants[0];
     return (
-      <Avatar className={`${className} ring-2 ring-primary ring-offset-2 ring-offset-background`}>
+      <Avatar className={`${className} ring-1 ring-border ring-offset-2 ring-offset-background`}>
         <AvatarImage src={p?.avatarUrl} alt={p?.name} />
         <AvatarFallback>{p?.name.slice(0, 2)}</AvatarFallback>
       </Avatar>
@@ -80,7 +80,7 @@ export function GroupAvatar({
   }
 
   return (
-    <div className={`${className} rounded-full ring-2 ring-primary ring-offset-2 ring-offset-background overflow-hidden relative bg-muted`}>
+    <div className={`${className} rounded-full ring-1 ring-border ring-offset-2 ring-offset-background overflow-hidden relative bg-muted`}>
       {count === 2 && (
         <>
           <MiniAvatar participant={participants[0]} className="absolute top-0 left-0 w-1/2 h-full rounded-none" />

@@ -1,4 +1,5 @@
 import { BottomNav } from "~/components/bottom-nav";
+import { ComposeFab } from "~/components/compose-fab";
 import type { Route } from "./+types/user";
 
 export default function User({ params }: Route.ComponentProps) {
@@ -10,6 +11,7 @@ export default function User({ params }: Route.ComponentProps) {
       <div className="grid place-items-center h-200">
         ユーザー: {params.id}
       </div>
+      <ComposeFab />
       <BottomNav />
     </div>
   );

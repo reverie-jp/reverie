@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { Search } from "lucide-react";
 import { Input } from "~/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { BottomNav } from "~/components/bottom-nav";
 import { PostCard, type Post } from "~/components/post-card";
 import { CallList, type Call } from "~/components/call-list";
+import { ComposeFab } from "~/components/compose-fab";
 import type { Route } from "./+types/home";
 
 const sampleCalls: Call[] = [
@@ -241,6 +243,21 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function Home() {
+  const [myPosts, setMyPosts] = useState<Post[]>([]);
+
+  const handlePost = (content: string) => {
+    const newPost: Post = {
+      id: `my-${Date.now()}`,
+      author: { name: "自分", customId: "me", avatarUrl: "" },
+      content,
+      createdAt: new Date(),
+      replyCount: 0,
+      repostCount: 0,
+      likeCount: 0,
+    };
+    setMyPosts((prev) => [newPost, ...prev]);
+  };
+
   return (
     <div className="w-full min-h-full flex flex-col">
       <Tabs defaultValue="following" className="gap-0 flex-1">
@@ -259,7 +276,7 @@ export default function Home() {
         <TabsContent value="following">
           <CallList calls={sampleCalls} />
           <div>
-            {followingPosts.map((post) => (
+            {[...myPosts, ...followingPosts].map((post) => (
               <PostCard key={post.id} post={post} />
             ))}
           </div>
@@ -267,12 +284,13 @@ export default function Home() {
         <TabsContent value="public">
           <CallList calls={sampleCalls} tab="public" />
           <div>
-            {publicPosts.map((post) => (
+            {[...myPosts, ...publicPosts].map((post) => (
               <PostCard key={post.id} post={post} />
             ))}
           </div>
         </TabsContent>
       </Tabs>
+      <ComposeFab onPost={handlePost} />
       <BottomNav />
     </div>
   );

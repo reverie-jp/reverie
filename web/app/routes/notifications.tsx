@@ -1,4 +1,5 @@
 import { BottomNav } from "~/components/bottom-nav";
+import { ComposeFab } from "~/components/compose-fab";
 
 export default function Notifications() {
   return (
@@ -7,6 +8,7 @@ export default function Notifications() {
         通知
       </div>
       <div className="grid place-items-center h-200">通知のコンテンツ</div>
+      <ComposeFab />
       <BottomNav />
     </div>
   );
