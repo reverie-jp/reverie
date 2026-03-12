@@ -5,4 +5,5 @@ export default [
   route("chat", "routes/chat.tsx"),
   route("notifications", "routes/notifications.tsx"),
   route("users/:id", "routes/user.tsx"),
+  route("calls", "routes/calls.tsx"),
 ] satisfies RouteConfig;
