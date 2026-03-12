@@ -2,6 +2,12 @@ FROM golang:1.25.6
 
 WORKDIR /reverie-api
 
+RUN apt-get update \
+  && apt-get install -y curl xz-utils \
+  && rm -rf /var/lib/apt/lists/* \
+  && curl -fsSL https://nodejs.org/dist/v24.10.0/node-v24.10.0-linux-arm64.tar.xz \
+  | tar -xJ -C /usr/local --strip-components=1
+
 RUN go install github.com/air-verse/air@v1.64.0
 RUN go install github.com/bufbuild/buf/cmd/buf@v1.63.0
 RUN go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.30.0
