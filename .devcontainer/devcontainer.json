@@ -37,9 +37,13 @@
         "golang.go",
         "bufbuild.vscode-buf",
         "editorconfig.editorconfig",
-        "esbenp.prettier-vscode"
+        "esbenp.prettier-vscode",
+        "bradlc.vscode-tailwindcss"
       ],
       "settings": {
+        "files.associations": {
+          "*.css": "tailwindcss"
+        },
         "editor.quickSuggestions": {
           "strings": "on"
         },
