@@ -13,10 +13,30 @@ import {
   Users,
   UserCheck,
   Lock,
+  Gavel,
+  Timer,
+  Flag,
+  SlidersHorizontal,
+  Shield,
+  Crown,
+  User,
+  UserPlus,
+  Settings,
+  ScreenShare,
+  VideoOff,
 } from "lucide-react";
 import { useState, useRef, useCallback } from "react";
 import { useCall, type CallVisibility } from "~/components/call-context";
 import { GroupAvatar } from "~/components/call-list";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
 
 function DraggableBubble({
   onTap,
@@ -109,6 +129,7 @@ export function CallScreen() {
     maximize,
     leaveCall,
     setVisibility,
+    setCallType,
   } = useCall();
   const [isMuted, setIsMuted] = useState(false);
   const [isSpeaker, setIsSpeaker] = useState(true);
@@ -148,7 +169,7 @@ export function CallScreen() {
     >
       <div className="flex items-center justify-between px-6 py-8 shrink-0">
         <button
-          className="flex items-center gap-2 min-w-0 hover:opacity-70 transition-opacity"
+          className="flex items-center gap-3 min-w-0 hover:opacity-70 transition-opacity"
           onClick={() => {
             const idx = visibilityOrder.indexOf(activeCall.visibility);
             setVisibility(visibilityOrder[(idx + 1) % visibilityOrder.length]);
@@ -156,7 +177,7 @@ export function CallScreen() {
         >
           {(() => {
             const Icon = visibilityIcon[activeCall.visibility];
-            return <Icon className="size-5 text-muted-foreground shrink-0 mr-1" />;
+            return <Icon className="size-5 text-muted-foreground shrink-0" />;
           })()}
           <div className="min-w-0 text-left">
             <p className="text-sm font-medium truncate">
@@ -167,23 +188,87 @@ export function CallScreen() {
             </p>
           </div>
         </button>
-        <Button variant="ghost" size="icon" onClick={handleMinimize}>
-          <Minimize2 className="size-5" />
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon">
+            <UserPlus className="size-5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => {
+              const next = activeCall.type === "audio" ? "video" : "audio";
+              setCallType(next);
+            }}
+          >
+            {activeCall.type === "video" ? (
+              <Video className="size-5" />
+            ) : (
+              <VideoOff className="size-5" />
+            )}
+          </Button>
+          <Button variant="ghost" size="icon">
+            <Settings className="size-5" />
+          </Button>
+          <Button variant="ghost" size="icon" onClick={handleMinimize}>
+            <Minimize2 className="size-5" />
+          </Button>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto px-6">
-        <div className="grid grid-cols-3 gap-4 justify-items-center">
+        <div className="grid grid-cols-3 gap-6 justify-items-center">
           {activeCall.participants.map((p, i) => (
-            <div key={i} className="flex flex-col items-center gap-2">
-              <Avatar className="size-16">
-                <AvatarImage src={p.avatarUrl} alt={p.name} />
-                <AvatarFallback>{p.name.slice(0, 2)}</AvatarFallback>
-              </Avatar>
-              <span className="text-xs truncate max-w-20 text-center">
-                {p.name}
-              </span>
-            </div>
+            <DropdownMenu key={i}>
+              <DropdownMenuTrigger className="flex flex-col items-center gap-2 outline-none hover:opacity-70 transition-opacity">
+                <Avatar className="size-16">
+                  <AvatarImage src={p.avatarUrl} alt={p.name} />
+                  <AvatarFallback>{p.name.slice(0, 2)}</AvatarFallback>
+                </Avatar>
+                <span className="text-xs truncate max-w-20 text-center">
+                  {p.name}
+                </span>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="min-w-44">
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel>{p.name}</DropdownMenuLabel>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  <User className="size-4" />
+                  プロフィール
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Shield className="size-4" />
+                  サブホストにする
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Crown className="size-4" />
+                  ホスト権限を譲渡
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  <MicOff className="size-4" />
+                  ミュートする
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <SlidersHorizontal className="size-4" />
+                  音量調整
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  <Flag className="size-4" />
+                  通報する
+                </DropdownMenuItem>
+                <DropdownMenuItem className="text-destructive">
+                  <Timer className="size-4" />
+                  一時追放
+                </DropdownMenuItem>
+                <DropdownMenuItem className="text-destructive">
+                  <Gavel className="size-4" />
+                  永久追放
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ))}
         </div>
       </div>
@@ -213,6 +298,14 @@ export function CallScreen() {
             ) : (
               <Mic className="size-5" />
             )}
+          </Button>
+          <Button
+            variant="outline"
+            size="icon-lg"
+            className="rounded-full size-14"
+            onClick={() => {}}
+          >
+            <ScreenShare className="size-5" />
           </Button>
           <Button
             variant="destructive"

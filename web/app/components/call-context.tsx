@@ -20,6 +20,7 @@ interface CallContextValue {
   joinCall: (call: Call) => void;
   createCall: (name: string, type: "audio" | "video", visibility: CallVisibility) => void;
   setVisibility: (visibility: CallVisibility) => void;
+  setCallType: (type: "audio" | "video") => void;
   minimize: () => void;
   maximize: () => void;
   leaveCall: () => void;
@@ -58,6 +59,10 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
     setActiveCall((prev) => prev ? { ...prev, visibility } : null);
   };
 
+  const setCallType = (type: "audio" | "video") => {
+    setActiveCall((prev) => prev ? { ...prev, type } : null);
+  };
+
   const minimize = () => setIsMinimized(true);
   const maximize = () => setIsMinimized(false);
   const leaveCall = () => {
@@ -72,6 +77,7 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
       joinCall,
       createCall,
       setVisibility,
+      setCallType,
       minimize,
       maximize,
       leaveCall,
