@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { Link, useNavigate } from "react-router";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import {
   DropdownMenu,
@@ -6,7 +8,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
-import { Button } from "~/components/ui/button";
 import {
   MessageCircle,
   Repeat2,
@@ -31,9 +32,11 @@ export interface Post {
   replyCount: number;
   repostCount: number;
   likeCount: number;
+  repostOf?: Post;
+  replyTo?: Post;
 }
 
-function formatRelativeTime(date: Date): string {
+export function formatRelativeTime(date: Date): string {
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffMinutes = Math.floor(diffMs / 60_000);
@@ -58,13 +61,24 @@ export function PostCard({
   onRepost?: (post: Post) => void;
 }) {
   const initials = post.author.name.slice(0, 2);
+  const [liked, setLiked] = useState(false);
+  const navigate = useNavigate();
 
   return (
-    <article className="flex gap-3 px-4 py-3 border-b">
-      <Avatar className="size-10 shrink-0">
-        <AvatarImage src={post.author.avatarUrl} alt={post.author.name} />
-        <AvatarFallback>{initials}</AvatarFallback>
-      </Avatar>
+    <article
+      className="flex gap-3 px-4 py-3 border-b cursor-pointer hover:bg-muted/30 transition-colors"
+      onClick={() => navigate(`/posts/${post.id}`)}
+    >
+      <Link
+        to={`/users/${post.author.customId}`}
+        className="shrink-0"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <Avatar className="size-10">
+          <AvatarImage src={post.author.avatarUrl} alt={post.author.name} />
+          <AvatarFallback>{initials}</AvatarFallback>
+        </Avatar>
+      </Link>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5 text-sm">
           <span className="font-bold truncate">{post.author.name}</span>
@@ -79,7 +93,28 @@ export function PostCard({
         <p className="mt-1 text-sm whitespace-pre-wrap wrap-break-word">
           {post.content}
         </p>
-        <div className="flex items-center justify-between mt-2 max-w-xs">
+        {post.repostOf && (
+          <div
+            className="mt-2 border rounded-lg p-3 hover:bg-muted/30 transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/posts/${post.repostOf!.id}`);
+            }}
+          >
+            <div className="flex items-center gap-1.5 text-xs">
+              <Avatar className="size-4">
+                <AvatarImage src={post.repostOf.author.avatarUrl} alt={post.repostOf.author.name} />
+                <AvatarFallback className="text-[8px]">{post.repostOf.author.name.slice(0, 1)}</AvatarFallback>
+              </Avatar>
+              <span className="font-bold truncate">{post.repostOf.author.name}</span>
+              <span className="text-muted-foreground truncate">@{post.repostOf.author.customId}</span>
+            </div>
+            <p className="mt-1 text-sm whitespace-pre-wrap wrap-break-word line-clamp-3">
+              {post.repostOf.content}
+            </p>
+          </div>
+        )}
+        <div className="flex items-center justify-between mt-2 max-w-xs" onClick={(e) => e.stopPropagation()}>
           <button
             onClick={() => onReply?.(post)}
             className="flex items-center gap-1.5 text-muted-foreground hover:text-blue-400 transition-colors group"
@@ -98,10 +133,15 @@ export function PostCard({
               <span className="text-xs">{post.repostCount}</span>
             )}
           </button>
-          <button className="flex items-center gap-1.5 text-muted-foreground hover:text-pink-400 transition-colors group">
-            <Heart className="size-4" />
-            {post.likeCount > 0 && (
-              <span className="text-xs">{post.likeCount}</span>
+          <button
+            onClick={() => setLiked(!liked)}
+            className={`flex items-center gap-1.5 transition-colors group ${liked ? "text-pink-400" : "text-muted-foreground hover:text-pink-400"}`}
+          >
+            <Heart className={`size-4 ${liked ? "fill-current" : ""}`} />
+            {(post.likeCount > 0 || liked) && (
+              <span className="text-xs">
+                {post.likeCount + (liked ? 1 : 0)}
+              </span>
             )}
           </button>
           <DropdownMenu>
