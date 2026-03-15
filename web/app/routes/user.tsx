@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import {
   Avatar,
@@ -404,6 +404,7 @@ export default function User({ params }: Route.ComponentProps) {
     customId: params.id,
     name: params.id,
   };
+  const navigate = useNavigate();
   const [isFollowing, setIsFollowing] = useState(profile.isFollowing);
   const [isMuted, setIsMuted] = useState(false);
   const [isRepostMuted, setIsRepostMuted] = useState(false);
@@ -459,7 +460,11 @@ export default function User({ params }: Route.ComponentProps) {
         {/* Action button (top-right of profile section) */}
         <div className="absolute top-3 right-4">
           {profile.isMe ? (
-            <Button variant="outline" className="rounded-full h-9 px-4">
+            <Button
+              variant="outline"
+              className="rounded-full h-9 px-4"
+              onClick={() => navigate("/settings/profile")}
+            >
               プロフィールを編集
             </Button>
           ) : profile.blockedByThem ? null : isBlocked ? (
@@ -609,10 +614,16 @@ export default function User({ params }: Route.ComponentProps) {
                 </span>
               )}
               {profile.website && (
-                <span className="flex items-center gap-1">
+                <a
+                  href={profile.website.startsWith("http") ? profile.website : `https://${profile.website}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 hover:underline"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <Link2 className="size-3.5" />
                   <span className="text-primary">{profile.website}</span>
-                </span>
+                </a>
               )}
               <span className="flex items-center gap-1">
                 <CalendarDays className="size-3.5" />
