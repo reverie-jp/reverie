@@ -264,7 +264,7 @@ export default function ChatDetail() {
 
   return (
     <>
-    <div className="w-full h-dvh flex flex-col">
+    <div className="w-full h-full flex flex-col">
       {/* Header */}
       <div className="shrink-0 border-b bg-background/60 backdrop-blur-lg z-10">
         <div className="flex items-center gap-3 px-4 h-16">

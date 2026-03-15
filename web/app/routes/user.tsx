@@ -10,15 +10,9 @@ import {
 } from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
 import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogAction,
-  AlertDialogCancel,
-} from "~/components/ui/alert-dialog";
+  ConfirmActionDialog,
+  type ConfirmActionType,
+} from "~/components/confirm-action-dialog";
 import { BottomNav } from "~/components/bottom-nav";
 import { ComposeFab } from "~/components/compose-fab";
 import { PostCard, type Post } from "~/components/post-card";
@@ -409,9 +403,9 @@ export default function User({ params }: Route.ComponentProps) {
   const [isMuted, setIsMuted] = useState(false);
   const [isRepostMuted, setIsRepostMuted] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
-  const [confirmAction, setConfirmAction] = useState<
-    "unfollow" | "mute" | "repost-mute" | "block" | null
-  >(null);
+  const [confirmAction, setConfirmAction] = useState<ConfirmActionType | null>(
+    null,
+  );
   const [showBlockedProfile, setShowBlockedProfile] = useState(false);
   const [composeMode, setComposeMode] = useState<ComposeMode | null>(null);
   const [selectedCall, setSelectedCall] = useState<ProfileCall | null>(null);
@@ -633,14 +627,20 @@ export default function User({ params }: Route.ComponentProps) {
 
             {/* Following / Followers */}
             <div className="flex gap-4 mt-3 text-sm">
-              <span>
+              <Link
+                to={`/users/${profile.customId}/connections?tab=following`}
+                className="hover:underline"
+              >
                 <span className="font-bold">{profile.followingCount}</span>{" "}
                 <span className="text-muted-foreground">フォロー中</span>
-              </span>
-              <span>
+              </Link>
+              <Link
+                to={`/users/${profile.customId}/connections?tab=followers`}
+                className="hover:underline"
+              >
                 <span className="font-bold">{profile.followerCount}</span>{" "}
                 <span className="text-muted-foreground">フォロワー</span>
-              </span>
+              </Link>
             </div>
           </>
         )}
@@ -781,62 +781,21 @@ export default function User({ params }: Route.ComponentProps) {
         onClose={() => setSelectedCall(null)}
         ended={selectedCall?.status === "ended"}
       />
-      <AlertDialog
-        open={confirmAction !== null}
-        onOpenChange={(open) => {
-          if (!open) setConfirmAction(null);
+      <ConfirmActionDialog
+        action={confirmAction}
+        customId={profile.customId}
+        onConfirm={() => {
+          if (confirmAction === "unfollow") setIsFollowing(false);
+          if (confirmAction === "mute") setIsMuted(true);
+          if (confirmAction === "repost-mute") setIsRepostMuted(true);
+          if (confirmAction === "block") {
+            setIsBlocked(true);
+            setIsFollowing(false);
+          }
+          setConfirmAction(null);
         }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {confirmAction === "unfollow" &&
-                `@${profile.customId}のフォローを解除しますか？`}
-              {confirmAction === "mute" &&
-                `@${profile.customId}をミュートしますか？`}
-              {confirmAction === "repost-mute" &&
-                `@${profile.customId}の再投稿をミュートしますか？`}
-              {confirmAction === "block" &&
-                `@${profile.customId}をブロックしますか？`}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {confirmAction === "unfollow" &&
-                "フォローを解除すると、このユーザーの投稿がタイムラインに表示されなくなります。"}
-              {confirmAction === "mute" &&
-                "ミュートすると、このユーザーの投稿や通知が非表示になります。相手には通知されません。"}
-              {confirmAction === "repost-mute" &&
-                "このユーザーの再投稿がタイムラインに表示されなくなります。相手には通知されません。"}
-              {confirmAction === "block" &&
-                "ブロックすると、このユーザーはあなたのプロフィールや投稿を閲覧できなくなります。"}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>キャンセル</AlertDialogCancel>
-            <AlertDialogAction
-              className={
-                confirmAction === "block"
-                  ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  : ""
-              }
-              onClick={() => {
-                if (confirmAction === "unfollow") setIsFollowing(false);
-                if (confirmAction === "mute") setIsMuted(true);
-                if (confirmAction === "repost-mute") setIsRepostMuted(true);
-                if (confirmAction === "block") {
-                  setIsBlocked(true);
-                  setIsFollowing(false);
-                }
-                setConfirmAction(null);
-              }}
-            >
-              {confirmAction === "unfollow" && "フォロー解除"}
-              {confirmAction === "mute" && "ミュート"}
-              {confirmAction === "repost-mute" && "ミュート"}
-              {confirmAction === "block" && "ブロック"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        onCancel={() => setConfirmAction(null)}
+      />
 
       {/* Floating call badge for other users */}
       {otherUserLiveCall && (
