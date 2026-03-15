@@ -71,7 +71,7 @@ export function PostCard({
     >
       <Link
         to={`/users/${post.author.customId}`}
-        className="shrink-0"
+        className="shrink-0 self-start"
         onClick={(e) => e.stopPropagation()}
       >
         <Avatar className="size-10">

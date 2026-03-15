@@ -1,6 +1,11 @@
+import { useState } from "react";
 import { Button } from "~/components/ui/button";
 import { BottomNav } from "~/components/bottom-nav";
 import { PostCard, type Post } from "~/components/post-card";
+import {
+  ComposePostDialog,
+  type ComposeMode,
+} from "~/components/compose-post-dialog";
 import { ArrowLeft } from "lucide-react";
 
 const originalPost: Post = {
@@ -27,6 +32,16 @@ const repostPosts: Post[] = [
 ];
 
 export default function PostReposts() {
+  const [composeMode, setComposeMode] = useState<ComposeMode | null>(null);
+
+  const handleReply = (post: Post) => {
+    setComposeMode({ type: "reply", post });
+  };
+
+  const handleRepost = (post: Post) => {
+    setComposeMode({ type: "repost", post });
+  };
+
   return (
     <div className="w-full min-h-full flex flex-col">
       <div className="sticky top-0 left-0 w-full border-b bg-background/60 backdrop-blur-lg z-10">
@@ -40,10 +55,16 @@ export default function PostReposts() {
 
       <div className="flex-1">
         {repostPosts.map((post) => (
-          <PostCard key={post.id} post={post} />
+          <PostCard key={post.id} post={post} onReply={handleReply} onRepost={handleRepost} />
         ))}
       </div>
 
+      <ComposePostDialog
+        open={composeMode !== null}
+        onClose={() => setComposeMode(null)}
+        onPost={() => setComposeMode(null)}
+        mode={composeMode ?? undefined}
+      />
       <BottomNav />
     </div>
   );

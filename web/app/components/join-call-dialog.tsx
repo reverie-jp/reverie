@@ -34,9 +34,11 @@ import { useAnyCallActive } from "~/components/use-any-call-active";
 export function JoinCallDialog({
   call,
   onClose,
+  ended = false,
 }: {
   call: Call | null;
   onClose: () => void;
+  ended?: boolean;
 }) {
   const { joinCall } = useCall();
   const { isInCall, currentCallName, endCurrentCall } = useAnyCallActive();
@@ -112,17 +114,23 @@ export function JoinCallDialog({
           <div className="flex items-center justify-between">
             <DialogDescription>{call?.host}の通話</DialogDescription>
             <span className="text-xs text-muted-foreground whitespace-nowrap">
-              {call?.participants.length}人が参加中
+              {ended ? `${call?.participants.length}人が参加しました` : `${call?.participants.length}人が参加中`}
             </span>
           </div>
           <DialogFooter>
-            <Button
-              className="w-full h-10 gap-2"
-              onClick={handleJoin}
-            >
-              <TypeIcon className="size-4" />
-              この通話に参加する
-            </Button>
+            {ended ? (
+              <Button className="w-full h-10" disabled>
+                この通話は終了しています
+              </Button>
+            ) : (
+              <Button
+                className="w-full h-10 gap-2"
+                onClick={handleJoin}
+              >
+                <TypeIcon className="size-4" />
+                この通話に参加する
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
