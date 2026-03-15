@@ -7,8 +7,6 @@ import {
   Volume2,
   VolumeOff,
   LogOut,
-  Phone,
-  Video,
   Globe,
   Users,
   UserCheck,
@@ -27,9 +25,9 @@ import {
   ScreenShareOff,
   Search,
 } from "lucide-react";
-import { useState, useRef, useCallback } from "react";
+import { useState } from "react";
 import { useCall, type CallVisibility } from "~/components/call-context";
-import { GroupAvatar } from "~/components/call-list";
+import { formatCallDuration } from "~/components/private-call-context";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -58,75 +56,6 @@ import {
 import { Input } from "~/components/ui/input";
 import { Slider } from "~/components/ui/slider";
 import { Switch } from "~/components/ui/switch";
-
-function DraggableBubble({
-  onTap,
-  children,
-}: {
-  onTap: () => void;
-  children: React.ReactNode;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-  const dragState = useRef<{
-    startX: number;
-    startY: number;
-    originX: number;
-    originY: number;
-    moved: boolean;
-  } | null>(null);
-  const [pos, setPos] = useState({ x: 16, y: window.innerHeight - 140 });
-
-  const clamp = useCallback((x: number, y: number) => {
-    const size = 56;
-    return {
-      x: Math.max(0, Math.min(window.innerWidth - size, x)),
-      y: Math.max(0, Math.min(window.innerHeight - size, y)),
-    };
-  }, []);
-
-  const handlePointerDown = (e: React.PointerEvent) => {
-    dragState.current = {
-      startX: e.clientX,
-      startY: e.clientY,
-      originX: pos.x,
-      originY: pos.y,
-      moved: false,
-    };
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
-  };
-
-  const handlePointerMove = (e: React.PointerEvent) => {
-    const ds = dragState.current;
-    if (!ds) return;
-    const dx = e.clientX - ds.startX;
-    const dy = e.clientY - ds.startY;
-    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
-      ds.moved = true;
-    }
-    setPos(clamp(ds.originX + dx, ds.originY + dy));
-  };
-
-  const handlePointerUp = () => {
-    const ds = dragState.current;
-    if (ds && !ds.moved) {
-      onTap();
-    }
-    dragState.current = null;
-  };
-
-  return (
-    <div
-      ref={ref}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      className="fixed z-50 touch-none select-none cursor-grab active:cursor-grabbing"
-      style={{ left: pos.x, top: pos.y }}
-    >
-      {children}
-    </div>
-  );
-}
 
 type OnlineStatus = "online" | "idle" | "offline";
 
@@ -179,19 +108,15 @@ const visibilityIcon: Record<CallVisibility, typeof Globe> = {
 };
 
 export function CallScreen() {
-  const {
-    activeCall,
-    isMinimized,
-    minimize,
-    maximize,
-    leaveCall,
-    setVisibility,
-  } = useCall();
+  const { activeCall, isMinimized, minimize, leaveCall, setVisibility } =
+    useCall();
   const [isMuted, setIsMuted] = useState(false);
   const [isSpeaker, setIsSpeaker] = useState(true);
   const [isClosing, setIsClosing] = useState(false);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
-  const [screenShareDialog, setScreenShareDialog] = useState<"start" | "stop" | null>(null);
+  const [screenShareDialog, setScreenShareDialog] = useState<
+    "start" | "stop" | null
+  >(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showInvite, setShowInvite] = useState(false);
   const [invitedUsers, setInvitedUsers] = useState<Set<string>>(new Set());
@@ -209,33 +134,16 @@ export function CallScreen() {
     }, 250);
   };
 
-  if (!activeCall) return null;
-
-  const TypeIcon = activeCall.type === "video" ? Video : Phone;
-
-  if (isMinimized) {
-    return (
-      <DraggableBubble onTap={maximize}>
-        <div className="relative size-14 shadow-lg rounded-full ring-2 ring-primary ring-offset-2 ring-offset-background">
-          <GroupAvatar
-            participants={activeCall.participants}
-            className="size-14"
-          />
-          <div className="absolute -bottom-0.5 -left-0.5 size-5 rounded-full bg-primary flex items-center justify-center">
-            <TypeIcon className="size-3 text-primary-foreground" />
-          </div>
-        </div>
-      </DraggableBubble>
-    );
-  }
+  if (!activeCall || isMinimized) return null;
 
   return (
     <div
       className={`fixed inset-0 z-50 bg-background flex flex-col duration-300 ${isClosing ? "animate-out slide-out-to-bottom fill-mode-forwards" : "animate-in slide-in-from-bottom"}`}
     >
       <div className="flex items-center justify-between px-6 py-8 shrink-0">
-        <button
-          className="flex items-center gap-3 min-w-0 hover:opacity-70 transition-opacity"
+        <Button
+          variant="ghost"
+          className="flex items-center gap-3 min-w-0 h-auto px-2 py-1"
           onClick={() => {
             const idx = visibilityOrder.indexOf(activeCall.visibility);
             setVisibility(visibilityOrder[(idx + 1) % visibilityOrder.length]);
@@ -250,15 +158,23 @@ export function CallScreen() {
               {activeCall.visibility}
             </p>
             <p className="text-xs text-muted-foreground">
-              {activeCall.participants.length}人が参加中
+              {formatCallDuration(activeCall.elapsed)}
             </p>
           </div>
-        </button>
+        </Button>
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => setShowInvite(true)}>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setShowInvite(true)}
+          >
             <UserPlus className="size-5" />
           </Button>
-          <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)}>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setShowSettings(true)}
+          >
             <Settings className="size-5" />
           </Button>
           <Button variant="ghost" size="icon" onClick={handleMinimize}>
@@ -334,55 +250,58 @@ export function CallScreen() {
       <div className="shrink-0 pb-safe px-6 py-8">
         <div className="flex items-center justify-center gap-6">
           <Button
-            variant={isSpeaker ? "outline" : "secondary"}
+            variant="secondary"
             size="icon-lg"
-            className="rounded-full size-14"
+            className={`rounded-full size-14! ${!isSpeaker ? "opacity-80 text-muted-foreground" : ""}`}
             onClick={() => setIsSpeaker(!isSpeaker)}
           >
             {isSpeaker ? (
-              <Volume2 className="size-5" />
+              <Volume2 className="size-6" />
             ) : (
-              <VolumeOff className="size-5" />
+              <VolumeOff className="size-6" />
             )}
           </Button>
           <Button
-            variant={isMuted ? "destructive" : "outline"}
+            variant="secondary"
             size="icon-lg"
-            className="rounded-full size-14"
+            className={`rounded-full size-14! ${isMuted ? "opacity-80 text-muted-foreground" : ""}`}
             onClick={() => setIsMuted(!isMuted)}
           >
             {isMuted ? (
-              <MicOff className="size-5" />
+              <MicOff className="size-6" />
             ) : (
-              <Mic className="size-5" />
+              <Mic className="size-6" />
             )}
           </Button>
           <Button
-            variant={isScreenSharing ? "destructive" : "outline"}
+            variant="secondary"
             size="icon-lg"
-            className="rounded-full size-14"
-            onClick={() => setScreenShareDialog(isScreenSharing ? "stop" : "start")}
+            className={`rounded-full size-14! ${!isScreenSharing ? "opacity-80 text-muted-foreground" : ""}`}
+            onClick={() =>
+              setScreenShareDialog(isScreenSharing ? "stop" : "start")
+            }
           >
             {isScreenSharing ? (
-              <ScreenShareOff className="size-5" />
+              <ScreenShareOff className="size-6" />
             ) : (
-              <ScreenShare className="size-5" />
+              <ScreenShare className="size-6" />
             )}
           </Button>
           <Button
-            variant="destructive"
             size="icon-lg"
-            className="rounded-full size-14"
+            className="rounded-full size-14! bg-red-500 text-white hover:bg-red-600"
             onClick={leaveCall}
           >
-            <LogOut className="size-5" />
+            <LogOut className="size-6" />
           </Button>
         </div>
       </div>
 
       <AlertDialog
         open={screenShareDialog === "start"}
-        onOpenChange={(open) => { if (!open) setScreenShareDialog(null); }}
+        onOpenChange={(open) => {
+          if (!open) setScreenShareDialog(null);
+        }}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -407,7 +326,9 @@ export function CallScreen() {
 
       <AlertDialog
         open={screenShareDialog === "stop"}
-        onOpenChange={(open) => { if (!open) setScreenShareDialog(null); }}
+        onOpenChange={(open) => {
+          if (!open) setScreenShareDialog(null);
+        }}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -431,7 +352,13 @@ export function CallScreen() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <Dialog open={showInvite} onOpenChange={(open) => { setShowInvite(open); if (!open) setInviteSearch(""); }}>
+      <Dialog
+        open={showInvite}
+        onOpenChange={(open) => {
+          setShowInvite(open);
+          if (!open) setInviteSearch("");
+        }}
+      >
         <DialogContent showCloseButton={false} className="max-w-80 sm:max-w-80">
           <DialogHeader>
             <DialogTitle>ユーザーを招待</DialogTitle>
@@ -450,7 +377,10 @@ export function CallScreen() {
               .filter((u) => {
                 if (!inviteSearch) return true;
                 const q = inviteSearch.toLowerCase();
-                return u.name.toLowerCase().includes(q) || u.customId.toLowerCase().includes(q);
+                return (
+                  u.name.toLowerCase().includes(q) ||
+                  u.customId.toLowerCase().includes(q)
+                );
               })
               .map((user) => {
                 const invited = invitedUsers.has(user.customId);
@@ -472,11 +402,17 @@ export function CallScreen() {
                         <AvatarImage src={user.avatarUrl} alt={user.name} />
                         <AvatarFallback>{user.name.slice(0, 2)}</AvatarFallback>
                       </Avatar>
-                      <div className={`absolute -bottom-0.5 -right-0.5 size-3 rounded-full border-2 border-background ${statusColor[user.status]}`} />
+                      <div
+                        className={`absolute -bottom-0.5 -right-0.5 size-3 rounded-full border-2 border-background ${statusColor[user.status]}`}
+                      />
                     </div>
                     <div className="flex-1 min-w-0 text-left">
-                      <p className="text-sm font-medium truncate">{user.name}</p>
-                      <p className="text-xs text-muted-foreground">@{user.customId}</p>
+                      <p className="text-sm font-medium truncate">
+                        {user.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        @{user.customId}
+                      </p>
                     </div>
                     {invited ? (
                       <UserCheckIcon className="size-4 text-primary shrink-0" />
@@ -499,40 +435,56 @@ export function CallScreen() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-sm">出力音量</span>
-                <span className="text-xs text-muted-foreground">{outputVolume}%</span>
+                <span className="text-xs text-muted-foreground">
+                  {outputVolume}%
+                </span>
               </div>
               <Slider
                 value={[outputVolume]}
-                onValueChange={(v) => setOutputVolume(Array.isArray(v) ? v[0] : v)}
+                onValueChange={(v) =>
+                  setOutputVolume(Array.isArray(v) ? v[0] : v)
+                }
                 max={100}
                 step={1}
               />
-              <p className="text-xs text-muted-foreground">自分に聞こえる音量</p>
+              <p className="text-xs text-muted-foreground">
+                自分に聞こえる音量
+              </p>
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-sm">入力音量</span>
-                <span className="text-xs text-muted-foreground">{inputVolume}%</span>
+                <span className="text-xs text-muted-foreground">
+                  {inputVolume}%
+                </span>
               </div>
               <Slider
                 value={[inputVolume]}
-                onValueChange={(v) => setInputVolume(Array.isArray(v) ? v[0] : v)}
+                onValueChange={(v) =>
+                  setInputVolume(Array.isArray(v) ? v[0] : v)
+                }
                 max={100}
                 step={1}
               />
-              <p className="text-xs text-muted-foreground">相手に聞こえる音量</p>
+              <p className="text-xs text-muted-foreground">
+                相手に聞こえる音量
+              </p>
             </div>
             <div className="flex items-center justify-between">
               <div>
                 <span className="text-sm">入室効果音</span>
-                <p className="text-xs text-muted-foreground">誰かが入室した時に効果音を鳴らす</p>
+                <p className="text-xs text-muted-foreground">
+                  誰かが入室した時に効果音を鳴らす
+                </p>
               </div>
               <Switch checked={joinSound} onCheckedChange={setJoinSound} />
             </div>
             <div className="flex items-center justify-between gap-4">
               <div>
                 <span className="text-sm">高音質モード</span>
-                <p className="text-xs text-muted-foreground">音質が向上しますが、バッテリー消費と通信量が増加します</p>
+                <p className="text-xs text-muted-foreground">
+                  音質が向上しますが、バッテリー消費と通信量が増加します
+                </p>
               </div>
               <Switch checked={highQuality} onCheckedChange={setHighQuality} />
             </div>

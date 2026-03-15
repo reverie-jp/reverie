@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect, useRef } from "react";
 import type { Call, CallParticipant } from "~/components/call-list";
 
 export type CallVisibility =
@@ -12,6 +12,7 @@ interface ActiveCall {
   type: "audio" | "video";
   visibility: CallVisibility;
   participants: CallParticipant[];
+  elapsed: number;
 }
 
 interface CallContextValue {
@@ -31,6 +32,20 @@ const CallContext = createContext<CallContextValue | null>(null);
 export function CallProvider({ children }: { children: React.ReactNode }) {
   const [activeCall, setActiveCall] = useState<ActiveCall | null>(null);
   const [isMinimized, setIsMinimized] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (activeCall) {
+      timerRef.current = setInterval(() => {
+        setActiveCall((prev) =>
+          prev ? { ...prev, elapsed: prev.elapsed + 1 } : null,
+        );
+      }, 1000);
+    }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [activeCall?.name]);
 
   const joinCall = (call: Call) => {
     setActiveCall({
@@ -41,6 +56,7 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
         ...call.participants,
         { name: "自分", customId: "me", avatarUrl: "" },
       ],
+      elapsed: 0,
     });
     setIsMinimized(false);
   };
@@ -51,6 +67,7 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
       type,
       visibility,
       participants: [{ name: "自分", customId: "me", avatarUrl: "" }],
+      elapsed: 0,
     });
     setIsMinimized(false);
   };
@@ -68,6 +85,7 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
   const leaveCall = () => {
     setActiveCall(null);
     setIsMinimized(false);
+    if (timerRef.current) clearInterval(timerRef.current);
   };
 
   return (

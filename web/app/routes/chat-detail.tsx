@@ -3,12 +3,24 @@ import { useParams, Link } from "react-router";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
 import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "~/components/ui/alert-dialog";
+import {
   ArrowLeft,
   SendHorizontal,
   Phone,
   Video,
   ImagePlus,
 } from "lucide-react";
+import { usePrivateCall } from "~/components/private-call-context";
+import { useAnyCallActive } from "~/components/use-any-call-active";
 
 type OnlineStatus = "online" | "idle" | "offline";
 
@@ -189,6 +201,10 @@ export default function ChatDetail() {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { startCall } = usePrivateCall();
+  const { isInCall, currentCallName, endCurrentCall } = useAnyCallActive();
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [pendingCallType, setPendingCallType] = useState<"audio" | "video">("audio");
 
   const chat = id ? chatData[id] : undefined;
 
@@ -229,7 +245,25 @@ export default function ChatDetail() {
     setInput("");
   };
 
+  const handleStartCall = (type: "audio" | "video") => {
+    if (!id) return;
+    if (isInCall) {
+      setPendingCallType(type);
+      setShowConfirm(true);
+      return;
+    }
+    startCall(id, participant, type);
+  };
+
+  const handleConfirmSwitch = () => {
+    if (!id) return;
+    endCurrentCall();
+    startCall(id, participant, pendingCallType);
+    setShowConfirm(false);
+  };
+
   return (
+    <>
     <div className="w-full h-dvh flex flex-col">
       {/* Header */}
       <div className="shrink-0 border-b bg-background/60 backdrop-blur-lg z-10">
@@ -261,10 +295,18 @@ export default function ChatDetail() {
             </div>
           </Link>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => handleStartCall("audio")}
+            >
               <Phone className="size-5" />
             </Button>
-            <Button variant="ghost" size="icon">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => handleStartCall("video")}
+            >
               <Video className="size-5" />
             </Button>
           </div>
@@ -359,5 +401,28 @@ export default function ChatDetail() {
         </div>
       </div>
     </div>
+
+    <AlertDialog
+      open={showConfirm}
+      onOpenChange={(open) => {
+        if (!open) setShowConfirm(false);
+      }}
+    >
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>通話を切り替えますか？</AlertDialogTitle>
+          <AlertDialogDescription>
+            「{currentCallName}」を終了して、{participant.name}との通話を開始しますか？
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>キャンセル</AlertDialogCancel>
+          <AlertDialogAction onClick={handleConfirmSwitch}>
+            切り替える
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }

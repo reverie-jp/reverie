@@ -10,6 +10,10 @@ import {
 import type { Route } from "./+types/root";
 import { CallProvider } from "~/components/call-context";
 import { CallScreen } from "~/components/call-screen";
+import { PrivateCallProvider } from "~/components/private-call-context";
+import { PrivateCallBar } from "~/components/private-call-bar";
+import { PrivateCallScreen } from "~/components/private-call-screen";
+import { GroupCallBar } from "~/components/group-call-bar";
 import "./app.css";
 
 export const links: Route.LinksFunction = () => [
@@ -48,8 +52,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <CallProvider>
-      <Outlet />
-      <CallScreen />
+      <PrivateCallProvider>
+        <GroupCallBar />
+        <PrivateCallBar />
+        <Outlet />
+        <CallScreen />
+        <PrivateCallScreen />
+      </PrivateCallProvider>
     </CallProvider>
   );
 }
