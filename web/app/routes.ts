@@ -4,6 +4,7 @@ export default [
   index("routes/home.tsx"),
   route("search", "routes/search.tsx"),
   route("chat", "routes/chat.tsx"),
+  route("chat/requests", "routes/chat-requests.tsx"),
   route("chat/:id", "routes/chat-detail.tsx"),
   route("notifications", "routes/notifications.tsx"),
   route("posts/:id", "routes/post.tsx"),

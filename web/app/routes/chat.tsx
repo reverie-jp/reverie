@@ -11,6 +11,7 @@ import {
   BellOff,
   Trash2,
   MailCheck,
+  ChevronRight,
 } from "lucide-react";
 
 type OnlineStatus = "online" | "idle" | "offline";
@@ -478,6 +479,17 @@ export default function Chat() {
           </div>
         )}
       </div>
+
+      {/* Message requests */}
+      {!editing && (
+        <Link
+          to="/chat/requests"
+          className="flex items-center justify-between px-4 py-2.5 border-b hover:bg-muted/30 transition-colors"
+        >
+          <span className="text-sm text-blue-500">メッセージリクエスト (3)</span>
+          <ChevronRight className="size-4 text-blue-500" />
+        </Link>
+      )}
 
       {/* Chat list */}
       <div className="flex-1">

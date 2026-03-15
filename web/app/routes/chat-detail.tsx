@@ -2,7 +2,13 @@ import { useState, useRef, useEffect } from "react";
 import { useParams, Link } from "react-router";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
-import { ArrowLeft, SendHorizontal, Phone, Video } from "lucide-react";
+import {
+  ArrowLeft,
+  SendHorizontal,
+  Phone,
+  Video,
+  ImagePlus,
+} from "lucide-react";
 
 type OnlineStatus = "online" | "idle" | "offline";
 
@@ -318,6 +324,14 @@ export default function ChatDetail() {
       {/* Input */}
       <div className="shrink-0 border-t bg-background px-4 py-3">
         <div className="flex gap-2">
+          <button
+            className="shrink-0 p-2 text-muted-foreground hover:text-foreground transition-colors"
+            onClick={() => {
+              // TODO: open file picker for images/videos
+            }}
+          >
+            <ImagePlus className="size-5" />
+          </button>
           <textarea
             placeholder="メッセージを入力..."
             value={input}
