@@ -39,7 +39,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
-        <div className="w-screen h-screen overflow-x-hidden overflow-y-auto">
+        <div className="w-screen h-screen flex flex-col overflow-hidden">
           {children}
         </div>
         <ScrollRestoration />
@@ -55,7 +55,9 @@ export default function App() {
       <PrivateCallProvider>
         <GroupCallBar />
         <PrivateCallBar />
-        <Outlet />
+        <div className="flex-1 overflow-x-hidden overflow-y-auto">
+          <Outlet />
+        </div>
         <CallScreen />
         <PrivateCallScreen />
       </PrivateCallProvider>

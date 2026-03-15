@@ -18,7 +18,7 @@ export function CallBar({
   EndIcon: LucideIcon;
 }) {
   return (
-    <div className="sticky top-0 left-0 w-full z-40">
+    <div className="w-full shrink-0">
       <div className="bg-muted border-b px-3 py-2.5 rounded-b-2xl shadow-md">
         <div className="flex items-center gap-2">
           <button
