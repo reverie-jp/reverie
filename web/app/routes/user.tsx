@@ -1,7 +1,13 @@
 import { useState } from "react";
 import { Link } from "react-router";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+  AvatarGroup,
+  AvatarGroupCount,
+} from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
 import {
   AlertDialog,
@@ -22,7 +28,6 @@ import {
 } from "~/components/compose-post-dialog";
 import { GroupAvatar, type Call } from "~/components/call-list";
 import { JoinCallDialog } from "~/components/join-call-dialog";
-import { formatCallDuration } from "~/components/private-call-context";
 import {
   ArrowLeft,
   Bell,
@@ -38,6 +43,7 @@ import {
   ShieldBan,
   Video,
   VolumeOff,
+  Crown,
   Image as ImageIcon,
 } from "lucide-react";
 import {
@@ -173,6 +179,7 @@ function getUserPosts(customId: string): Post[] {
 interface ProfileCall extends Call {
   status: "live" | "ended";
   duration?: string;
+  hostId: string;
 }
 
 function getUserCalls(customId: string): ProfileCall[] {
@@ -183,9 +190,15 @@ function getUserCalls(customId: string): ProfileCall[] {
       name: "雑談部屋",
       type: "audio",
       host: name,
+      hostId: customId,
       participants: [
         { name, customId, avatarUrl: "" },
         { name: "佐藤花子", customId: "hanako_s", avatarUrl: "" },
+        { name: "山田美咲", customId: "misaki_y", avatarUrl: "" },
+        { name: "渡辺大輔", customId: "daisuke_w", avatarUrl: "" },
+        { name: "木村拓也", customId: "takuya_k", avatarUrl: "" },
+        { name: "小林あおい", customId: "aoi_kb", avatarUrl: "" },
+        { name: "高橋真一", customId: "shin_t", avatarUrl: "" },
       ],
       status: "live",
     },
@@ -194,6 +207,7 @@ function getUserCalls(customId: string): ProfileCall[] {
       name: "デザインレビュー",
       type: "video",
       host: name,
+      hostId: customId,
       participants: [
         { name, customId, avatarUrl: "" },
         { name: "鈴木一郎", customId: "ichiro_dev", avatarUrl: "" },
@@ -207,6 +221,7 @@ function getUserCalls(customId: string): ProfileCall[] {
       name: "チーム定例",
       type: "audio",
       host: "小林あおい",
+      hostId: "aoi_kb",
       participants: [
         { name, customId, avatarUrl: "" },
         { name: "小林あおい", customId: "aoi_kb", avatarUrl: "" },
@@ -308,7 +323,15 @@ function ProfileCallItem({
         </div>
       </div>
       <div
-        className={`size-8 rounded-full flex items-center justify-center shrink-0 ${isLive ? "bg-muted text-muted-foreground" : "bg-muted/60 text-muted-foreground/50"}`}
+        className={`size-8 rounded-full flex items-center justify-center shrink-0 ${
+          isLive
+            ? call.type === "video"
+              ? "bg-blue-500/10 text-blue-500"
+              : "bg-green-500/10 text-green-500"
+            : call.type === "video"
+              ? "bg-blue-500/5 text-blue-500/40"
+              : "bg-green-500/5 text-green-500/40"
+        }`}
       >
         <TypeIcon className="size-4" />
       </div>
@@ -317,37 +340,59 @@ function ProfileCallItem({
 }
 
 function FloatingCallBadge({
-  callName,
-  callType,
-  elapsed,
-  participantCount,
+  call,
   onClick,
 }: {
-  callName: string;
-  callType: "audio" | "video";
-  elapsed: number;
-  participantCount?: number;
+  call: ProfileCall;
   onClick: () => void;
 }) {
-  const TypeIcon = callType === "video" ? Video : Phone;
+  const TypeIcon = call.type === "video" ? Video : Phone;
+  const maxAvatars = 5;
+  const shown = call.participants.slice(0, maxAvatars);
+  const overflow = call.participants.length - maxAvatars;
+  const hostIndex = call.participants.findIndex(
+    (p) => p.customId === call.hostId,
+  );
 
   return (
     <button
       onClick={onClick}
-      className="fixed bottom-20 right-4 z-40 flex items-center gap-2.5 rounded-full bg-green-500 text-white pl-3 pr-4 py-2 shadow-lg hover:bg-green-600 transition-colors"
+      className="fixed bottom-20 right-4 z-40 flex items-center gap-2.5 rounded-full border bg-background pl-3 pr-4 py-2 shadow-lg hover:bg-muted/50 transition-colors max-w-50"
     >
-      <div className="size-8 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-        <TypeIcon className="size-4" />
+      <div
+        className={`size-8 rounded-full flex items-center justify-center shrink-0 ${call.type === "video" ? "bg-blue-500/10" : "bg-green-500/10"}`}
+      >
+        <TypeIcon
+          className={`size-4 ${call.type === "video" ? "text-blue-500" : "text-green-500"}`}
+        />
       </div>
-      <div className="text-left min-w-0">
+      <div className="flex flex-col gap-1 min-w-0">
         <div className="flex items-center gap-1.5">
-          <span className="text-sm font-medium truncate max-w-32">{callName}</span>
-          <span className="size-1.5 rounded-full bg-white animate-pulse" />
+          <span className="text-sm font-medium truncate">通話に参加中</span>
+          <span className="size-1.5 rounded-full bg-green-500 animate-pulse shrink-0" />
         </div>
-        <div className="text-xs text-white/80">
-          {formatCallDuration(elapsed)}
-          {participantCount !== undefined && ` · ${participantCount}人`}
-        </div>
+        <AvatarGroup className="-space-x-1.5 *:data-[slot=avatar]:ring-background *:data-[slot=avatar]:ring-[1.5px]">
+          {shown.map((p, i) => (
+            <div key={i} className="relative">
+              <Avatar className="size-5!">
+                <AvatarImage src={p.avatarUrl} alt={p.name} />
+                <AvatarFallback className="text-[8px]">
+                  {p.name.slice(0, 1)}
+                </AvatarFallback>
+              </Avatar>
+              {i === hostIndex && (
+                <div className="absolute -top-px -left-0.5 size-2 rounded-full bg-yellow-400 flex items-center justify-center z-10">
+                  <Crown className="size-1 text-yellow-800" />
+                </div>
+              )}
+            </div>
+          ))}
+          {overflow > 0 && (
+            <AvatarGroupCount className="size-5! text-[8px] ring-[1.5px]! ring-background!">
+              +{overflow}
+            </AvatarGroupCount>
+          )}
+        </AvatarGroup>
       </div>
     </button>
   );
@@ -785,10 +830,7 @@ export default function User({ params }: Route.ComponentProps) {
       {/* Floating call badge for other users */}
       {otherUserLiveCall && (
         <FloatingCallBadge
-          callName={otherUserLiveCall.name}
-          callType={otherUserLiveCall.type}
-          elapsed={0}
-          participantCount={otherUserLiveCall.participants.length}
+          call={otherUserLiveCall}
           onClick={() => setSelectedCall(otherUserLiveCall)}
         />
       )}

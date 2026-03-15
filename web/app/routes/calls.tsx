@@ -215,7 +215,9 @@ function CallListItem({
           {participantNames}
         </div>
       </div>
-      <TypeIcon className="size-4 text-muted-foreground shrink-0" />
+      <div className={`size-8 rounded-full flex items-center justify-center shrink-0 ${call.type === "video" ? "bg-blue-500/10 text-blue-500" : "bg-green-500/10 text-green-500"}`}>
+        <TypeIcon className="size-4" />
+      </div>
     </button>
   );
 }

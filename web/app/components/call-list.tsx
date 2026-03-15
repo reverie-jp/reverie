@@ -65,8 +65,8 @@ function CallItem({ call, onTap }: { call: Call; onTap: (call: Call) => void }) 
     <button onClick={() => onTap(call)} className="flex flex-col items-center gap-1.5 shrink-0">
       <div className="relative">
         <GroupAvatar participants={call.participants} />
-        <div className="absolute -bottom-0.5 -right-0.5 size-5 rounded-full bg-primary flex items-center justify-center">
-          <TypeIcon className="size-3 text-primary-foreground" />
+        <div className={`absolute -bottom-0.5 -right-0.5 size-5 rounded-full border bg-background flex items-center justify-center ${call.type === "video" ? "text-blue-500" : "text-green-500"}`}>
+          <TypeIcon className="size-3" />
         </div>
       </div>
       <span className="text-xs truncate max-w-16">{call.name}</span>
