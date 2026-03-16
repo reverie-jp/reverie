@@ -61,8 +61,15 @@ interface UserProfile {
   followingCount: number;
   followerCount: number;
   isFollowing: boolean;
+  followsYou?: boolean;
   isMe: boolean;
   blockedByThem?: boolean;
+}
+
+interface MutualFollower {
+  name: string;
+  customId: string;
+  avatarUrl?: string;
 }
 
 const users: Record<string, UserProfile> = {
@@ -87,6 +94,7 @@ const users: Record<string, UserProfile> = {
     followingCount: 85,
     followerCount: 342,
     isFollowing: true,
+    followsYou: true,
     isMe: false,
   },
   hanako_s: {
@@ -99,6 +107,7 @@ const users: Record<string, UserProfile> = {
     followingCount: 200,
     followerCount: 510,
     isFollowing: true,
+    followsYou: true,
     isMe: false,
   },
   ichiro_dev: {
@@ -123,6 +132,20 @@ const defaultUser: UserProfile = {
   followerCount: 0,
   isFollowing: false,
   isMe: false,
+};
+
+const mutualFollowers: Record<string, MutualFollower[]> = {
+  tanaka: [
+    { name: "佐藤花子", customId: "hanako_s" },
+    { name: "山田美咲", customId: "misaki_y" },
+    { name: "渡辺大輔", customId: "daisuke_w" },
+    { name: "小林あおい", customId: "aoi_kb" },
+    { name: "木村拓也", customId: "takuya_k" },
+  ],
+  hanako_s: [
+    { name: "田中太郎", customId: "tanaka" },
+    { name: "山田美咲", customId: "misaki_y" },
+  ],
 };
 
 function getUserPosts(customId: string): Post[] {
@@ -414,6 +437,7 @@ export default function User({ params }: Route.ComponentProps) {
   const calls = getUserCalls(params.id);
   const likedPosts = getUserLikedPosts();
   const media = getUserMedia(params.id);
+  const mutuals = mutualFollowers[params.id] ?? [];
 
   // For other users, show their live call as a floating badge
   const otherUserLiveCall = !profile.isMe
@@ -588,7 +612,14 @@ export default function User({ params }: Route.ComponentProps) {
 
         {/* Name & ID */}
         <div className="mt-3">
-          <p className="text-lg font-bold">{profile.name}</p>
+          <div className="flex items-center gap-2">
+            <p className="text-lg font-bold">{profile.name}</p>
+            {profile.followsYou && (
+              <span className="text-[10px] bg-muted text-muted-foreground rounded px-1.5 py-0.5 leading-none">
+                フォローされています
+              </span>
+            )}
+          </div>
           <p className="text-sm text-muted-foreground">@{profile.customId}</p>
         </div>
 
@@ -609,7 +640,11 @@ export default function User({ params }: Route.ComponentProps) {
               )}
               {profile.website && (
                 <a
-                  href={profile.website.startsWith("http") ? profile.website : `https://${profile.website}`}
+                  href={
+                    profile.website.startsWith("http")
+                      ? profile.website
+                      : `https://${profile.website}`
+                  }
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-1 hover:underline"
@@ -642,6 +677,33 @@ export default function User({ params }: Route.ComponentProps) {
                 <span className="text-muted-foreground">フォロワー</span>
               </Link>
             </div>
+
+            {/* Mutual followers */}
+            {!profile.isMe && mutuals.length > 0 && (
+              <Link
+                to={`/users/${profile.customId}/connections?tab=mutual`}
+                className="flex items-center gap-2 mt-3 group"
+              >
+                <AvatarGroup className="-space-x-2 *:data-[slot=avatar]:ring-background *:data-[slot=avatar]:ring-[1.5px]">
+                  {mutuals.slice(0, 3).map((u) => (
+                    <Avatar key={u.customId} className="size-5!">
+                      <AvatarImage src={u.avatarUrl} alt={u.name} />
+                      <AvatarFallback className="text-[8px]">
+                        {u.name.slice(0, 1)}
+                      </AvatarFallback>
+                    </Avatar>
+                  ))}
+                </AvatarGroup>
+                <p className="text-xs text-muted-foreground group-hover:underline">
+                  {mutuals.length <= 2
+                    ? `${mutuals.map((u) => u.name).join("、")}がフォロー中`
+                    : `${mutuals
+                        .slice(0, 2)
+                        .map((u) => u.name)
+                        .join("、")}、他${mutuals.length - 2}人がフォロー中`}
+                </p>
+              </Link>
+            )}
           </>
         )}
       </div>

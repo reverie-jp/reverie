@@ -112,6 +112,69 @@ const followerUsers: UserItem[] = [
   },
 ];
 
+const mutualUsers: Record<string, UserItem[]> = {
+  tanaka: [
+    {
+      name: "佐藤花子",
+      customId: "hanako_s",
+      bio: "カフェ巡りと読書が好き。デザイナーやってます。",
+      isFollowing: true,
+      followsYou: true,
+      isMe: false,
+    },
+    {
+      name: "山田美咲",
+      customId: "misaki_y",
+      bio: "フロントエンドエンジニア。猫が好き。",
+      isFollowing: true,
+      followsYou: false,
+      isMe: false,
+    },
+    {
+      name: "渡辺大輔",
+      customId: "daisuke_w",
+      bio: "バックエンドエンジニア。Go / Rust。",
+      isFollowing: true,
+      followsYou: true,
+      isMe: false,
+    },
+    {
+      name: "小林あおい",
+      customId: "aoi_kb",
+      bio: "PM やってます。スクラム好き。",
+      isFollowing: true,
+      followsYou: false,
+      isMe: false,
+    },
+    {
+      name: "木村拓也",
+      customId: "takuya_k",
+      bio: "インフラエンジニア。Kubernetes。",
+      isFollowing: true,
+      followsYou: true,
+      isMe: false,
+    },
+  ],
+  hanako_s: [
+    {
+      name: "田中太郎",
+      customId: "tanaka",
+      bio: "エンジニア兼ゲーマー。TypeScriptの型パズルが趣味。",
+      isFollowing: true,
+      followsYou: true,
+      isMe: false,
+    },
+    {
+      name: "山田美咲",
+      customId: "misaki_y",
+      bio: "フロントエンドエンジニア。猫が好き。",
+      isFollowing: true,
+      followsYou: false,
+      isMe: false,
+    },
+  ],
+};
+
 const userNames: Record<string, string> = {
   me: "自分",
   tanaka: "田中太郎",
@@ -184,8 +247,15 @@ function UserListItem({ user }: { user: UserItem }) {
 
 export default function UserConnections({ params }: Route.ComponentProps) {
   const [searchParams] = useSearchParams();
-  const defaultTab = searchParams.get("tab") === "followers" ? "followers" : "following";
+  const tab = searchParams.get("tab");
+  const defaultTab =
+    tab === "followers"
+      ? "followers"
+      : tab === "mutual"
+        ? "mutual"
+        : "following";
   const displayName = userNames[params.id] ?? params.id;
+  const mutuals = mutualUsers[params.id] ?? [];
 
   return (
     <div className="w-full min-h-full flex flex-col">
@@ -206,10 +276,23 @@ export default function UserConnections({ params }: Route.ComponentProps) {
       <Tabs defaultValue={defaultTab} className="gap-0 flex-1">
         <div className="sticky top-14 left-0 w-full border-b bg-background/60 backdrop-blur-lg z-10">
           <TabsList variant="line" className="w-full h-12">
+            <TabsTrigger value="mutual">共通のフォロー</TabsTrigger>
             <TabsTrigger value="following">フォロー中</TabsTrigger>
             <TabsTrigger value="followers">フォロワー</TabsTrigger>
           </TabsList>
         </div>
+
+        <TabsContent value="mutual">
+          {mutuals.length === 0 ? (
+            <div className="py-12 text-center text-muted-foreground text-sm">
+              共通のフォローはいません
+            </div>
+          ) : (
+            mutuals.map((user) => (
+              <UserListItem key={user.customId} user={user} />
+            ))
+          )}
+        </TabsContent>
 
         <TabsContent value="following">
           {followingUsers.length === 0 ? (
