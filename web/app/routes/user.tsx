@@ -9,10 +9,7 @@ import {
   AvatarGroupCount,
 } from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
-import {
-  ConfirmActionDialog,
-  type ConfirmActionType,
-} from "~/components/confirm-action-dialog";
+import { FollowButton } from "~/components/follow-button";
 import { BottomNav } from "~/components/bottom-nav";
 import { ComposeFab } from "~/components/compose-fab";
 import { PostCard, type Post } from "~/components/post-card";
@@ -24,29 +21,15 @@ import { GroupAvatar, type Call } from "~/components/call-list";
 import { JoinCallDialog } from "~/components/join-call-dialog";
 import {
   ArrowLeft,
-  Bell,
   CalendarDays,
-  ChevronDown,
-  ClipboardCopy,
-  Flag,
   Link2,
   MapPin,
-  MessageCircle,
   Phone,
-  Repeat2,
   ShieldBan,
   Video,
-  VolumeOff,
   Crown,
   Image as ImageIcon,
 } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "~/components/ui/dropdown-menu";
 import type { Route } from "./+types/user";
 
 interface UserProfile {
@@ -422,13 +405,7 @@ export default function User({ params }: Route.ComponentProps) {
     name: params.id,
   };
   const navigate = useNavigate();
-  const [isFollowing, setIsFollowing] = useState(profile.isFollowing);
-  const [isMuted, setIsMuted] = useState(false);
-  const [isRepostMuted, setIsRepostMuted] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
-  const [confirmAction, setConfirmAction] = useState<ConfirmActionType | null>(
-    null,
-  );
   const [showBlockedProfile, setShowBlockedProfile] = useState(false);
   const [composeMode, setComposeMode] = useState<ComposeMode | null>(null);
   const [selectedCall, setSelectedCall] = useState<ProfileCall | null>(null);
@@ -485,116 +462,14 @@ export default function User({ params }: Route.ComponentProps) {
             >
               プロフィールを編集
             </Button>
-          ) : profile.blockedByThem ? null : isBlocked ? (
-            <Button
-              variant="destructive"
-              className="rounded-full h-9 px-4"
-              onClick={() => setIsBlocked(false)}
-            >
-              ブロックを解除
-            </Button>
-          ) : (
-            <div className="flex items-center">
-              <Button
-                variant={isFollowing ? "outline" : "default"}
-                className="rounded-r-none rounded-l-full h-9 px-4"
-                onClick={() => {
-                  if (isFollowing) {
-                    setConfirmAction("unfollow");
-                  } else {
-                    setIsFollowing(true);
-                  }
-                }}
-              >
-                {isFollowing ? "フォロー中" : "フォローする"}
-              </Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  render={
-                    <Button
-                      variant={isFollowing ? "outline" : "default"}
-                      className="rounded-l-none rounded-r-full border-l-0 px-2 h-9"
-                    />
-                  }
-                >
-                  <ChevronDown className="size-3.5" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="min-w-48">
-                  <DropdownMenuItem
-                    onClick={() =>
-                      navigator.clipboard.writeText(`@${profile.customId}`)
-                    }
-                  >
-                    <ClipboardCopy className="size-4" />
-                    ユーザーIDをコピー
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() =>
-                      navigator.clipboard.writeText(
-                        `${window.location.origin}/users/${profile.customId}`,
-                      )
-                    }
-                  >
-                    <Link2 className="size-4" />
-                    プロフィールURLをコピー
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <MessageCircle className="size-4" />
-                    メッセージを送信
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Bell className="size-4" />
-                    投稿を通知
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={() => {
-                      if (isMuted) {
-                        setIsMuted(false);
-                      } else {
-                        setConfirmAction("mute");
-                      }
-                    }}
-                  >
-                    <VolumeOff className="size-4" />
-                    {isMuted ? "ミュートを解除" : "ミュート"}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => {
-                      if (isRepostMuted) {
-                        setIsRepostMuted(false);
-                      } else {
-                        setConfirmAction("repost-mute");
-                      }
-                    }}
-                  >
-                    <Repeat2 className="size-4" />
-                    {isRepostMuted
-                      ? "再投稿のミュートを解除"
-                      : "再投稿をミュート"}
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    className="text-destructive"
-                    onClick={() => {
-                      if (isBlocked) {
-                        setIsBlocked(false);
-                      } else {
-                        setConfirmAction("block");
-                      }
-                    }}
-                  >
-                    <ShieldBan className="size-4" />
-                    {isBlocked ? "ブロックを解除" : "ブロック"}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="text-destructive">
-                    <Flag className="size-4" />
-                    通報する
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+          ) : profile.blockedByThem ? null : (
+            <FollowButton
+              customId={profile.customId}
+              initialFollowing={profile.isFollowing}
+              followsYou={profile.followsYou}
+              size="md"
+              onBlockChange={setIsBlocked}
+            />
           )}
         </div>
 
@@ -843,22 +718,6 @@ export default function User({ params }: Route.ComponentProps) {
         onClose={() => setSelectedCall(null)}
         ended={selectedCall?.status === "ended"}
       />
-      <ConfirmActionDialog
-        action={confirmAction}
-        customId={profile.customId}
-        onConfirm={() => {
-          if (confirmAction === "unfollow") setIsFollowing(false);
-          if (confirmAction === "mute") setIsMuted(true);
-          if (confirmAction === "repost-mute") setIsRepostMuted(true);
-          if (confirmAction === "block") {
-            setIsBlocked(true);
-            setIsFollowing(false);
-          }
-          setConfirmAction(null);
-        }}
-        onCancel={() => setConfirmAction(null)}
-      />
-
       {/* Floating call badge for other users */}
       {otherUserLiveCall && (
         <FloatingCallBadge

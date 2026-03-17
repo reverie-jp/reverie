@@ -13,5 +13,6 @@ export default [
   route("users/:id", "routes/user.tsx"),
   route("users/:id/connections", "routes/user-connections.tsx"),
   route("settings/profile", "routes/profile-edit.tsx"),
+  route("footprints", "routes/footprints.tsx"),
   route("calls", "routes/calls.tsx"),
 ] satisfies RouteConfig;
