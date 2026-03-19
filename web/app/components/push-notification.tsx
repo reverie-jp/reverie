@@ -6,7 +6,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import {
   Heart,
   MessageCircle,
@@ -178,6 +178,8 @@ export function PushNotificationProvider({
 }: {
   children: React.ReactNode;
 }) {
+  const location = useLocation();
+  const isLoggedOut = location.pathname === "/login";
   const [notifications, setNotifications] = useState<ActiveNotification[]>([]);
   const idCounter = useRef(0);
   const demoIndex = useRef(0);
@@ -210,9 +212,10 @@ export function PushNotificationProvider({
     [dismiss],
   );
 
-  // Global demo: random notification every 10 seconds
+  // Global demo: random notification every 10 seconds (only when logged in)
   useEffect(() => {
-    // Show first one after 3 seconds
+    if (isLoggedOut) return;
+
     const initial = setTimeout(() => {
       const idx = Math.floor(Math.random() * demoNotifications.length);
       push(demoNotifications[idx]);
@@ -232,7 +235,7 @@ export function PushNotificationProvider({
       clearTimeout(initial);
       clearInterval(interval);
     };
-  }, [push]);
+  }, [push, isLoggedOut]);
 
   return (
     <PushNotificationContext.Provider value={{ push }}>

@@ -25,6 +25,7 @@ import {
   Link2,
   MapPin,
   Phone,
+  Settings,
   ShieldBan,
   Video,
   Crown,
@@ -47,6 +48,7 @@ interface UserProfile {
   followsYou?: boolean;
   isMe: boolean;
   blockedByThem?: boolean;
+  onlineStatus?: "online" | "idle" | "offline";
 }
 
 interface MutualFollower {
@@ -67,6 +69,7 @@ const users: Record<string, UserProfile> = {
     followerCount: 256,
     isFollowing: false,
     isMe: true,
+    onlineStatus: "online",
   },
   tanaka: {
     name: "田中太郎",
@@ -79,6 +82,7 @@ const users: Record<string, UserProfile> = {
     isFollowing: true,
     followsYou: true,
     isMe: false,
+    onlineStatus: "online",
   },
   hanako_s: {
     name: "佐藤花子",
@@ -92,6 +96,7 @@ const users: Record<string, UserProfile> = {
     isFollowing: true,
     followsYou: true,
     isMe: false,
+    onlineStatus: "idle",
   },
   ichiro_dev: {
     name: "鈴木一郎",
@@ -103,6 +108,7 @@ const users: Record<string, UserProfile> = {
     isFollowing: false,
     isMe: false,
     blockedByThem: true,
+    onlineStatus: "offline",
   },
 };
 
@@ -441,9 +447,17 @@ export default function User({ params }: Route.ComponentProps) {
           <Button variant="ghost" size="icon" onClick={() => history.back()}>
             <ArrowLeft className="size-5" />
           </Button>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <h1 className="text-base font-bold truncate">{profile.name}</h1>
           </div>
+          {profile.isMe && (
+            <Link
+              to="/settings"
+              className="inline-flex items-center justify-center size-9 rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+            >
+              <Settings className="size-5" />
+            </Link>
+          )}
         </div>
       </div>
 
@@ -474,7 +488,7 @@ export default function User({ params }: Route.ComponentProps) {
         </div>
 
         {/* Avatar */}
-        <div className="-mt-12">
+        <div className="-mt-12 relative w-fit">
           <Avatar className="size-20 ring-4 ring-background">
             {!profile.blockedByThem && (
               <AvatarImage src={profile.avatarUrl} alt={profile.name} />
@@ -483,6 +497,15 @@ export default function User({ params }: Route.ComponentProps) {
               {profile.name.slice(0, 2)}
             </AvatarFallback>
           </Avatar>
+          {profile.onlineStatus && profile.onlineStatus !== "offline" && (
+            <span
+              className={`absolute bottom-0.5 right-0.5 size-4 rounded-full ring-[3px] ring-background ${
+                profile.onlineStatus === "online"
+                  ? "bg-green-500"
+                  : "bg-yellow-500"
+              }`}
+            />
+          )}
         </div>
 
         {/* Name & ID */}

@@ -16,4 +16,6 @@ export default [
   route("footprints", "routes/footprints.tsx"),
   route("calls", "routes/calls.tsx"),
   route("trends/:keyword", "routes/trend.tsx"),
+  route("settings", "routes/settings.tsx"),
+  route("login", "routes/login.tsx"),
 ] satisfies RouteConfig;
