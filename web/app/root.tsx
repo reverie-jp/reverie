@@ -14,6 +14,7 @@ import { PrivateCallProvider } from "~/components/private-call-context";
 import { PrivateCallBar } from "~/components/private-call-bar";
 import { PrivateCallScreen } from "~/components/private-call-screen";
 import { GroupCallBar } from "~/components/group-call-bar";
+import { PushNotificationProvider, CallNotificationBridge } from "~/components/push-notification";
 import "./app.css";
 
 export const links: Route.LinksFunction = () => [
@@ -51,17 +52,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <CallProvider>
-      <PrivateCallProvider>
-        <GroupCallBar />
-        <PrivateCallBar />
-        <div className="flex-1 overflow-x-hidden overflow-y-auto">
-          <Outlet />
-        </div>
-        <CallScreen />
-        <PrivateCallScreen />
-      </PrivateCallProvider>
-    </CallProvider>
+    <PushNotificationProvider>
+      <CallProvider>
+        <CallNotificationBridge />
+        <PrivateCallProvider>
+          <GroupCallBar />
+          <PrivateCallBar />
+          <div className="flex-1 overflow-x-hidden overflow-y-auto">
+            <Outlet />
+          </div>
+          <CallScreen />
+          <PrivateCallScreen />
+        </PrivateCallProvider>
+      </CallProvider>
+    </PushNotificationProvider>
   );
 }
 

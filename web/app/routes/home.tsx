@@ -257,6 +257,7 @@ export default function Home() {
   const [myPosts, setMyPosts] = useState<Post[]>([]);
   const [composeMode, setComposeMode] = useState<ComposeMode | null>(null);
 
+
   const handlePost = (content: string) => {
     const newPost: Post = {
       id: `my-${Date.now()}`,
