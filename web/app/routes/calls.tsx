@@ -193,7 +193,7 @@ const publicCalls: Call[] = [
   },
 ];
 
-function CallListItem({
+export function CallListItem({
   call,
   onTap,
 }: {

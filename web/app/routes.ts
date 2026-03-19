@@ -15,4 +15,5 @@ export default [
   route("settings/profile", "routes/profile-edit.tsx"),
   route("footprints", "routes/footprints.tsx"),
   route("calls", "routes/calls.tsx"),
+  route("trends/:keyword", "routes/trend.tsx"),
 ] satisfies RouteConfig;
