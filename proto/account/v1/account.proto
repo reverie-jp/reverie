@@ -1,0 +1,141 @@
+syntax = "proto3";
+
+package account.v1;
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+service AccountService {
+  // Get the authenticated user's account.
+  rpc GetAccount(GetAccountRequest) returns (GetAccountResponse) {
+    option (google.api.http) = {
+      get: "/v1/account"
+    };
+  }
+
+  // Delete account permanently.
+  rpc DeleteAccount(DeleteAccountRequest) returns (DeleteAccountResponse) {
+    option (google.api.http) = {
+      delete: "/v1/account"
+    };
+  }
+
+  // Social login (Google).
+  rpc SocialLogin(SocialLoginRequest) returns (SocialLoginResponse) {
+    option (google.api.http) = {
+      post: "/v1/account:socialLogin"
+      body: "*"
+    };
+  }
+
+  // Refresh access token.
+  rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse) {
+    option (google.api.http) = {
+      post: "/v1/account:refreshToken"
+      body: "*"
+    };
+  }
+
+  // Log out and invalidate session.
+  rpc Logout(LogoutRequest) returns (LogoutResponse) {
+    option (google.api.http) = {
+      post: "/v1/account:logout"
+      body: "*"
+    };
+  }
+
+  // List logged-in devices.
+  rpc ListDevices(ListDevicesRequest) returns (ListDevicesResponse) {
+    option (google.api.http) = {
+      get: "/v1/account/devices"
+    };
+  }
+
+  // Revoke a device's login.
+  rpc RevokeDevice(RevokeDeviceRequest) returns (RevokeDeviceResponse) {
+    option (google.api.http) = {
+      post: "/v1/account/devices/{device_id}:revoke"
+    };
+  }
+}
+
+// Enums
+
+enum AuthProvider {
+  AUTH_PROVIDER_UNSPECIFIED = 0;
+  AUTH_PROVIDER_GOOGLE = 1;
+}
+
+// Resources
+
+message Account {
+  string id = 1;
+  string custom_id = 2;
+  string display_name = 3;
+  optional string avatar_url = 4;
+  AuthProvider provider = 5;
+  google.protobuf.Timestamp create_time = 6;
+}
+
+message Device {
+  string id = 1;
+  string device_name = 2;
+  google.protobuf.Timestamp last_active_time = 3;
+  bool is_current = 4;
+}
+
+message TokenPair {
+  string access_token = 1;
+  string refresh_token = 2;
+}
+
+// Request / Response
+
+message GetAccountRequest {}
+
+message GetAccountResponse {
+  Account account = 1;
+}
+
+message DeleteAccountRequest {
+  // User must confirm by typing their own custom_id.
+  string confirm_custom_id = 1;
+}
+
+message DeleteAccountResponse {}
+
+message SocialLoginRequest {
+  AuthProvider provider = 1;
+  // OAuth authorization code from the provider.
+  string code = 2;
+}
+
+message SocialLoginResponse {
+  TokenPair token_pair = 1;
+  // True if a new account was created.
+  bool is_new_account = 2;
+}
+
+message RefreshTokenRequest {
+  string refresh_token = 1;
+}
+
+message RefreshTokenResponse {
+  TokenPair token_pair = 1;
+}
+
+message LogoutRequest {}
+
+message LogoutResponse {}
+
+message ListDevicesRequest {}
+
+message ListDevicesResponse {
+  repeated Device devices = 1;
+}
+
+message RevokeDeviceRequest {
+  string device_id = 1;
+}
+
+message RevokeDeviceResponse {}

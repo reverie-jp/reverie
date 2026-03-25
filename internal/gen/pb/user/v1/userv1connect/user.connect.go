@@ -35,11 +35,26 @@ const (
 const (
 	// UserServiceGetUserProcedure is the fully-qualified name of the UserService's GetUser RPC.
 	UserServiceGetUserProcedure = "/user.v1.UserService/GetUser"
+	// UserServiceUpdateUserProcedure is the fully-qualified name of the UserService's UpdateUser RPC.
+	UserServiceUpdateUserProcedure = "/user.v1.UserService/UpdateUser"
+	// UserServiceGetUserSettingsProcedure is the fully-qualified name of the UserService's
+	// GetUserSettings RPC.
+	UserServiceGetUserSettingsProcedure = "/user.v1.UserService/GetUserSettings"
+	// UserServiceUpdateUserSettingsProcedure is the fully-qualified name of the UserService's
+	// UpdateUserSettings RPC.
+	UserServiceUpdateUserSettingsProcedure = "/user.v1.UserService/UpdateUserSettings"
 )
 
 // UserServiceClient is a client for the user.v1.UserService service.
 type UserServiceClient interface {
+	// Get user profile (includes online status).
 	GetUser(context.Context, *connect.Request[v1.GetUserRequest]) (*connect.Response[v1.GetUserResponse], error)
+	// Update profile (partial update via update_mask).
+	UpdateUser(context.Context, *connect.Request[v1.UpdateUserRequest]) (*connect.Response[v1.UpdateUserResponse], error)
+	// Get user settings.
+	GetUserSettings(context.Context, *connect.Request[v1.GetUserSettingsRequest]) (*connect.Response[v1.GetUserSettingsResponse], error)
+	// Update user settings.
+	UpdateUserSettings(context.Context, *connect.Request[v1.UpdateUserSettingsRequest]) (*connect.Response[v1.UpdateUserSettingsResponse], error)
 }
 
 // NewUserServiceClient constructs a client for the user.v1.UserService service. By default, it uses
@@ -59,12 +74,33 @@ func NewUserServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(userServiceMethods.ByName("GetUser")),
 			connect.WithClientOptions(opts...),
 		),
+		updateUser: connect.NewClient[v1.UpdateUserRequest, v1.UpdateUserResponse](
+			httpClient,
+			baseURL+UserServiceUpdateUserProcedure,
+			connect.WithSchema(userServiceMethods.ByName("UpdateUser")),
+			connect.WithClientOptions(opts...),
+		),
+		getUserSettings: connect.NewClient[v1.GetUserSettingsRequest, v1.GetUserSettingsResponse](
+			httpClient,
+			baseURL+UserServiceGetUserSettingsProcedure,
+			connect.WithSchema(userServiceMethods.ByName("GetUserSettings")),
+			connect.WithClientOptions(opts...),
+		),
+		updateUserSettings: connect.NewClient[v1.UpdateUserSettingsRequest, v1.UpdateUserSettingsResponse](
+			httpClient,
+			baseURL+UserServiceUpdateUserSettingsProcedure,
+			connect.WithSchema(userServiceMethods.ByName("UpdateUserSettings")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // userServiceClient implements UserServiceClient.
 type userServiceClient struct {
-	getUser *connect.Client[v1.GetUserRequest, v1.GetUserResponse]
+	getUser            *connect.Client[v1.GetUserRequest, v1.GetUserResponse]
+	updateUser         *connect.Client[v1.UpdateUserRequest, v1.UpdateUserResponse]
+	getUserSettings    *connect.Client[v1.GetUserSettingsRequest, v1.GetUserSettingsResponse]
+	updateUserSettings *connect.Client[v1.UpdateUserSettingsRequest, v1.UpdateUserSettingsResponse]
 }
 
 // GetUser calls user.v1.UserService.GetUser.
@@ -72,9 +108,31 @@ func (c *userServiceClient) GetUser(ctx context.Context, req *connect.Request[v1
 	return c.getUser.CallUnary(ctx, req)
 }
 
+// UpdateUser calls user.v1.UserService.UpdateUser.
+func (c *userServiceClient) UpdateUser(ctx context.Context, req *connect.Request[v1.UpdateUserRequest]) (*connect.Response[v1.UpdateUserResponse], error) {
+	return c.updateUser.CallUnary(ctx, req)
+}
+
+// GetUserSettings calls user.v1.UserService.GetUserSettings.
+func (c *userServiceClient) GetUserSettings(ctx context.Context, req *connect.Request[v1.GetUserSettingsRequest]) (*connect.Response[v1.GetUserSettingsResponse], error) {
+	return c.getUserSettings.CallUnary(ctx, req)
+}
+
+// UpdateUserSettings calls user.v1.UserService.UpdateUserSettings.
+func (c *userServiceClient) UpdateUserSettings(ctx context.Context, req *connect.Request[v1.UpdateUserSettingsRequest]) (*connect.Response[v1.UpdateUserSettingsResponse], error) {
+	return c.updateUserSettings.CallUnary(ctx, req)
+}
+
 // UserServiceHandler is an implementation of the user.v1.UserService service.
 type UserServiceHandler interface {
+	// Get user profile (includes online status).
 	GetUser(context.Context, *connect.Request[v1.GetUserRequest]) (*connect.Response[v1.GetUserResponse], error)
+	// Update profile (partial update via update_mask).
+	UpdateUser(context.Context, *connect.Request[v1.UpdateUserRequest]) (*connect.Response[v1.UpdateUserResponse], error)
+	// Get user settings.
+	GetUserSettings(context.Context, *connect.Request[v1.GetUserSettingsRequest]) (*connect.Response[v1.GetUserSettingsResponse], error)
+	// Update user settings.
+	UpdateUserSettings(context.Context, *connect.Request[v1.UpdateUserSettingsRequest]) (*connect.Response[v1.UpdateUserSettingsResponse], error)
 }
 
 // NewUserServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -90,10 +148,34 @@ func NewUserServiceHandler(svc UserServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(userServiceMethods.ByName("GetUser")),
 		connect.WithHandlerOptions(opts...),
 	)
+	userServiceUpdateUserHandler := connect.NewUnaryHandler(
+		UserServiceUpdateUserProcedure,
+		svc.UpdateUser,
+		connect.WithSchema(userServiceMethods.ByName("UpdateUser")),
+		connect.WithHandlerOptions(opts...),
+	)
+	userServiceGetUserSettingsHandler := connect.NewUnaryHandler(
+		UserServiceGetUserSettingsProcedure,
+		svc.GetUserSettings,
+		connect.WithSchema(userServiceMethods.ByName("GetUserSettings")),
+		connect.WithHandlerOptions(opts...),
+	)
+	userServiceUpdateUserSettingsHandler := connect.NewUnaryHandler(
+		UserServiceUpdateUserSettingsProcedure,
+		svc.UpdateUserSettings,
+		connect.WithSchema(userServiceMethods.ByName("UpdateUserSettings")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/user.v1.UserService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case UserServiceGetUserProcedure:
 			userServiceGetUserHandler.ServeHTTP(w, r)
+		case UserServiceUpdateUserProcedure:
+			userServiceUpdateUserHandler.ServeHTTP(w, r)
+		case UserServiceGetUserSettingsProcedure:
+			userServiceGetUserSettingsHandler.ServeHTTP(w, r)
+		case UserServiceUpdateUserSettingsProcedure:
+			userServiceUpdateUserSettingsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -105,4 +187,16 @@ type UnimplementedUserServiceHandler struct{}
 
 func (UnimplementedUserServiceHandler) GetUser(context.Context, *connect.Request[v1.GetUserRequest]) (*connect.Response[v1.GetUserResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("user.v1.UserService.GetUser is not implemented"))
+}
+
+func (UnimplementedUserServiceHandler) UpdateUser(context.Context, *connect.Request[v1.UpdateUserRequest]) (*connect.Response[v1.UpdateUserResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("user.v1.UserService.UpdateUser is not implemented"))
+}
+
+func (UnimplementedUserServiceHandler) GetUserSettings(context.Context, *connect.Request[v1.GetUserSettingsRequest]) (*connect.Response[v1.GetUserSettingsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("user.v1.UserService.GetUserSettings is not implemented"))
+}
+
+func (UnimplementedUserServiceHandler) UpdateUserSettings(context.Context, *connect.Request[v1.UpdateUserSettingsRequest]) (*connect.Response[v1.UpdateUserSettingsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("user.v1.UserService.UpdateUserSettings is not implemented"))
 }

@@ -3,23 +3,88 @@ syntax = "proto3";
 package user.v1;
 
 import "google/api/annotations.proto";
+import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
 
 service UserService {
+  // Get user profile (includes online status).
   rpc GetUser(GetUserRequest) returns (GetUserResponse) {
     option (google.api.http) = {
       get: "/v1/users/{user_id}"
     };
-  };
+  }
+
+  // Update profile (partial update via update_mask).
+  rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse) {
+    option (google.api.http) = {
+      patch: "/v1/users/me"
+      body: "*"
+    };
+  }
+
+  // Get user settings.
+  rpc GetUserSettings(GetUserSettingsRequest) returns (GetUserSettingsResponse) {
+    option (google.api.http) = {
+      get: "/v1/users/me/settings"
+    };
+  }
+
+  // Update user settings.
+  rpc UpdateUserSettings(UpdateUserSettingsRequest) returns (UpdateUserSettingsResponse) {
+    option (google.api.http) = {
+      patch: "/v1/users/me/settings"
+      body: "*"
+    };
+  }
 }
+
+// Enums
+
+enum OnlineStatus {
+  ONLINE_STATUS_UNSPECIFIED = 0;
+  ONLINE_STATUS_ONLINE = 1;
+  ONLINE_STATUS_IDLE = 2;
+  ONLINE_STATUS_OFFLINE = 3;
+}
+
+enum PostVisibility {
+  POST_VISIBILITY_UNSPECIFIED = 0;
+  POST_VISIBILITY_PUBLIC = 1;
+  POST_VISIBILITY_FOLLOWERS = 2;
+}
+
+// Resources
 
 message User {
   string id = 1;
   string custom_id = 2;
   string display_name = 3;
   optional string biography = 4;
-  google.protobuf.Timestamp create_time = 5;
+  optional string location = 5;
+  optional string website = 6;
+  optional string avatar_url = 7;
+  optional string banner_url = 8;
+  bool is_private = 9;
+  OnlineStatus online_status = 10;
+  int32 following_count = 11;
+  int32 follower_count = 12;
+  // Relationship to the requesting user.
+  bool is_following = 13;
+  bool is_followed_by = 14;
+  bool is_blocked_by = 15;
+  bool is_me = 16;
+  google.protobuf.Timestamp create_time = 17;
 }
+
+message UserSettings {
+  bool is_private = 1;
+  bool push_notifications = 2;
+  bool notification_sound = 3;
+  bool show_online_status = 4;
+  PostVisibility default_visibility = 5;
+}
+
+// Request / Response
 
 message GetUserRequest {
   string user_id = 1;
@@ -27,4 +92,28 @@ message GetUserRequest {
 
 message GetUserResponse {
   User user = 1;
+}
+
+message UpdateUserRequest {
+  User user = 1;
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+message UpdateUserResponse {
+  User user = 1;
+}
+
+message GetUserSettingsRequest {}
+
+message GetUserSettingsResponse {
+  UserSettings settings = 1;
+}
+
+message UpdateUserSettingsRequest {
+  UserSettings settings = 1;
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+message UpdateUserSettingsResponse {
+  UserSettings settings = 1;
 }

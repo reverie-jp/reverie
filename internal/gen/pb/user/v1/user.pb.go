@@ -10,6 +10,7 @@ import (
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
@@ -23,13 +24,127 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type OnlineStatus int32
+
+const (
+	OnlineStatus_ONLINE_STATUS_UNSPECIFIED OnlineStatus = 0
+	OnlineStatus_ONLINE_STATUS_ONLINE      OnlineStatus = 1
+	OnlineStatus_ONLINE_STATUS_IDLE        OnlineStatus = 2
+	OnlineStatus_ONLINE_STATUS_OFFLINE     OnlineStatus = 3
+)
+
+// Enum value maps for OnlineStatus.
+var (
+	OnlineStatus_name = map[int32]string{
+		0: "ONLINE_STATUS_UNSPECIFIED",
+		1: "ONLINE_STATUS_ONLINE",
+		2: "ONLINE_STATUS_IDLE",
+		3: "ONLINE_STATUS_OFFLINE",
+	}
+	OnlineStatus_value = map[string]int32{
+		"ONLINE_STATUS_UNSPECIFIED": 0,
+		"ONLINE_STATUS_ONLINE":      1,
+		"ONLINE_STATUS_IDLE":        2,
+		"ONLINE_STATUS_OFFLINE":     3,
+	}
+)
+
+func (x OnlineStatus) Enum() *OnlineStatus {
+	p := new(OnlineStatus)
+	*p = x
+	return p
+}
+
+func (x OnlineStatus) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (OnlineStatus) Descriptor() protoreflect.EnumDescriptor {
+	return file_user_v1_user_proto_enumTypes[0].Descriptor()
+}
+
+func (OnlineStatus) Type() protoreflect.EnumType {
+	return &file_user_v1_user_proto_enumTypes[0]
+}
+
+func (x OnlineStatus) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use OnlineStatus.Descriptor instead.
+func (OnlineStatus) EnumDescriptor() ([]byte, []int) {
+	return file_user_v1_user_proto_rawDescGZIP(), []int{0}
+}
+
+type PostVisibility int32
+
+const (
+	PostVisibility_POST_VISIBILITY_UNSPECIFIED PostVisibility = 0
+	PostVisibility_POST_VISIBILITY_PUBLIC      PostVisibility = 1
+	PostVisibility_POST_VISIBILITY_FOLLOWERS   PostVisibility = 2
+)
+
+// Enum value maps for PostVisibility.
+var (
+	PostVisibility_name = map[int32]string{
+		0: "POST_VISIBILITY_UNSPECIFIED",
+		1: "POST_VISIBILITY_PUBLIC",
+		2: "POST_VISIBILITY_FOLLOWERS",
+	}
+	PostVisibility_value = map[string]int32{
+		"POST_VISIBILITY_UNSPECIFIED": 0,
+		"POST_VISIBILITY_PUBLIC":      1,
+		"POST_VISIBILITY_FOLLOWERS":   2,
+	}
+)
+
+func (x PostVisibility) Enum() *PostVisibility {
+	p := new(PostVisibility)
+	*p = x
+	return p
+}
+
+func (x PostVisibility) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (PostVisibility) Descriptor() protoreflect.EnumDescriptor {
+	return file_user_v1_user_proto_enumTypes[1].Descriptor()
+}
+
+func (PostVisibility) Type() protoreflect.EnumType {
+	return &file_user_v1_user_proto_enumTypes[1]
+}
+
+func (x PostVisibility) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use PostVisibility.Descriptor instead.
+func (PostVisibility) EnumDescriptor() ([]byte, []int) {
+	return file_user_v1_user_proto_rawDescGZIP(), []int{1}
+}
+
 type User struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	CustomId      string                 `protobuf:"bytes,2,opt,name=custom_id,json=customId,proto3" json:"custom_id,omitempty"`
-	DisplayName   string                 `protobuf:"bytes,3,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
-	Biography     *string                `protobuf:"bytes,4,opt,name=biography,proto3,oneof" json:"biography,omitempty"`
-	CreateTime    *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Id             string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	CustomId       string                 `protobuf:"bytes,2,opt,name=custom_id,json=customId,proto3" json:"custom_id,omitempty"`
+	DisplayName    string                 `protobuf:"bytes,3,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
+	Biography      *string                `protobuf:"bytes,4,opt,name=biography,proto3,oneof" json:"biography,omitempty"`
+	Location       *string                `protobuf:"bytes,5,opt,name=location,proto3,oneof" json:"location,omitempty"`
+	Website        *string                `protobuf:"bytes,6,opt,name=website,proto3,oneof" json:"website,omitempty"`
+	AvatarUrl      *string                `protobuf:"bytes,7,opt,name=avatar_url,json=avatarUrl,proto3,oneof" json:"avatar_url,omitempty"`
+	BannerUrl      *string                `protobuf:"bytes,8,opt,name=banner_url,json=bannerUrl,proto3,oneof" json:"banner_url,omitempty"`
+	IsPrivate      bool                   `protobuf:"varint,9,opt,name=is_private,json=isPrivate,proto3" json:"is_private,omitempty"`
+	OnlineStatus   OnlineStatus           `protobuf:"varint,10,opt,name=online_status,json=onlineStatus,proto3,enum=user.v1.OnlineStatus" json:"online_status,omitempty"`
+	FollowingCount int32                  `protobuf:"varint,11,opt,name=following_count,json=followingCount,proto3" json:"following_count,omitempty"`
+	FollowerCount  int32                  `protobuf:"varint,12,opt,name=follower_count,json=followerCount,proto3" json:"follower_count,omitempty"`
+	// Relationship to the requesting user.
+	IsFollowing   bool                   `protobuf:"varint,13,opt,name=is_following,json=isFollowing,proto3" json:"is_following,omitempty"`
+	IsFollowedBy  bool                   `protobuf:"varint,14,opt,name=is_followed_by,json=isFollowedBy,proto3" json:"is_followed_by,omitempty"`
+	IsBlockedBy   bool                   `protobuf:"varint,15,opt,name=is_blocked_by,json=isBlockedBy,proto3" json:"is_blocked_by,omitempty"`
+	IsMe          bool                   `protobuf:"varint,16,opt,name=is_me,json=isMe,proto3" json:"is_me,omitempty"`
+	CreateTime    *timestamppb.Timestamp `protobuf:"bytes,17,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -92,11 +207,171 @@ func (x *User) GetBiography() string {
 	return ""
 }
 
+func (x *User) GetLocation() string {
+	if x != nil && x.Location != nil {
+		return *x.Location
+	}
+	return ""
+}
+
+func (x *User) GetWebsite() string {
+	if x != nil && x.Website != nil {
+		return *x.Website
+	}
+	return ""
+}
+
+func (x *User) GetAvatarUrl() string {
+	if x != nil && x.AvatarUrl != nil {
+		return *x.AvatarUrl
+	}
+	return ""
+}
+
+func (x *User) GetBannerUrl() string {
+	if x != nil && x.BannerUrl != nil {
+		return *x.BannerUrl
+	}
+	return ""
+}
+
+func (x *User) GetIsPrivate() bool {
+	if x != nil {
+		return x.IsPrivate
+	}
+	return false
+}
+
+func (x *User) GetOnlineStatus() OnlineStatus {
+	if x != nil {
+		return x.OnlineStatus
+	}
+	return OnlineStatus_ONLINE_STATUS_UNSPECIFIED
+}
+
+func (x *User) GetFollowingCount() int32 {
+	if x != nil {
+		return x.FollowingCount
+	}
+	return 0
+}
+
+func (x *User) GetFollowerCount() int32 {
+	if x != nil {
+		return x.FollowerCount
+	}
+	return 0
+}
+
+func (x *User) GetIsFollowing() bool {
+	if x != nil {
+		return x.IsFollowing
+	}
+	return false
+}
+
+func (x *User) GetIsFollowedBy() bool {
+	if x != nil {
+		return x.IsFollowedBy
+	}
+	return false
+}
+
+func (x *User) GetIsBlockedBy() bool {
+	if x != nil {
+		return x.IsBlockedBy
+	}
+	return false
+}
+
+func (x *User) GetIsMe() bool {
+	if x != nil {
+		return x.IsMe
+	}
+	return false
+}
+
 func (x *User) GetCreateTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.CreateTime
 	}
 	return nil
+}
+
+type UserSettings struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	IsPrivate         bool                   `protobuf:"varint,1,opt,name=is_private,json=isPrivate,proto3" json:"is_private,omitempty"`
+	PushNotifications bool                   `protobuf:"varint,2,opt,name=push_notifications,json=pushNotifications,proto3" json:"push_notifications,omitempty"`
+	NotificationSound bool                   `protobuf:"varint,3,opt,name=notification_sound,json=notificationSound,proto3" json:"notification_sound,omitempty"`
+	ShowOnlineStatus  bool                   `protobuf:"varint,4,opt,name=show_online_status,json=showOnlineStatus,proto3" json:"show_online_status,omitempty"`
+	DefaultVisibility PostVisibility         `protobuf:"varint,5,opt,name=default_visibility,json=defaultVisibility,proto3,enum=user.v1.PostVisibility" json:"default_visibility,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *UserSettings) Reset() {
+	*x = UserSettings{}
+	mi := &file_user_v1_user_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UserSettings) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UserSettings) ProtoMessage() {}
+
+func (x *UserSettings) ProtoReflect() protoreflect.Message {
+	mi := &file_user_v1_user_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UserSettings.ProtoReflect.Descriptor instead.
+func (*UserSettings) Descriptor() ([]byte, []int) {
+	return file_user_v1_user_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *UserSettings) GetIsPrivate() bool {
+	if x != nil {
+		return x.IsPrivate
+	}
+	return false
+}
+
+func (x *UserSettings) GetPushNotifications() bool {
+	if x != nil {
+		return x.PushNotifications
+	}
+	return false
+}
+
+func (x *UserSettings) GetNotificationSound() bool {
+	if x != nil {
+		return x.NotificationSound
+	}
+	return false
+}
+
+func (x *UserSettings) GetShowOnlineStatus() bool {
+	if x != nil {
+		return x.ShowOnlineStatus
+	}
+	return false
+}
+
+func (x *UserSettings) GetDefaultVisibility() PostVisibility {
+	if x != nil {
+		return x.DefaultVisibility
+	}
+	return PostVisibility_POST_VISIBILITY_UNSPECIFIED
 }
 
 type GetUserRequest struct {
@@ -108,7 +383,7 @@ type GetUserRequest struct {
 
 func (x *GetUserRequest) Reset() {
 	*x = GetUserRequest{}
-	mi := &file_user_v1_user_proto_msgTypes[1]
+	mi := &file_user_v1_user_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -120,7 +395,7 @@ func (x *GetUserRequest) String() string {
 func (*GetUserRequest) ProtoMessage() {}
 
 func (x *GetUserRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_user_v1_user_proto_msgTypes[1]
+	mi := &file_user_v1_user_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -133,7 +408,7 @@ func (x *GetUserRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetUserRequest.ProtoReflect.Descriptor instead.
 func (*GetUserRequest) Descriptor() ([]byte, []int) {
-	return file_user_v1_user_proto_rawDescGZIP(), []int{1}
+	return file_user_v1_user_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *GetUserRequest) GetUserId() string {
@@ -152,7 +427,7 @@ type GetUserResponse struct {
 
 func (x *GetUserResponse) Reset() {
 	*x = GetUserResponse{}
-	mi := &file_user_v1_user_proto_msgTypes[2]
+	mi := &file_user_v1_user_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -164,7 +439,7 @@ func (x *GetUserResponse) String() string {
 func (*GetUserResponse) ProtoMessage() {}
 
 func (x *GetUserResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_user_v1_user_proto_msgTypes[2]
+	mi := &file_user_v1_user_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -177,7 +452,7 @@ func (x *GetUserResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetUserResponse.ProtoReflect.Descriptor instead.
 func (*GetUserResponse) Descriptor() ([]byte, []int) {
-	return file_user_v1_user_proto_rawDescGZIP(), []int{2}
+	return file_user_v1_user_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *GetUserResponse) GetUser() *User {
@@ -187,26 +462,354 @@ func (x *GetUserResponse) GetUser() *User {
 	return nil
 }
 
+type UpdateUserRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	User          *User                  `protobuf:"bytes,1,opt,name=user,proto3" json:"user,omitempty"`
+	UpdateMask    *fieldmaskpb.FieldMask `protobuf:"bytes,2,opt,name=update_mask,json=updateMask,proto3" json:"update_mask,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateUserRequest) Reset() {
+	*x = UpdateUserRequest{}
+	mi := &file_user_v1_user_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateUserRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateUserRequest) ProtoMessage() {}
+
+func (x *UpdateUserRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_user_v1_user_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateUserRequest.ProtoReflect.Descriptor instead.
+func (*UpdateUserRequest) Descriptor() ([]byte, []int) {
+	return file_user_v1_user_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *UpdateUserRequest) GetUser() *User {
+	if x != nil {
+		return x.User
+	}
+	return nil
+}
+
+func (x *UpdateUserRequest) GetUpdateMask() *fieldmaskpb.FieldMask {
+	if x != nil {
+		return x.UpdateMask
+	}
+	return nil
+}
+
+type UpdateUserResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	User          *User                  `protobuf:"bytes,1,opt,name=user,proto3" json:"user,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateUserResponse) Reset() {
+	*x = UpdateUserResponse{}
+	mi := &file_user_v1_user_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateUserResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateUserResponse) ProtoMessage() {}
+
+func (x *UpdateUserResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_user_v1_user_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateUserResponse.ProtoReflect.Descriptor instead.
+func (*UpdateUserResponse) Descriptor() ([]byte, []int) {
+	return file_user_v1_user_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *UpdateUserResponse) GetUser() *User {
+	if x != nil {
+		return x.User
+	}
+	return nil
+}
+
+type GetUserSettingsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetUserSettingsRequest) Reset() {
+	*x = GetUserSettingsRequest{}
+	mi := &file_user_v1_user_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetUserSettingsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetUserSettingsRequest) ProtoMessage() {}
+
+func (x *GetUserSettingsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_user_v1_user_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetUserSettingsRequest.ProtoReflect.Descriptor instead.
+func (*GetUserSettingsRequest) Descriptor() ([]byte, []int) {
+	return file_user_v1_user_proto_rawDescGZIP(), []int{6}
+}
+
+type GetUserSettingsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Settings      *UserSettings          `protobuf:"bytes,1,opt,name=settings,proto3" json:"settings,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetUserSettingsResponse) Reset() {
+	*x = GetUserSettingsResponse{}
+	mi := &file_user_v1_user_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetUserSettingsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetUserSettingsResponse) ProtoMessage() {}
+
+func (x *GetUserSettingsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_user_v1_user_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetUserSettingsResponse.ProtoReflect.Descriptor instead.
+func (*GetUserSettingsResponse) Descriptor() ([]byte, []int) {
+	return file_user_v1_user_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *GetUserSettingsResponse) GetSettings() *UserSettings {
+	if x != nil {
+		return x.Settings
+	}
+	return nil
+}
+
+type UpdateUserSettingsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Settings      *UserSettings          `protobuf:"bytes,1,opt,name=settings,proto3" json:"settings,omitempty"`
+	UpdateMask    *fieldmaskpb.FieldMask `protobuf:"bytes,2,opt,name=update_mask,json=updateMask,proto3" json:"update_mask,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateUserSettingsRequest) Reset() {
+	*x = UpdateUserSettingsRequest{}
+	mi := &file_user_v1_user_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateUserSettingsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateUserSettingsRequest) ProtoMessage() {}
+
+func (x *UpdateUserSettingsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_user_v1_user_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateUserSettingsRequest.ProtoReflect.Descriptor instead.
+func (*UpdateUserSettingsRequest) Descriptor() ([]byte, []int) {
+	return file_user_v1_user_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *UpdateUserSettingsRequest) GetSettings() *UserSettings {
+	if x != nil {
+		return x.Settings
+	}
+	return nil
+}
+
+func (x *UpdateUserSettingsRequest) GetUpdateMask() *fieldmaskpb.FieldMask {
+	if x != nil {
+		return x.UpdateMask
+	}
+	return nil
+}
+
+type UpdateUserSettingsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Settings      *UserSettings          `protobuf:"bytes,1,opt,name=settings,proto3" json:"settings,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateUserSettingsResponse) Reset() {
+	*x = UpdateUserSettingsResponse{}
+	mi := &file_user_v1_user_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateUserSettingsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateUserSettingsResponse) ProtoMessage() {}
+
+func (x *UpdateUserSettingsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_user_v1_user_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateUserSettingsResponse.ProtoReflect.Descriptor instead.
+func (*UpdateUserSettingsResponse) Descriptor() ([]byte, []int) {
+	return file_user_v1_user_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *UpdateUserSettingsResponse) GetSettings() *UserSettings {
+	if x != nil {
+		return x.Settings
+	}
+	return nil
+}
+
 var File_user_v1_user_proto protoreflect.FileDescriptor
 
 const file_user_v1_user_proto_rawDesc = "" +
 	"\n" +
-	"\x12user/v1/user.proto\x12\auser.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xc4\x01\n" +
+	"\x12user/v1/user.proto\x12\auser.v1\x1a\x1cgoogle/api/annotations.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xb0\x05\n" +
 	"\x04User\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +
 	"\tcustom_id\x18\x02 \x01(\tR\bcustomId\x12!\n" +
 	"\fdisplay_name\x18\x03 \x01(\tR\vdisplayName\x12!\n" +
-	"\tbiography\x18\x04 \x01(\tH\x00R\tbiography\x88\x01\x01\x12;\n" +
-	"\vcreate_time\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"\tbiography\x18\x04 \x01(\tH\x00R\tbiography\x88\x01\x01\x12\x1f\n" +
+	"\blocation\x18\x05 \x01(\tH\x01R\blocation\x88\x01\x01\x12\x1d\n" +
+	"\awebsite\x18\x06 \x01(\tH\x02R\awebsite\x88\x01\x01\x12\"\n" +
+	"\n" +
+	"avatar_url\x18\a \x01(\tH\x03R\tavatarUrl\x88\x01\x01\x12\"\n" +
+	"\n" +
+	"banner_url\x18\b \x01(\tH\x04R\tbannerUrl\x88\x01\x01\x12\x1d\n" +
+	"\n" +
+	"is_private\x18\t \x01(\bR\tisPrivate\x12:\n" +
+	"\ronline_status\x18\n" +
+	" \x01(\x0e2\x15.user.v1.OnlineStatusR\fonlineStatus\x12'\n" +
+	"\x0ffollowing_count\x18\v \x01(\x05R\x0efollowingCount\x12%\n" +
+	"\x0efollower_count\x18\f \x01(\x05R\rfollowerCount\x12!\n" +
+	"\fis_following\x18\r \x01(\bR\visFollowing\x12$\n" +
+	"\x0eis_followed_by\x18\x0e \x01(\bR\fisFollowedBy\x12\"\n" +
+	"\ris_blocked_by\x18\x0f \x01(\bR\visBlockedBy\x12\x13\n" +
+	"\x05is_me\x18\x10 \x01(\bR\x04isMe\x12;\n" +
+	"\vcreate_time\x18\x11 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"createTimeB\f\n" +
 	"\n" +
-	"_biography\")\n" +
+	"_biographyB\v\n" +
+	"\t_locationB\n" +
+	"\n" +
+	"\b_websiteB\r\n" +
+	"\v_avatar_urlB\r\n" +
+	"\v_banner_url\"\x81\x02\n" +
+	"\fUserSettings\x12\x1d\n" +
+	"\n" +
+	"is_private\x18\x01 \x01(\bR\tisPrivate\x12-\n" +
+	"\x12push_notifications\x18\x02 \x01(\bR\x11pushNotifications\x12-\n" +
+	"\x12notification_sound\x18\x03 \x01(\bR\x11notificationSound\x12,\n" +
+	"\x12show_online_status\x18\x04 \x01(\bR\x10showOnlineStatus\x12F\n" +
+	"\x12default_visibility\x18\x05 \x01(\x0e2\x17.user.v1.PostVisibilityR\x11defaultVisibility\")\n" +
 	"\x0eGetUserRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\"4\n" +
 	"\x0fGetUserResponse\x12!\n" +
-	"\x04user\x18\x01 \x01(\v2\r.user.v1.UserR\x04user2h\n" +
+	"\x04user\x18\x01 \x01(\v2\r.user.v1.UserR\x04user\"s\n" +
+	"\x11UpdateUserRequest\x12!\n" +
+	"\x04user\x18\x01 \x01(\v2\r.user.v1.UserR\x04user\x12;\n" +
+	"\vupdate_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\n" +
+	"updateMask\"7\n" +
+	"\x12UpdateUserResponse\x12!\n" +
+	"\x04user\x18\x01 \x01(\v2\r.user.v1.UserR\x04user\"\x18\n" +
+	"\x16GetUserSettingsRequest\"L\n" +
+	"\x17GetUserSettingsResponse\x121\n" +
+	"\bsettings\x18\x01 \x01(\v2\x15.user.v1.UserSettingsR\bsettings\"\x8b\x01\n" +
+	"\x19UpdateUserSettingsRequest\x121\n" +
+	"\bsettings\x18\x01 \x01(\v2\x15.user.v1.UserSettingsR\bsettings\x12;\n" +
+	"\vupdate_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\n" +
+	"updateMask\"O\n" +
+	"\x1aUpdateUserSettingsResponse\x121\n" +
+	"\bsettings\x18\x01 \x01(\v2\x15.user.v1.UserSettingsR\bsettings*z\n" +
+	"\fOnlineStatus\x12\x1d\n" +
+	"\x19ONLINE_STATUS_UNSPECIFIED\x10\x00\x12\x18\n" +
+	"\x14ONLINE_STATUS_ONLINE\x10\x01\x12\x16\n" +
+	"\x12ONLINE_STATUS_IDLE\x10\x02\x12\x19\n" +
+	"\x15ONLINE_STATUS_OFFLINE\x10\x03*l\n" +
+	"\x0ePostVisibility\x12\x1f\n" +
+	"\x1bPOST_VISIBILITY_UNSPECIFIED\x10\x00\x12\x1a\n" +
+	"\x16POST_VISIBILITY_PUBLIC\x10\x01\x12\x1d\n" +
+	"\x19POST_VISIBILITY_FOLLOWERS\x10\x022\xbe\x03\n" +
 	"\vUserService\x12Y\n" +
-	"\aGetUser\x12\x17.user.v1.GetUserRequest\x1a\x18.user.v1.GetUserResponse\"\x1b\x82\xd3\xe4\x93\x02\x15\x12\x13/v1/users/{user_id}B\x88\x01\n" +
+	"\aGetUser\x12\x17.user.v1.GetUserRequest\x1a\x18.user.v1.GetUserResponse\"\x1b\x82\xd3\xe4\x93\x02\x15\x12\x13/v1/users/{user_id}\x12^\n" +
+	"\n" +
+	"UpdateUser\x12\x1a.user.v1.UpdateUserRequest\x1a\x1b.user.v1.UpdateUserResponse\"\x17\x82\xd3\xe4\x93\x02\x11:\x01*2\f/v1/users/me\x12s\n" +
+	"\x0fGetUserSettings\x12\x1f.user.v1.GetUserSettingsRequest\x1a .user.v1.GetUserSettingsResponse\"\x1d\x82\xd3\xe4\x93\x02\x17\x12\x15/v1/users/me/settings\x12\x7f\n" +
+	"\x12UpdateUserSettings\x12\".user.v1.UpdateUserSettingsRequest\x1a#.user.v1.UpdateUserSettingsResponse\" \x82\xd3\xe4\x93\x02\x1a:\x01*2\x15/v1/users/me/settingsB\x88\x01\n" +
 	"\vcom.user.v1B\tUserProtoP\x01Z1reverie.jp/reverie/internal/gen/pb/user/v1;userv1\xa2\x02\x03UXX\xaa\x02\aUser.V1\xca\x02\aUser\\V1\xe2\x02\x13User\\V1\\GPBMetadata\xea\x02\bUser::V1b\x06proto3"
 
 var (
@@ -221,23 +824,49 @@ func file_user_v1_user_proto_rawDescGZIP() []byte {
 	return file_user_v1_user_proto_rawDescData
 }
 
-var file_user_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_user_v1_user_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_user_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_user_v1_user_proto_goTypes = []any{
-	(*User)(nil),                  // 0: user.v1.User
-	(*GetUserRequest)(nil),        // 1: user.v1.GetUserRequest
-	(*GetUserResponse)(nil),       // 2: user.v1.GetUserResponse
-	(*timestamppb.Timestamp)(nil), // 3: google.protobuf.Timestamp
+	(OnlineStatus)(0),                  // 0: user.v1.OnlineStatus
+	(PostVisibility)(0),                // 1: user.v1.PostVisibility
+	(*User)(nil),                       // 2: user.v1.User
+	(*UserSettings)(nil),               // 3: user.v1.UserSettings
+	(*GetUserRequest)(nil),             // 4: user.v1.GetUserRequest
+	(*GetUserResponse)(nil),            // 5: user.v1.GetUserResponse
+	(*UpdateUserRequest)(nil),          // 6: user.v1.UpdateUserRequest
+	(*UpdateUserResponse)(nil),         // 7: user.v1.UpdateUserResponse
+	(*GetUserSettingsRequest)(nil),     // 8: user.v1.GetUserSettingsRequest
+	(*GetUserSettingsResponse)(nil),    // 9: user.v1.GetUserSettingsResponse
+	(*UpdateUserSettingsRequest)(nil),  // 10: user.v1.UpdateUserSettingsRequest
+	(*UpdateUserSettingsResponse)(nil), // 11: user.v1.UpdateUserSettingsResponse
+	(*timestamppb.Timestamp)(nil),      // 12: google.protobuf.Timestamp
+	(*fieldmaskpb.FieldMask)(nil),      // 13: google.protobuf.FieldMask
 }
 var file_user_v1_user_proto_depIdxs = []int32{
-	3, // 0: user.v1.User.create_time:type_name -> google.protobuf.Timestamp
-	0, // 1: user.v1.GetUserResponse.user:type_name -> user.v1.User
-	1, // 2: user.v1.UserService.GetUser:input_type -> user.v1.GetUserRequest
-	2, // 3: user.v1.UserService.GetUser:output_type -> user.v1.GetUserResponse
-	3, // [3:4] is the sub-list for method output_type
-	2, // [2:3] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	0,  // 0: user.v1.User.online_status:type_name -> user.v1.OnlineStatus
+	12, // 1: user.v1.User.create_time:type_name -> google.protobuf.Timestamp
+	1,  // 2: user.v1.UserSettings.default_visibility:type_name -> user.v1.PostVisibility
+	2,  // 3: user.v1.GetUserResponse.user:type_name -> user.v1.User
+	2,  // 4: user.v1.UpdateUserRequest.user:type_name -> user.v1.User
+	13, // 5: user.v1.UpdateUserRequest.update_mask:type_name -> google.protobuf.FieldMask
+	2,  // 6: user.v1.UpdateUserResponse.user:type_name -> user.v1.User
+	3,  // 7: user.v1.GetUserSettingsResponse.settings:type_name -> user.v1.UserSettings
+	3,  // 8: user.v1.UpdateUserSettingsRequest.settings:type_name -> user.v1.UserSettings
+	13, // 9: user.v1.UpdateUserSettingsRequest.update_mask:type_name -> google.protobuf.FieldMask
+	3,  // 10: user.v1.UpdateUserSettingsResponse.settings:type_name -> user.v1.UserSettings
+	4,  // 11: user.v1.UserService.GetUser:input_type -> user.v1.GetUserRequest
+	6,  // 12: user.v1.UserService.UpdateUser:input_type -> user.v1.UpdateUserRequest
+	8,  // 13: user.v1.UserService.GetUserSettings:input_type -> user.v1.GetUserSettingsRequest
+	10, // 14: user.v1.UserService.UpdateUserSettings:input_type -> user.v1.UpdateUserSettingsRequest
+	5,  // 15: user.v1.UserService.GetUser:output_type -> user.v1.GetUserResponse
+	7,  // 16: user.v1.UserService.UpdateUser:output_type -> user.v1.UpdateUserResponse
+	9,  // 17: user.v1.UserService.GetUserSettings:output_type -> user.v1.GetUserSettingsResponse
+	11, // 18: user.v1.UserService.UpdateUserSettings:output_type -> user.v1.UpdateUserSettingsResponse
+	15, // [15:19] is the sub-list for method output_type
+	11, // [11:15] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_user_v1_user_proto_init() }
@@ -251,13 +880,14 @@ func file_user_v1_user_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_user_v1_user_proto_rawDesc), len(file_user_v1_user_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   3,
+			NumEnums:      2,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_user_v1_user_proto_goTypes,
 		DependencyIndexes: file_user_v1_user_proto_depIdxs,
+		EnumInfos:         file_user_v1_user_proto_enumTypes,
 		MessageInfos:      file_user_v1_user_proto_msgTypes,
 	}.Build()
 	File_user_v1_user_proto = out.File
