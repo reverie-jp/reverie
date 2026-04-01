@@ -3,15 +3,17 @@ package usecase
 import (
 	"context"
 
-	"reverie.jp/reverie/internal/modules/account/repository"
+	userrepo "reverie.jp/reverie/internal/modules/user/repository"
+	"reverie.jp/reverie/internal/platform/ulid"
+	"reverie.jp/reverie/internal/platform/xerrors"
 )
 
 type GetAccount struct {
-	repo repository.Repository
+	userRepo userrepo.Repository
 }
 
-func NewGetAccount(repo repository.Repository) *GetAccount {
-	return &GetAccount{repo: repo}
+func NewGetAccount(userRepo userrepo.Repository) *GetAccount {
+	return &GetAccount{userRepo: userRepo}
 }
 
 func (uc *GetAccount) Execute(ctx context.Context, input GetAccountInput) (*GetAccountOutput, error) {
@@ -19,10 +21,16 @@ func (uc *GetAccount) Execute(ctx context.Context, input GetAccountInput) (*GetA
 		return nil, err
 	}
 
-	user, err := uc.repo.GetUserByID(ctx, input.UserID)
+	users, err := uc.userRepo.ListUsersByIDs(ctx, []ulid.ULID{input.UserID})
 	if err != nil {
 		return nil, err
 	}
+
+	if len(users) == 0 {
+		return nil, xerrors.ErrAccountNotFound
+	}
+
+	user := users[0]
 
 	return &GetAccountOutput{
 		ID:          user.ID,

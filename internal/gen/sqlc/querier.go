@@ -14,7 +14,7 @@ type Querier interface {
 	DeleteUser(ctx context.Context, id string) error
 	GetAuthProviderByProvider(ctx context.Context, arg GetAuthProviderByProviderParams) (UserAuthProvider, error)
 	GetUserByCustomID(ctx context.Context, customID string) (User, error)
-	GetUserByID(ctx context.Context, id string) (User, error)
+	ListUsersByIDs(ctx context.Context, ids []string) ([]User, error)
 }
 
 var _ Querier = (*Queries)(nil)

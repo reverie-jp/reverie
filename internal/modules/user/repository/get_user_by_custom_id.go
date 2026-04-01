@@ -8,15 +8,14 @@ import (
 
 	"reverie.jp/reverie/internal/domain/entity"
 	"reverie.jp/reverie/internal/domain/mapper"
-	"reverie.jp/reverie/internal/platform/ulid"
 	"reverie.jp/reverie/internal/platform/xerrors"
 )
 
-func (r *RepositoryImpl) GetUserByID(ctx context.Context, id ulid.ULID) (*entity.User, error) {
-	row, err := r.q.GetUserByID(ctx, id.String())
+func (r *RepositoryImpl) GetUserByCustomID(ctx context.Context, customID string) (*entity.User, error) {
+	row, err := r.q.GetUserByCustomID(ctx, customID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, xerrors.ErrAccountNotFound
+			return nil, xerrors.ErrUserNotFound
 		}
 		return nil, xerrors.ErrInternal.WithCause(err)
 	}

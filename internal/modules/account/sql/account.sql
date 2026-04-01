@@ -1,18 +1,3 @@
--- name: CreateUser :exec
-INSERT INTO users (id, custom_id, display_name, avatar_url, create_time, update_time)
-VALUES ($1, $2, $3, $4, $5, $5);
-
--- name: GetUserByID :one
-SELECT * FROM users
-WHERE id = $1;
-
--- name: GetUserByCustomID :one
-SELECT * FROM users
-WHERE custom_id = $1;
-
--- name: DeleteUser :exec
-DELETE FROM users WHERE id = $1;
-
 -- name: CreateAuthProvider :exec
 INSERT INTO user_auth_providers (id, user_id, provider, provider_user_id, create_time)
 VALUES ($1, $2, $3, $4, $5);

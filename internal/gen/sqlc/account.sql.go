@@ -36,39 +36,6 @@ func (q *Queries) CreateAuthProvider(ctx context.Context, arg CreateAuthProvider
 	return err
 }
 
-const createUser = `-- name: CreateUser :exec
-INSERT INTO users (id, custom_id, display_name, avatar_url, create_time, update_time)
-VALUES ($1, $2, $3, $4, $5, $5)
-`
-
-type CreateUserParams struct {
-	ID          ulid.ULID          `json:"id"`
-	CustomID    string             `json:"custom_id"`
-	DisplayName string             `json:"display_name"`
-	AvatarUrl   *string            `json:"avatar_url"`
-	CreateTime  pgtype.Timestamptz `json:"create_time"`
-}
-
-func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
-	_, err := q.db.Exec(ctx, createUser,
-		arg.ID,
-		arg.CustomID,
-		arg.DisplayName,
-		arg.AvatarUrl,
-		arg.CreateTime,
-	)
-	return err
-}
-
-const deleteUser = `-- name: DeleteUser :exec
-DELETE FROM users WHERE id = $1
-`
-
-func (q *Queries) DeleteUser(ctx context.Context, id string) error {
-	_, err := q.db.Exec(ctx, deleteUser, id)
-	return err
-}
-
 const getAuthProviderByProvider = `-- name: GetAuthProviderByProvider :one
 SELECT id, user_id, provider, provider_user_id, create_time FROM user_auth_providers
 WHERE provider = $1 AND provider_user_id = $2
@@ -88,56 +55,6 @@ func (q *Queries) GetAuthProviderByProvider(ctx context.Context, arg GetAuthProv
 		&i.Provider,
 		&i.ProviderUserID,
 		&i.CreateTime,
-	)
-	return i, err
-}
-
-const getUserByCustomID = `-- name: GetUserByCustomID :one
-SELECT id, custom_id, custom_id_changed_at, display_name, biography, location, website, avatar_url, banner_url, is_private, create_time, update_time FROM users
-WHERE custom_id = $1
-`
-
-func (q *Queries) GetUserByCustomID(ctx context.Context, customID string) (User, error) {
-	row := q.db.QueryRow(ctx, getUserByCustomID, customID)
-	var i User
-	err := row.Scan(
-		&i.ID,
-		&i.CustomID,
-		&i.CustomIDChangedAt,
-		&i.DisplayName,
-		&i.Biography,
-		&i.Location,
-		&i.Website,
-		&i.AvatarUrl,
-		&i.BannerUrl,
-		&i.IsPrivate,
-		&i.CreateTime,
-		&i.UpdateTime,
-	)
-	return i, err
-}
-
-const getUserByID = `-- name: GetUserByID :one
-SELECT id, custom_id, custom_id_changed_at, display_name, biography, location, website, avatar_url, banner_url, is_private, create_time, update_time FROM users
-WHERE id = $1
-`
-
-func (q *Queries) GetUserByID(ctx context.Context, id string) (User, error) {
-	row := q.db.QueryRow(ctx, getUserByID, id)
-	var i User
-	err := row.Scan(
-		&i.ID,
-		&i.CustomID,
-		&i.CustomIDChangedAt,
-		&i.DisplayName,
-		&i.Biography,
-		&i.Location,
-		&i.Website,
-		&i.AvatarUrl,
-		&i.BannerUrl,
-		&i.IsPrivate,
-		&i.CreateTime,
-		&i.UpdateTime,
 	)
 	return i, err
 }

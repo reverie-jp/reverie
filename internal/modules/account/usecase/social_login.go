@@ -7,7 +7,8 @@ import (
 
 	"reverie.jp/reverie/internal/application/transaction"
 	"reverie.jp/reverie/internal/gen/sqlc"
-	"reverie.jp/reverie/internal/modules/account/repository"
+	accountrepo "reverie.jp/reverie/internal/modules/account/repository"
+	userrepo "reverie.jp/reverie/internal/modules/user/repository"
 	"reverie.jp/reverie/internal/platform/google"
 	"reverie.jp/reverie/internal/platform/jwt"
 	"reverie.jp/reverie/internal/platform/ulid"
@@ -15,18 +16,20 @@ import (
 )
 
 type SocialLogin struct {
-	repo       repository.Repository
-	tx         transaction.Runner
-	googleAuth *google.AuthClient
-	jwtManager *jwt.Manager
+	accountRepo accountrepo.Repository
+	userRepo    userrepo.Repository
+	tx          transaction.Runner
+	googleAuth  *google.AuthClient
+	jwtManager  *jwt.Manager
 }
 
-func NewSocialLogin(repo repository.Repository, tx transaction.Runner, googleAuth *google.AuthClient, jwtManager *jwt.Manager) *SocialLogin {
+func NewSocialLogin(accountRepo accountrepo.Repository, userRepo userrepo.Repository, tx transaction.Runner, googleAuth *google.AuthClient, jwtManager *jwt.Manager) *SocialLogin {
 	return &SocialLogin{
-		repo:       repo,
-		tx:         tx,
-		googleAuth: googleAuth,
-		jwtManager: jwtManager,
+		accountRepo: accountRepo,
+		userRepo:    userRepo,
+		tx:          tx,
+		googleAuth:  googleAuth,
+		jwtManager:  jwtManager,
 	}
 }
 
@@ -40,7 +43,7 @@ func (uc *SocialLogin) Execute(ctx context.Context, input SocialLoginInput) (*So
 		return nil, xerrors.ErrSocialLoginFailed.WithCause(err)
 	}
 
-	authProvider, err := uc.repo.GetAuthProviderByProvider(ctx, input.Provider, userInfo.Sub)
+	authProvider, err := uc.accountRepo.GetAuthProviderByProvider(ctx, input.Provider, userInfo.Sub)
 	if err != nil {
 		return nil, xerrors.ErrSocialLoginFailed.WithCause(err)
 	}
@@ -93,9 +96,10 @@ func (uc *SocialLogin) createNewUser(ctx context.Context, userInfo *google.UserI
 	}
 
 	err = uc.tx.WithTx(ctx, func(q sqlc.Querier) error {
-		txRepo := repository.NewRepository(q)
+		txUserRepo := userrepo.NewRepository(q)
+		txAccountRepo := accountrepo.NewRepository(q)
 
-		if err := txRepo.CreateUser(ctx, repository.CreateUserParams{
+		if err := txUserRepo.CreateUser(ctx, userrepo.CreateUserParams{
 			ID:          userID,
 			CustomID:    customID,
 			DisplayName: displayName,
@@ -104,7 +108,7 @@ func (uc *SocialLogin) createNewUser(ctx context.Context, userInfo *google.UserI
 			return err
 		}
 
-		if err := txRepo.CreateAuthProvider(ctx, repository.CreateAuthProviderParams{
+		if err := txAccountRepo.CreateAuthProvider(ctx, accountrepo.CreateAuthProviderParams{
 			UserID:         userID,
 			Provider:       "google",
 			ProviderUserID: userInfo.Sub,
