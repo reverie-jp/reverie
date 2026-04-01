@@ -12,8 +12,7 @@ CREATE TABLE IF NOT EXISTS users (
     banner_url TEXT,
     is_private BOOLEAN NOT NULL DEFAULT FALSE,
     create_time TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    update_time TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    delete_time TIMESTAMPTZ
+    update_time TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TYPE auth_provider AS ENUM ('google');

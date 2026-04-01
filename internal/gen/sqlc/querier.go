@@ -11,10 +11,10 @@ import (
 type Querier interface {
 	CreateAuthProvider(ctx context.Context, arg CreateAuthProviderParams) error
 	CreateUser(ctx context.Context, arg CreateUserParams) error
+	DeleteUser(ctx context.Context, id string) error
 	GetAuthProviderByProvider(ctx context.Context, arg GetAuthProviderByProviderParams) (UserAuthProvider, error)
 	GetUserByCustomID(ctx context.Context, customID string) (User, error)
 	GetUserByID(ctx context.Context, id string) (User, error)
-	SoftDeleteUser(ctx context.Context, id string) error
 }
 
 var _ Querier = (*Queries)(nil)

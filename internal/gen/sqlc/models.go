@@ -66,7 +66,6 @@ type User struct {
 	IsPrivate         bool       `json:"is_private"`
 	CreateTime        time.Time  `json:"create_time"`
 	UpdateTime        time.Time  `json:"update_time"`
-	DeleteTime        *time.Time `json:"delete_time"`
 }
 
 type UserAuthProvider struct {

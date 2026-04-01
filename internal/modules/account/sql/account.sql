@@ -4,14 +4,14 @@ VALUES ($1, $2, $3, $4, $5, $5);
 
 -- name: GetUserByID :one
 SELECT * FROM users
-WHERE id = $1 AND delete_time IS NULL;
+WHERE id = $1;
 
 -- name: GetUserByCustomID :one
 SELECT * FROM users
-WHERE custom_id = $1 AND delete_time IS NULL;
+WHERE custom_id = $1;
 
--- name: SoftDeleteUser :exec
-UPDATE users SET delete_time = NOW() WHERE id = $1;
+-- name: DeleteUser :exec
+DELETE FROM users WHERE id = $1;
 
 -- name: CreateAuthProvider :exec
 INSERT INTO user_auth_providers (id, user_id, provider, provider_user_id, create_time)

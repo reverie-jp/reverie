@@ -29,5 +29,5 @@ func (uc *DeleteAccount) Execute(ctx context.Context, input DeleteAccountInput) 
 		return xerrors.ErrCustomIDMismatch
 	}
 
-	return uc.repo.SoftDeleteUser(ctx, input.UserID)
+	return uc.repo.DeleteUser(ctx, input.UserID)
 }

@@ -60,6 +60,15 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
 	return err
 }
 
+const deleteUser = `-- name: DeleteUser :exec
+DELETE FROM users WHERE id = $1
+`
+
+func (q *Queries) DeleteUser(ctx context.Context, id string) error {
+	_, err := q.db.Exec(ctx, deleteUser, id)
+	return err
+}
+
 const getAuthProviderByProvider = `-- name: GetAuthProviderByProvider :one
 SELECT id, user_id, provider, provider_user_id, create_time FROM user_auth_providers
 WHERE provider = $1 AND provider_user_id = $2
@@ -84,8 +93,8 @@ func (q *Queries) GetAuthProviderByProvider(ctx context.Context, arg GetAuthProv
 }
 
 const getUserByCustomID = `-- name: GetUserByCustomID :one
-SELECT id, custom_id, custom_id_changed_at, display_name, biography, location, website, avatar_url, banner_url, is_private, create_time, update_time, delete_time FROM users
-WHERE custom_id = $1 AND delete_time IS NULL
+SELECT id, custom_id, custom_id_changed_at, display_name, biography, location, website, avatar_url, banner_url, is_private, create_time, update_time FROM users
+WHERE custom_id = $1
 `
 
 func (q *Queries) GetUserByCustomID(ctx context.Context, customID string) (User, error) {
@@ -104,14 +113,13 @@ func (q *Queries) GetUserByCustomID(ctx context.Context, customID string) (User,
 		&i.IsPrivate,
 		&i.CreateTime,
 		&i.UpdateTime,
-		&i.DeleteTime,
 	)
 	return i, err
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, custom_id, custom_id_changed_at, display_name, biography, location, website, avatar_url, banner_url, is_private, create_time, update_time, delete_time FROM users
-WHERE id = $1 AND delete_time IS NULL
+SELECT id, custom_id, custom_id_changed_at, display_name, biography, location, website, avatar_url, banner_url, is_private, create_time, update_time FROM users
+WHERE id = $1
 `
 
 func (q *Queries) GetUserByID(ctx context.Context, id string) (User, error) {
@@ -130,16 +138,6 @@ func (q *Queries) GetUserByID(ctx context.Context, id string) (User, error) {
 		&i.IsPrivate,
 		&i.CreateTime,
 		&i.UpdateTime,
-		&i.DeleteTime,
 	)
 	return i, err
-}
-
-const softDeleteUser = `-- name: SoftDeleteUser :exec
-UPDATE users SET delete_time = NOW() WHERE id = $1
-`
-
-func (q *Queries) SoftDeleteUser(ctx context.Context, id string) error {
-	_, err := q.db.Exec(ctx, softDeleteUser, id)
-	return err
 }

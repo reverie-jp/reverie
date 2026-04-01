@@ -7,8 +7,8 @@ import (
 	"reverie.jp/reverie/internal/platform/xerrors"
 )
 
-func (r *RepositoryImpl) SoftDeleteUser(ctx context.Context, id ulid.ULID) error {
-	err := r.q.SoftDeleteUser(ctx, id.String())
+func (r *RepositoryImpl) DeleteUser(ctx context.Context, id ulid.ULID) error {
+	err := r.q.DeleteUser(ctx, id.String())
 	if err != nil {
 		return xerrors.ErrInternal.WithCause(err)
 	}

@@ -7,6 +7,7 @@ import (
 	"github.com/jackc/pgx/v5"
 
 	"reverie.jp/reverie/internal/domain/entity"
+	"reverie.jp/reverie/internal/domain/mapper"
 	"reverie.jp/reverie/internal/platform/ulid"
 	"reverie.jp/reverie/internal/platform/xerrors"
 )
@@ -20,19 +21,5 @@ func (r *RepositoryImpl) GetUserByID(ctx context.Context, id ulid.ULID) (*entity
 		return nil, xerrors.ErrInternal.WithCause(err)
 	}
 
-	return &entity.User{
-		ID:                row.ID,
-		CustomID:          row.CustomID,
-		CustomIDChangedAt: row.CustomIDChangedAt,
-		DisplayName:       row.DisplayName,
-		Biography:         row.Biography,
-		Location:          row.Location,
-		Website:           row.Website,
-		AvatarURL:         row.AvatarUrl,
-		BannerURL:         row.BannerUrl,
-		IsPrivate:         row.IsPrivate,
-		CreateTime:        row.CreateTime,
-		UpdateTime:        row.UpdateTime,
-		DeleteTime:        row.DeleteTime,
-	}, nil
+	return mapper.ToUser(&row), nil
 }

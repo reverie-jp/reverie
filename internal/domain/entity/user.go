@@ -19,7 +19,6 @@ type User struct {
 	IsPrivate         bool
 	CreateTime        time.Time
 	UpdateTime        time.Time
-	DeleteTime        *time.Time
 }
 
 type AuthProvider struct {
