@@ -3,42 +3,27 @@ package usecase
 import (
 	"context"
 	"crypto/rand"
-	"errors"
-	"fmt"
 	"math/big"
-	"time"
-
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgtype"
 
 	"reverie.jp/reverie/internal/application/transaction"
 	"reverie.jp/reverie/internal/gen/sqlc"
+	"reverie.jp/reverie/internal/modules/account/repository"
 	"reverie.jp/reverie/internal/platform/google"
 	"reverie.jp/reverie/internal/platform/jwt"
 	"reverie.jp/reverie/internal/platform/ulid"
+	"reverie.jp/reverie/internal/platform/xerrors"
 )
 
-type SocialLoginInput struct {
-	Provider string
-	Code     string
-}
-
-type SocialLoginOutput struct {
-	AccessToken  string
-	RefreshToken string
-	IsNewAccount bool
-}
-
 type SocialLogin struct {
-	q          *sqlc.Queries
+	repo       repository.Repository
 	tx         transaction.Runner
 	googleAuth *google.AuthClient
 	jwtManager *jwt.Manager
 }
 
-func NewSocialLogin(q *sqlc.Queries, tx transaction.Runner, googleAuth *google.AuthClient, jwtManager *jwt.Manager) *SocialLogin {
+func NewSocialLogin(repo repository.Repository, tx transaction.Runner, googleAuth *google.AuthClient, jwtManager *jwt.Manager) *SocialLogin {
 	return &SocialLogin{
-		q:          q,
+		repo:       repo,
 		tx:         tx,
 		googleAuth: googleAuth,
 		jwtManager: jwtManager,
@@ -46,26 +31,22 @@ func NewSocialLogin(q *sqlc.Queries, tx transaction.Runner, googleAuth *google.A
 }
 
 func (uc *SocialLogin) Execute(ctx context.Context, input SocialLoginInput) (*SocialLoginOutput, error) {
-	if input.Provider != "google" {
-		return nil, fmt.Errorf("unsupported provider: %s", input.Provider)
+	if err := input.Validate(); err != nil {
+		return nil, err
 	}
 
 	userInfo, err := uc.googleAuth.Exchange(ctx, input.Code)
 	if err != nil {
-		return nil, fmt.Errorf("failed to authenticate with google: %w", err)
+		return nil, xerrors.ErrSocialLoginFailed.WithCause(err)
 	}
 
-	// Check if this provider account is already linked.
-	authProvider, err := uc.q.GetAuthProviderByProvider(ctx, sqlc.GetAuthProviderByProviderParams{
-		Provider:       sqlc.AuthProviderGoogle,
-		ProviderUserID: userInfo.Sub,
-	})
-	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
-		return nil, fmt.Errorf("failed to get auth provider: %w", err)
+	authProvider, err := uc.repo.GetAuthProviderByProvider(ctx, input.Provider, userInfo.Sub)
+	if err != nil {
+		return nil, xerrors.ErrSocialLoginFailed.WithCause(err)
 	}
 
 	var userID ulid.ULID
-	isNewAccount := errors.Is(err, pgx.ErrNoRows)
+	isNewAccount := authProvider == nil
 
 	if isNewAccount {
 		userID, err = uc.createNewUser(ctx, userInfo)
@@ -78,12 +59,12 @@ func (uc *SocialLogin) Execute(ctx context.Context, input SocialLoginInput) (*So
 
 	accessToken, err := uc.jwtManager.GenerateAccessToken(userID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate access token: %w", err)
+		return nil, xerrors.ErrSocialLoginFailed.WithCause(err)
 	}
 
 	refreshToken, err := uc.jwtManager.GenerateRefreshToken(userID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate refresh token: %w", err)
+		return nil, xerrors.ErrSocialLoginFailed.WithCause(err)
 	}
 
 	return &SocialLoginOutput{
@@ -95,11 +76,10 @@ func (uc *SocialLogin) Execute(ctx context.Context, input SocialLoginInput) (*So
 
 func (uc *SocialLogin) createNewUser(ctx context.Context, userInfo *google.UserInfo) (ulid.ULID, error) {
 	userID := ulid.New()
-	now := time.Now()
 
 	customID, err := generateCustomID()
 	if err != nil {
-		return ulid.ULID{}, fmt.Errorf("failed to generate custom id: %w", err)
+		return ulid.ULID{}, xerrors.ErrSocialLoginFailed.WithCause(err)
 	}
 
 	displayName := userInfo.Name
@@ -113,24 +93,23 @@ func (uc *SocialLogin) createNewUser(ctx context.Context, userInfo *google.UserI
 	}
 
 	err = uc.tx.WithTx(ctx, func(q sqlc.Querier) error {
-		if err := q.CreateUser(ctx, sqlc.CreateUserParams{
+		txRepo := repository.NewRepository(q)
+
+		if err := txRepo.CreateUser(ctx, repository.CreateUserParams{
 			ID:          userID,
 			CustomID:    customID,
 			DisplayName: displayName,
-			AvatarUrl:   avatarURL,
-			CreateTime:  pgtype.Timestamptz{Time: now, Valid: true},
+			AvatarURL:   avatarURL,
 		}); err != nil {
-			return fmt.Errorf("failed to create user: %w", err)
+			return err
 		}
 
-		if err := q.CreateAuthProvider(ctx, sqlc.CreateAuthProviderParams{
-			ID:             ulid.New(),
+		if err := txRepo.CreateAuthProvider(ctx, repository.CreateAuthProviderParams{
 			UserID:         userID,
-			Provider:       sqlc.AuthProviderGoogle,
+			Provider:       "google",
 			ProviderUserID: userInfo.Sub,
-			CreateTime:     pgtype.Timestamptz{Time: now, Valid: true},
 		}); err != nil {
-			return fmt.Errorf("failed to create auth provider: %w", err)
+			return err
 		}
 
 		return nil

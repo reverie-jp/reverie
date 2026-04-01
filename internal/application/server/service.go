@@ -16,8 +16,8 @@ import (
 	userv1 "reverie.jp/reverie/internal/gen/pb/user/v1"
 	"reverie.jp/reverie/internal/gen/pb/user/v1/userv1connect"
 	"reverie.jp/reverie/internal/gen/sqlc"
+	"reverie.jp/reverie/internal/application/server/interceptor"
 	"reverie.jp/reverie/internal/modules/account"
-	accounthandler "reverie.jp/reverie/internal/modules/account/handler"
 	"reverie.jp/reverie/internal/platform/google"
 	"reverie.jp/reverie/internal/platform/jwt"
 )
@@ -32,7 +32,8 @@ func initServices(cfg *config.Config, db *pgxpool.Pool, jwtManager *jwt.Manager)
 	q := sqlc.New(db)
 	tx := transaction.NewRunner(db)
 	googleAuth := google.NewAuthClient(cfg.Google.ClientID, cfg.Google.ClientSecret, cfg.Google.RedirectURL)
-	authInterceptor := accounthandler.NewAuthInterceptor(jwtManager)
+	errorInterceptor := interceptor.ErrorInterceptor(cfg.Env)
+	authInterceptor := interceptor.AuthInterceptor(jwtManager)
 	accountService := account.InitModule(q, tx, googleAuth, jwtManager)
 
 	return []Service{
@@ -41,7 +42,7 @@ func initServices(cfg *config.Config, db *pgxpool.Pool, jwtManager *jwt.Manager)
 			RegisterConnectHandler: func(mux *http.ServeMux) {
 				mux.Handle(accountv1connect.NewAccountServiceHandler(
 					accountService,
-					connect.WithInterceptors(authInterceptor),
+					connect.WithInterceptors(errorInterceptor, authInterceptor),
 				))
 			},
 			RegisterGatewayHandler: func(ctx context.Context, mux *runtime.ServeMux, addr string, opts []grpc.DialOption) error {
@@ -53,7 +54,7 @@ func initServices(cfg *config.Config, db *pgxpool.Pool, jwtManager *jwt.Manager)
 			RegisterConnectHandler: func(mux *http.ServeMux) {
 				mux.Handle(userv1connect.NewUserServiceHandler(
 					nil, // TODO: implement UserService
-					connect.WithInterceptors(authInterceptor),
+					connect.WithInterceptors(errorInterceptor, authInterceptor),
 				))
 			},
 			RegisterGatewayHandler: func(ctx context.Context, mux *runtime.ServeMux, addr string, opts []grpc.DialOption) error {

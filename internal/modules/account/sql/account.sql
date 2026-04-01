@@ -3,13 +3,11 @@ INSERT INTO users (id, custom_id, display_name, avatar_url, create_time, update_
 VALUES ($1, $2, $3, $4, $5, $5);
 
 -- name: GetUserByID :one
-SELECT id, custom_id, display_name, avatar_url, create_time
-FROM users
+SELECT * FROM users
 WHERE id = $1 AND delete_time IS NULL;
 
 -- name: GetUserByCustomID :one
-SELECT id, custom_id, display_name, avatar_url, create_time
-FROM users
+SELECT * FROM users
 WHERE custom_id = $1 AND delete_time IS NULL;
 
 -- name: SoftDeleteUser :exec
@@ -20,6 +18,5 @@ INSERT INTO user_auth_providers (id, user_id, provider, provider_user_id, create
 VALUES ($1, $2, $3, $4, $5);
 
 -- name: GetAuthProviderByProvider :one
-SELECT id, user_id, provider, provider_user_id, create_time
-FROM user_auth_providers
+SELECT * FROM user_auth_providers
 WHERE provider = $1 AND provider_user_id = $2;

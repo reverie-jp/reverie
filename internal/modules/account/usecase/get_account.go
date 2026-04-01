@@ -2,40 +2,33 @@ package usecase
 
 import (
 	"context"
-	"fmt"
-	"time"
 
-	"reverie.jp/reverie/internal/gen/sqlc"
-	"reverie.jp/reverie/internal/platform/ulid"
+	"reverie.jp/reverie/internal/modules/account/repository"
 )
 
-type GetAccountOutput struct {
-	ID          ulid.ULID
-	CustomID    string
-	DisplayName string
-	AvatarURL   *string
-	CreateTime  time.Time
-}
-
 type GetAccount struct {
-	q *sqlc.Queries
+	repo repository.Repository
 }
 
-func NewGetAccount(q *sqlc.Queries) *GetAccount {
-	return &GetAccount{q: q}
+func NewGetAccount(repo repository.Repository) *GetAccount {
+	return &GetAccount{repo: repo}
 }
 
-func (uc *GetAccount) Execute(ctx context.Context, userID ulid.ULID) (*GetAccountOutput, error) {
-	user, err := uc.q.GetUserByID(ctx, userID.String())
+func (uc *GetAccount) Execute(ctx context.Context, input GetAccountInput) (*GetAccountOutput, error) {
+	if err := input.Validate(); err != nil {
+		return nil, err
+	}
+
+	user, err := uc.repo.GetUserByID(ctx, input.UserID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get user: %w", err)
+		return nil, err
 	}
 
 	return &GetAccountOutput{
 		ID:          user.ID,
 		CustomID:    user.CustomID,
 		DisplayName: user.DisplayName,
-		AvatarURL:   user.AvatarUrl,
+		AvatarURL:   user.AvatarURL,
 		CreateTime:  user.CreateTime,
 	}, nil
 }

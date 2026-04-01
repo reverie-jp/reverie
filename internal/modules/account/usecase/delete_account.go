@@ -2,38 +2,32 @@ package usecase
 
 import (
 	"context"
-	"fmt"
 
-	"reverie.jp/reverie/internal/gen/sqlc"
-	"reverie.jp/reverie/internal/platform/ulid"
+	"reverie.jp/reverie/internal/modules/account/repository"
+	"reverie.jp/reverie/internal/platform/xerrors"
 )
 
-type DeleteAccountInput struct {
-	UserID          ulid.ULID
-	ConfirmCustomID string
-}
-
 type DeleteAccount struct {
-	q *sqlc.Queries
+	repo repository.Repository
 }
 
-func NewDeleteAccount(q *sqlc.Queries) *DeleteAccount {
-	return &DeleteAccount{q: q}
+func NewDeleteAccount(repo repository.Repository) *DeleteAccount {
+	return &DeleteAccount{repo: repo}
 }
 
 func (uc *DeleteAccount) Execute(ctx context.Context, input DeleteAccountInput) error {
-	user, err := uc.q.GetUserByID(ctx, input.UserID.String())
+	if err := input.Validate(); err != nil {
+		return err
+	}
+
+	user, err := uc.repo.GetUserByID(ctx, input.UserID)
 	if err != nil {
-		return fmt.Errorf("failed to get user: %w", err)
+		return err
 	}
 
 	if user.CustomID != input.ConfirmCustomID {
-		return fmt.Errorf("custom id does not match")
+		return xerrors.ErrCustomIDMismatch
 	}
 
-	if err := uc.q.SoftDeleteUser(ctx, input.UserID.String()); err != nil {
-		return fmt.Errorf("failed to delete user: %w", err)
-	}
-
-	return nil
+	return uc.repo.SoftDeleteUser(ctx, input.UserID)
 }

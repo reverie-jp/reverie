@@ -1,4 +1,4 @@
-package handler
+package interceptor
 
 import (
 	"context"
@@ -12,13 +12,30 @@ import (
 	"reverie.jp/reverie/internal/platform/ulid"
 )
 
+type userIDKey struct{}
+
+// ContextWithUserID returns a new context with the user ID set.
+func ContextWithUserID(ctx context.Context, userID ulid.ULID) context.Context {
+	return context.WithValue(ctx, userIDKey{}, userID)
+}
+
+// UserIDFromContext extracts the user ID from the context.
+func UserIDFromContext(ctx context.Context) (ulid.ULID, bool) {
+	v := ctx.Value(userIDKey{})
+	if v == nil {
+		return ulid.ULID{}, false
+	}
+	id, ok := v.(ulid.ULID)
+	return id, ok
+}
+
 // publicProcedures lists RPC procedures that do not require authentication.
 var publicProcedures = map[string]bool{
 	accountv1connect.AccountServiceSocialLoginProcedure:  true,
 	accountv1connect.AccountServiceRefreshTokenProcedure: true,
 }
 
-func NewAuthInterceptor(jwtManager *jwt.Manager) connect.UnaryInterceptorFunc {
+func AuthInterceptor(jwtManager *jwt.Manager) connect.UnaryInterceptorFunc {
 	return func(next connect.UnaryFunc) connect.UnaryFunc {
 		return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
 			if publicProcedures[req.Spec().Procedure] {

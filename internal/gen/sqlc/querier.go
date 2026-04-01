@@ -12,8 +12,8 @@ type Querier interface {
 	CreateAuthProvider(ctx context.Context, arg CreateAuthProviderParams) error
 	CreateUser(ctx context.Context, arg CreateUserParams) error
 	GetAuthProviderByProvider(ctx context.Context, arg GetAuthProviderByProviderParams) (UserAuthProvider, error)
-	GetUserByCustomID(ctx context.Context, customID string) (GetUserByCustomIDRow, error)
-	GetUserByID(ctx context.Context, id string) (GetUserByIDRow, error)
+	GetUserByCustomID(ctx context.Context, customID string) (User, error)
+	GetUserByID(ctx context.Context, id string) (User, error)
 	SoftDeleteUser(ctx context.Context, id string) error
 }
 

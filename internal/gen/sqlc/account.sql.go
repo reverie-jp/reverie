@@ -7,7 +7,6 @@ package sqlc
 
 import (
 	"context"
-	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
 	"reverie.jp/reverie/internal/platform/ulid"
@@ -62,8 +61,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
 }
 
 const getAuthProviderByProvider = `-- name: GetAuthProviderByProvider :one
-SELECT id, user_id, provider, provider_user_id, create_time
-FROM user_auth_providers
+SELECT id, user_id, provider, provider_user_id, create_time FROM user_auth_providers
 WHERE provider = $1 AND provider_user_id = $2
 `
 
@@ -86,55 +84,53 @@ func (q *Queries) GetAuthProviderByProvider(ctx context.Context, arg GetAuthProv
 }
 
 const getUserByCustomID = `-- name: GetUserByCustomID :one
-SELECT id, custom_id, display_name, avatar_url, create_time
-FROM users
+SELECT id, custom_id, custom_id_changed_at, display_name, biography, location, website, avatar_url, banner_url, is_private, create_time, update_time, delete_time FROM users
 WHERE custom_id = $1 AND delete_time IS NULL
 `
 
-type GetUserByCustomIDRow struct {
-	ID          ulid.ULID `json:"id"`
-	CustomID    string    `json:"custom_id"`
-	DisplayName string    `json:"display_name"`
-	AvatarUrl   *string   `json:"avatar_url"`
-	CreateTime  time.Time `json:"create_time"`
-}
-
-func (q *Queries) GetUserByCustomID(ctx context.Context, customID string) (GetUserByCustomIDRow, error) {
+func (q *Queries) GetUserByCustomID(ctx context.Context, customID string) (User, error) {
 	row := q.db.QueryRow(ctx, getUserByCustomID, customID)
-	var i GetUserByCustomIDRow
+	var i User
 	err := row.Scan(
 		&i.ID,
 		&i.CustomID,
+		&i.CustomIDChangedAt,
 		&i.DisplayName,
+		&i.Biography,
+		&i.Location,
+		&i.Website,
 		&i.AvatarUrl,
+		&i.BannerUrl,
+		&i.IsPrivate,
 		&i.CreateTime,
+		&i.UpdateTime,
+		&i.DeleteTime,
 	)
 	return i, err
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, custom_id, display_name, avatar_url, create_time
-FROM users
+SELECT id, custom_id, custom_id_changed_at, display_name, biography, location, website, avatar_url, banner_url, is_private, create_time, update_time, delete_time FROM users
 WHERE id = $1 AND delete_time IS NULL
 `
 
-type GetUserByIDRow struct {
-	ID          ulid.ULID `json:"id"`
-	CustomID    string    `json:"custom_id"`
-	DisplayName string    `json:"display_name"`
-	AvatarUrl   *string   `json:"avatar_url"`
-	CreateTime  time.Time `json:"create_time"`
-}
-
-func (q *Queries) GetUserByID(ctx context.Context, id string) (GetUserByIDRow, error) {
+func (q *Queries) GetUserByID(ctx context.Context, id string) (User, error) {
 	row := q.db.QueryRow(ctx, getUserByID, id)
-	var i GetUserByIDRow
+	var i User
 	err := row.Scan(
 		&i.ID,
 		&i.CustomID,
+		&i.CustomIDChangedAt,
 		&i.DisplayName,
+		&i.Biography,
+		&i.Location,
+		&i.Website,
 		&i.AvatarUrl,
+		&i.BannerUrl,
+		&i.IsPrivate,
 		&i.CreateTime,
+		&i.UpdateTime,
+		&i.DeleteTime,
 	)
 	return i, err
 }

@@ -5,16 +5,19 @@ import (
 	"reverie.jp/reverie/internal/gen/pb/account/v1/accountv1connect"
 	"reverie.jp/reverie/internal/gen/sqlc"
 	"reverie.jp/reverie/internal/modules/account/handler"
+	"reverie.jp/reverie/internal/modules/account/repository"
 	"reverie.jp/reverie/internal/modules/account/usecase"
 	"reverie.jp/reverie/internal/platform/google"
 	"reverie.jp/reverie/internal/platform/jwt"
 )
 
 func InitModule(q *sqlc.Queries, tx transaction.Runner, googleAuth *google.AuthClient, jwtManager *jwt.Manager) accountv1connect.AccountServiceHandler {
-	socialLogin := usecase.NewSocialLogin(q, tx, googleAuth, jwtManager)
-	refreshToken := usecase.NewRefreshToken(jwtManager)
-	getAccount := usecase.NewGetAccount(q)
-	deleteAccount := usecase.NewDeleteAccount(q)
+	repo := repository.NewRepository(q)
 
-	return handler.NewAccountHandler(socialLogin, refreshToken, getAccount, deleteAccount)
+	socialLogin := usecase.NewSocialLogin(repo, tx, googleAuth, jwtManager)
+	refreshToken := usecase.NewRefreshToken(jwtManager)
+	getAccount := usecase.NewGetAccount(repo)
+	deleteAccount := usecase.NewDeleteAccount(repo)
+
+	return handler.NewHandler(socialLogin, refreshToken, getAccount, deleteAccount)
 }
