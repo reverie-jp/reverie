@@ -8,21 +8,19 @@ package sqlc
 import (
 	"context"
 
-	"github.com/jackc/pgx/v5/pgtype"
 	"reverie.jp/reverie/internal/platform/ulid"
 )
 
 const createAuthProvider = `-- name: CreateAuthProvider :exec
-INSERT INTO user_auth_providers (id, user_id, provider, provider_user_id, create_time)
-VALUES ($1, $2, $3, $4, $5)
+INSERT INTO user_auth_providers (id, user_id, provider, provider_user_id)
+VALUES ($1, $2, $3, $4)
 `
 
 type CreateAuthProviderParams struct {
-	ID             ulid.ULID          `json:"id"`
-	UserID         ulid.ULID          `json:"user_id"`
-	Provider       AuthProvider       `json:"provider"`
-	ProviderUserID string             `json:"provider_user_id"`
-	CreateTime     pgtype.Timestamptz `json:"create_time"`
+	ID             ulid.ULID    `json:"id"`
+	UserID         ulid.ULID    `json:"user_id"`
+	Provider       AuthProvider `json:"provider"`
+	ProviderUserID string       `json:"provider_user_id"`
 }
 
 func (q *Queries) CreateAuthProvider(ctx context.Context, arg CreateAuthProviderParams) error {
@@ -31,7 +29,6 @@ func (q *Queries) CreateAuthProvider(ctx context.Context, arg CreateAuthProvider
 		arg.UserID,
 		arg.Provider,
 		arg.ProviderUserID,
-		arg.CreateTime,
 	)
 	return err
 }

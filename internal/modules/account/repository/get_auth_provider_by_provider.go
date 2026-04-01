@@ -8,7 +8,6 @@ import (
 
 	"reverie.jp/reverie/internal/domain/entity"
 	"reverie.jp/reverie/internal/gen/sqlc"
-	"reverie.jp/reverie/internal/platform/xerrors"
 )
 
 func (r *RepositoryImpl) GetAuthProviderByProvider(ctx context.Context, provider string, providerUserID string) (*entity.AuthProvider, error) {
@@ -20,7 +19,7 @@ func (r *RepositoryImpl) GetAuthProviderByProvider(ctx context.Context, provider
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
 		}
-		return nil, xerrors.ErrInternal.WithCause(err)
+		return nil, err
 	}
 
 	return &entity.AuthProvider{

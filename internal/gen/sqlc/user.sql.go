@@ -8,21 +8,19 @@ package sqlc
 import (
 	"context"
 
-	"github.com/jackc/pgx/v5/pgtype"
 	"reverie.jp/reverie/internal/platform/ulid"
 )
 
 const createUser = `-- name: CreateUser :exec
-INSERT INTO users (id, custom_id, display_name, avatar_url, create_time, update_time)
-VALUES ($1, $2, $3, $4, $5, $5)
+INSERT INTO users (id, custom_id, display_name, avatar_url)
+VALUES ($1, $2, $3, $4)
 `
 
 type CreateUserParams struct {
-	ID          ulid.ULID          `json:"id"`
-	CustomID    string             `json:"custom_id"`
-	DisplayName string             `json:"display_name"`
-	AvatarUrl   *string            `json:"avatar_url"`
-	CreateTime  pgtype.Timestamptz `json:"create_time"`
+	ID          ulid.ULID `json:"id"`
+	CustomID    string    `json:"custom_id"`
+	DisplayName string    `json:"display_name"`
+	AvatarUrl   *string   `json:"avatar_url"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
@@ -31,7 +29,6 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
 		arg.CustomID,
 		arg.DisplayName,
 		arg.AvatarUrl,
-		arg.CreateTime,
 	)
 	return err
 }

@@ -6,7 +6,6 @@ import (
 	"reverie.jp/reverie/internal/domain/entity"
 	"reverie.jp/reverie/internal/domain/mapper"
 	"reverie.jp/reverie/internal/platform/ulid"
-	"reverie.jp/reverie/internal/platform/xerrors"
 )
 
 func (r *RepositoryImpl) ListUsersByIDs(ctx context.Context, ids []ulid.ULID) ([]*entity.User, error) {
@@ -17,7 +16,7 @@ func (r *RepositoryImpl) ListUsersByIDs(ctx context.Context, ids []ulid.ULID) ([
 
 	rows, err := r.q.ListUsersByIDs(ctx, strIDs)
 	if err != nil {
-		return nil, xerrors.ErrInternal.WithCause(err)
+		return nil, err
 	}
 
 	users := make([]*entity.User, len(rows))
