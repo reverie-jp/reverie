@@ -7,19 +7,18 @@ import (
 	"reverie.jp/reverie/internal/modules/account/handler"
 	accountrepo "reverie.jp/reverie/internal/modules/account/repository"
 	"reverie.jp/reverie/internal/modules/account/usecase"
-	userrepo "reverie.jp/reverie/internal/modules/user/repository"
+	usergw "reverie.jp/reverie/internal/modules/user/gateway"
 	"reverie.jp/reverie/internal/platform/google"
 	"reverie.jp/reverie/internal/platform/jwt"
 )
 
-func InitModule(q *sqlc.Queries, tx transaction.Runner, googleAuth *google.AuthClient, jwtManager *jwt.Manager) accountv1connect.AccountServiceHandler {
-	accountRepo := accountrepo.NewRepository(q)
-	userRepo := userrepo.NewRepository(q)
+func InitModule(q *sqlc.Queries, userGateway usergw.Gateway, tx transaction.Runner, googleAuth *google.AuthClient, jwtManager *jwt.Manager) accountv1connect.AccountServiceHandler {
+	accountRepo := accountrepo.New(q)
 
-	socialLogin := usecase.NewSocialLogin(accountRepo, userRepo, tx, googleAuth, jwtManager)
+	socialLogin := usecase.NewSocialLogin(accountRepo, userGateway, tx, googleAuth, jwtManager)
 	refreshToken := usecase.NewRefreshToken(jwtManager)
-	getAccount := usecase.NewGetAccount(userRepo)
-	deleteAccount := usecase.NewDeleteAccount(userRepo)
+	getAccount := usecase.NewGetAccount(userGateway)
+	deleteAccount := usecase.NewDeleteAccount(userGateway)
 
-	return handler.NewHandler(socialLogin, refreshToken, getAccount, deleteAccount)
+	return handler.New(socialLogin, refreshToken, getAccount, deleteAccount)
 }

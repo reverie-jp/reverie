@@ -8,7 +8,7 @@ import (
 	"reverie.jp/reverie/internal/application/transaction"
 	"reverie.jp/reverie/internal/gen/sqlc"
 	accountrepo "reverie.jp/reverie/internal/modules/account/repository"
-	userrepo "reverie.jp/reverie/internal/modules/user/repository"
+	usergw "reverie.jp/reverie/internal/modules/user/gateway"
 	"reverie.jp/reverie/internal/platform/google"
 	"reverie.jp/reverie/internal/platform/jwt"
 	"reverie.jp/reverie/internal/platform/ulid"
@@ -17,16 +17,16 @@ import (
 
 type SocialLogin struct {
 	accountRepo accountrepo.Repository
-	userRepo    userrepo.Repository
+	userGateway usergw.Gateway
 	tx          transaction.Runner
 	googleAuth  *google.AuthClient
 	jwtManager  *jwt.Manager
 }
 
-func NewSocialLogin(accountRepo accountrepo.Repository, userRepo userrepo.Repository, tx transaction.Runner, googleAuth *google.AuthClient, jwtManager *jwt.Manager) *SocialLogin {
+func NewSocialLogin(accountRepo accountrepo.Repository, userGateway usergw.Gateway, tx transaction.Runner, googleAuth *google.AuthClient, jwtManager *jwt.Manager) *SocialLogin {
 	return &SocialLogin{
 		accountRepo: accountRepo,
-		userRepo:    userRepo,
+		userGateway: userGateway,
 		tx:          tx,
 		googleAuth:  googleAuth,
 		jwtManager:  jwtManager,
@@ -96,10 +96,10 @@ func (uc *SocialLogin) createNewUser(ctx context.Context, userInfo *google.UserI
 	}
 
 	err = uc.tx.WithTx(ctx, func(q sqlc.Querier) error {
-		txUserRepo := userrepo.NewRepository(q)
-		txAccountRepo := accountrepo.NewRepository(q)
+		txUserGw := usergw.New(q)
+		txAccountRepo := accountrepo.New(q)
 
-		if err := txUserRepo.CreateUser(ctx, userrepo.CreateUserParams{
+		if err := txUserGw.CreateUser(ctx, usergw.CreateUserParams{
 			ID:          userID,
 			CustomID:    customID,
 			DisplayName: displayName,

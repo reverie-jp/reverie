@@ -3,17 +3,17 @@ package usecase
 import (
 	"context"
 
-	userrepo "reverie.jp/reverie/internal/modules/user/repository"
+	usergw "reverie.jp/reverie/internal/modules/user/gateway"
 	"reverie.jp/reverie/internal/platform/ulid"
 	"reverie.jp/reverie/internal/platform/xerrors"
 )
 
 type GetAccount struct {
-	userRepo userrepo.Repository
+	userGateway usergw.Gateway
 }
 
-func NewGetAccount(userRepo userrepo.Repository) *GetAccount {
-	return &GetAccount{userRepo: userRepo}
+func NewGetAccount(userGateway usergw.Gateway) *GetAccount {
+	return &GetAccount{userGateway: userGateway}
 }
 
 func (uc *GetAccount) Execute(ctx context.Context, input GetAccountInput) (*GetAccountOutput, error) {
@@ -21,7 +21,7 @@ func (uc *GetAccount) Execute(ctx context.Context, input GetAccountInput) (*GetA
 		return nil, err
 	}
 
-	users, err := uc.userRepo.ListUsersByIDs(ctx, []ulid.ULID{input.UserID})
+	users, err := uc.userGateway.ListUsersByIDs(ctx, []ulid.ULID{input.UserID})
 	if err != nil {
 		return nil, err
 	}

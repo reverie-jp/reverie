@@ -9,6 +9,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"google.golang.org/grpc"
 
+	"reverie.jp/reverie/internal/application/server/interceptor"
 	"reverie.jp/reverie/internal/application/transaction"
 	"reverie.jp/reverie/internal/config"
 	accountv1 "reverie.jp/reverie/internal/gen/pb/account/v1"
@@ -16,8 +17,8 @@ import (
 	userv1 "reverie.jp/reverie/internal/gen/pb/user/v1"
 	"reverie.jp/reverie/internal/gen/pb/user/v1/userv1connect"
 	"reverie.jp/reverie/internal/gen/sqlc"
-	"reverie.jp/reverie/internal/application/server/interceptor"
 	"reverie.jp/reverie/internal/modules/account"
+	usergw "reverie.jp/reverie/internal/modules/user/gateway"
 	"reverie.jp/reverie/internal/platform/google"
 	"reverie.jp/reverie/internal/platform/jwt"
 )
@@ -34,7 +35,8 @@ func initServices(cfg *config.Config, db *pgxpool.Pool, jwtManager *jwt.Manager)
 	googleAuth := google.NewAuthClient(cfg.Google.ClientID, cfg.Google.ClientSecret, cfg.Google.RedirectURL)
 	errorInterceptor := interceptor.ErrorInterceptor(cfg.Env)
 	authInterceptor := interceptor.AuthInterceptor(jwtManager)
-	accountService := account.InitModule(q, tx, googleAuth, jwtManager)
+	userGateway := usergw.New(q)
+	accountService := account.InitModule(q, userGateway, tx, googleAuth, jwtManager)
 
 	return []Service{
 		{

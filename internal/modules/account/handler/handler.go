@@ -15,7 +15,7 @@ type Handler struct {
 	deleteAccount *usecase.DeleteAccount
 }
 
-func NewHandler(
+func New(
 	socialLogin *usecase.SocialLogin,
 	refreshToken *usecase.RefreshToken,
 	getAccount *usecase.GetAccount,

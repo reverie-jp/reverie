@@ -3,17 +3,17 @@ package usecase
 import (
 	"context"
 
-	userrepo "reverie.jp/reverie/internal/modules/user/repository"
+	usergw "reverie.jp/reverie/internal/modules/user/gateway"
 	"reverie.jp/reverie/internal/platform/ulid"
 	"reverie.jp/reverie/internal/platform/xerrors"
 )
 
 type DeleteAccount struct {
-	userRepo userrepo.Repository
+	userGateway usergw.Gateway
 }
 
-func NewDeleteAccount(userRepo userrepo.Repository) *DeleteAccount {
-	return &DeleteAccount{userRepo: userRepo}
+func NewDeleteAccount(userGateway usergw.Gateway) *DeleteAccount {
+	return &DeleteAccount{userGateway: userGateway}
 }
 
 func (uc *DeleteAccount) Execute(ctx context.Context, input DeleteAccountInput) error {
@@ -21,7 +21,7 @@ func (uc *DeleteAccount) Execute(ctx context.Context, input DeleteAccountInput) 
 		return err
 	}
 
-	users, err := uc.userRepo.ListUsersByIDs(ctx, []ulid.ULID{input.UserID})
+	users, err := uc.userGateway.ListUsersByIDs(ctx, []ulid.ULID{input.UserID})
 	if err != nil {
 		return err
 	}
@@ -34,5 +34,5 @@ func (uc *DeleteAccount) Execute(ctx context.Context, input DeleteAccountInput) 
 		return xerrors.ErrCustomIDMismatch
 	}
 
-	return uc.userRepo.DeleteUser(ctx, input.UserID)
+	return uc.userGateway.DeleteUser(ctx, input.UserID)
 }

@@ -16,6 +16,6 @@ type RepositoryImpl struct {
 	q sqlc.Querier
 }
 
-func NewRepository(q sqlc.Querier) Repository {
+func New(q sqlc.Querier) Repository {
 	return &RepositoryImpl{q: q}
 }
