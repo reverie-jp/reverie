@@ -203,7 +203,7 @@ CREATE INDEX idx_room_members_room_id ON room_members(room_id);
 
 CREATE TABLE IF NOT EXISTS pinned_rooms (
     id        ulid PRIMARY KEY,
-    user_id   ulid NOT NULL REFERENCES rooms(id) ON DELETE CASCADE,
+    user_id   ulid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     room_id   ulid NOT NULL REFERENCES rooms(id) ON DELETE CASCADE,
     pinned_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE (user_id, room_id)
