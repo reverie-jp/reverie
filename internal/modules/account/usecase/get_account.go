@@ -36,7 +36,6 @@ func (uc *GetAccount) Execute(ctx context.Context, input GetAccountInput) (*GetA
 		ID:          user.ID,
 		CustomID:    user.CustomID,
 		DisplayName: user.DisplayName,
-		AvatarURL:   user.AvatarURL,
 		CreateTime:  user.CreateTime,
 	}, nil
 }

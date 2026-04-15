@@ -12,15 +12,14 @@ import (
 )
 
 const createUser = `-- name: CreateUser :exec
-INSERT INTO users (id, custom_id, display_name, avatar_url)
-VALUES ($1, $2, $3, $4)
+INSERT INTO users (id, custom_id, display_name)
+VALUES ($1, $2, $3)
 `
 
 type CreateUserParams struct {
 	ID          ulid.ULID `json:"id"`
 	CustomID    string    `json:"custom_id"`
 	DisplayName string    `json:"display_name"`
-	AvatarUrl   *string   `json:"avatar_url"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
@@ -28,7 +27,6 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
 		arg.ID,
 		arg.CustomID,
 		arg.DisplayName,
-		arg.AvatarUrl,
 	)
 	return err
 }
@@ -43,7 +41,9 @@ func (q *Queries) DeleteUser(ctx context.Context, id string) error {
 }
 
 const getUserByCustomID = `-- name: GetUserByCustomID :one
-SELECT id, custom_id, custom_id_changed_at, display_name, biography, location, website, avatar_url, banner_url, is_private, create_time, update_time FROM users
+SELECT id, custom_id, custom_id_changed_at, display_name, biography,
+       avatar_media_id, banner_media_id, is_private, birthdate, create_time, update_time
+FROM users
 WHERE custom_id = $1
 `
 
@@ -56,11 +56,10 @@ func (q *Queries) GetUserByCustomID(ctx context.Context, customID string) (User,
 		&i.CustomIDChangedAt,
 		&i.DisplayName,
 		&i.Biography,
-		&i.Location,
-		&i.Website,
-		&i.AvatarUrl,
-		&i.BannerUrl,
+		&i.AvatarMediaID,
+		&i.BannerMediaID,
 		&i.IsPrivate,
+		&i.Birthdate,
 		&i.CreateTime,
 		&i.UpdateTime,
 	)
@@ -68,7 +67,9 @@ func (q *Queries) GetUserByCustomID(ctx context.Context, customID string) (User,
 }
 
 const listUsersByIDs = `-- name: ListUsersByIDs :many
-SELECT id, custom_id, custom_id_changed_at, display_name, biography, location, website, avatar_url, banner_url, is_private, create_time, update_time FROM users
+SELECT id, custom_id, custom_id_changed_at, display_name, biography,
+       avatar_media_id, banner_media_id, is_private, birthdate, create_time, update_time
+FROM users
 WHERE id = ANY($1::text[])
 `
 
@@ -87,11 +88,10 @@ func (q *Queries) ListUsersByIDs(ctx context.Context, ids []string) ([]User, err
 			&i.CustomIDChangedAt,
 			&i.DisplayName,
 			&i.Biography,
-			&i.Location,
-			&i.Website,
-			&i.AvatarUrl,
-			&i.BannerUrl,
+			&i.AvatarMediaID,
+			&i.BannerMediaID,
 			&i.IsPrivate,
+			&i.Birthdate,
 			&i.CreateTime,
 			&i.UpdateTime,
 		); err != nil {

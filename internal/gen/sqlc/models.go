@@ -12,66 +12,64 @@ import (
 	"reverie.jp/reverie/internal/platform/ulid"
 )
 
-type AuthProvider string
+type AuthProviderType string
 
 const (
-	AuthProviderGoogle AuthProvider = "google"
+	AuthProviderTypeGoogle AuthProviderType = "google"
+	AuthProviderTypeLine   AuthProviderType = "line"
 )
 
-func (e *AuthProvider) Scan(src interface{}) error {
+func (e *AuthProviderType) Scan(src interface{}) error {
 	switch s := src.(type) {
 	case []byte:
-		*e = AuthProvider(s)
+		*e = AuthProviderType(s)
 	case string:
-		*e = AuthProvider(s)
+		*e = AuthProviderType(s)
 	default:
-		return fmt.Errorf("unsupported scan type for AuthProvider: %T", src)
+		return fmt.Errorf("unsupported scan type for AuthProviderType: %T", src)
 	}
 	return nil
 }
 
-type NullAuthProvider struct {
-	AuthProvider AuthProvider `json:"auth_provider"`
-	Valid        bool         `json:"valid"` // Valid is true if AuthProvider is not NULL
+type NullAuthProviderType struct {
+	AuthProviderType AuthProviderType `json:"auth_provider_type"`
+	Valid            bool             `json:"valid"`
 }
 
-// Scan implements the Scanner interface.
-func (ns *NullAuthProvider) Scan(value interface{}) error {
+func (ns *NullAuthProviderType) Scan(value interface{}) error {
 	if value == nil {
-		ns.AuthProvider, ns.Valid = "", false
+		ns.AuthProviderType, ns.Valid = "", false
 		return nil
 	}
 	ns.Valid = true
-	return ns.AuthProvider.Scan(value)
+	return ns.AuthProviderType.Scan(value)
 }
 
-// Value implements the driver Valuer interface.
-func (ns NullAuthProvider) Value() (driver.Value, error) {
+func (ns NullAuthProviderType) Value() (driver.Value, error) {
 	if !ns.Valid {
 		return nil, nil
 	}
-	return string(ns.AuthProvider), nil
+	return string(ns.AuthProviderType), nil
+}
+
+type AuthProvider struct {
+	ID             ulid.ULID        `json:"id"`
+	UserID         ulid.ULID        `json:"user_id"`
+	Provider       AuthProviderType `json:"provider"`
+	ProviderUserID string           `json:"provider_user_id"`
+	CreateTime     time.Time        `json:"create_time"`
 }
 
 type User struct {
-	ID                ulid.ULID  `json:"id"`
-	CustomID          string     `json:"custom_id"`
-	CustomIDChangedAt *time.Time `json:"custom_id_changed_at"`
-	DisplayName       string     `json:"display_name"`
-	Biography         *string    `json:"biography"`
-	Location          *string    `json:"location"`
-	Website           *string    `json:"website"`
-	AvatarUrl         *string    `json:"avatar_url"`
-	BannerUrl         *string    `json:"banner_url"`
-	IsPrivate         bool       `json:"is_private"`
-	CreateTime        time.Time  `json:"create_time"`
-	UpdateTime        time.Time  `json:"update_time"`
-}
-
-type UserAuthProvider struct {
-	ID             ulid.ULID    `json:"id"`
-	UserID         ulid.ULID    `json:"user_id"`
-	Provider       AuthProvider `json:"provider"`
-	ProviderUserID string       `json:"provider_user_id"`
-	CreateTime     time.Time    `json:"create_time"`
+	ID                  ulid.ULID  `json:"id"`
+	CustomID            string     `json:"custom_id"`
+	CustomIDChangedAt   *time.Time `json:"custom_id_changed_at"`
+	DisplayName         string     `json:"display_name"`
+	Biography           *string    `json:"biography"`
+	AvatarMediaID       *ulid.ULID `json:"avatar_media_id"`
+	BannerMediaID       *ulid.ULID `json:"banner_media_id"`
+	IsPrivate           bool       `json:"is_private"`
+	Birthdate           *time.Time `json:"birthdate"`
+	CreateTime          time.Time  `json:"create_time"`
+	UpdateTime          time.Time  `json:"update_time"`
 }

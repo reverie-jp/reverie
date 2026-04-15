@@ -17,7 +17,6 @@ type CreateUserParams struct {
 	ID          ulid.ULID
 	CustomID    string
 	DisplayName string
-	AvatarURL   *string
 }
 
 type Gateway interface {

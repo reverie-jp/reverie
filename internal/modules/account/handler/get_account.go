@@ -29,7 +29,6 @@ func (h *Handler) GetAccount(ctx context.Context, req *connect.Request[accountv1
 			Id:          output.ID.String(),
 			CustomId:    output.CustomID,
 			DisplayName: output.DisplayName,
-			AvatarUrl:   output.AvatarURL,
 		},
 	}), nil
 }

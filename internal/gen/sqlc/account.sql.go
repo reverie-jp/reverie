@@ -12,15 +12,15 @@ import (
 )
 
 const createAuthProvider = `-- name: CreateAuthProvider :exec
-INSERT INTO user_auth_providers (id, user_id, provider, provider_user_id)
+INSERT INTO auth_providers (id, user_id, provider, provider_user_id)
 VALUES ($1, $2, $3, $4)
 `
 
 type CreateAuthProviderParams struct {
-	ID             ulid.ULID    `json:"id"`
-	UserID         ulid.ULID    `json:"user_id"`
-	Provider       AuthProvider `json:"provider"`
-	ProviderUserID string       `json:"provider_user_id"`
+	ID             ulid.ULID        `json:"id"`
+	UserID         ulid.ULID        `json:"user_id"`
+	Provider       AuthProviderType `json:"provider"`
+	ProviderUserID string           `json:"provider_user_id"`
 }
 
 func (q *Queries) CreateAuthProvider(ctx context.Context, arg CreateAuthProviderParams) error {
@@ -34,18 +34,18 @@ func (q *Queries) CreateAuthProvider(ctx context.Context, arg CreateAuthProvider
 }
 
 const getAuthProviderByProvider = `-- name: GetAuthProviderByProvider :one
-SELECT id, user_id, provider, provider_user_id, create_time FROM user_auth_providers
+SELECT id, user_id, provider, provider_user_id, create_time FROM auth_providers
 WHERE provider = $1 AND provider_user_id = $2
 `
 
 type GetAuthProviderByProviderParams struct {
-	Provider       AuthProvider `json:"provider"`
-	ProviderUserID string       `json:"provider_user_id"`
+	Provider       AuthProviderType `json:"provider"`
+	ProviderUserID string           `json:"provider_user_id"`
 }
 
-func (q *Queries) GetAuthProviderByProvider(ctx context.Context, arg GetAuthProviderByProviderParams) (UserAuthProvider, error) {
+func (q *Queries) GetAuthProviderByProvider(ctx context.Context, arg GetAuthProviderByProviderParams) (AuthProvider, error) {
 	row := q.db.QueryRow(ctx, getAuthProviderByProvider, arg.Provider, arg.ProviderUserID)
-	var i UserAuthProvider
+	var i AuthProvider
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,

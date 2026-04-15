@@ -90,11 +90,6 @@ func (uc *SocialLogin) createNewUser(ctx context.Context, userInfo *google.UserI
 		displayName = "unknown"
 	}
 
-	var avatarURL *string
-	if userInfo.Picture != "" {
-		avatarURL = &userInfo.Picture
-	}
-
 	err = uc.tx.WithTx(ctx, func(q sqlc.Querier) error {
 		txUserGw := usergw.New(q)
 		txAccountRepo := accountrepo.New(q)
@@ -103,7 +98,6 @@ func (uc *SocialLogin) createNewUser(ctx context.Context, userInfo *google.UserI
 			ID:          userID,
 			CustomID:    customID,
 			DisplayName: displayName,
-			AvatarURL:   avatarURL,
 		}); err != nil {
 			return err
 		}

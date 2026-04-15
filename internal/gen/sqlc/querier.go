@@ -12,7 +12,7 @@ type Querier interface {
 	CreateAuthProvider(ctx context.Context, arg CreateAuthProviderParams) error
 	CreateUser(ctx context.Context, arg CreateUserParams) error
 	DeleteUser(ctx context.Context, id string) error
-	GetAuthProviderByProvider(ctx context.Context, arg GetAuthProviderByProviderParams) (UserAuthProvider, error)
+	GetAuthProviderByProvider(ctx context.Context, arg GetAuthProviderByProviderParams) (AuthProvider, error)
 	GetUserByCustomID(ctx context.Context, customID string) (User, error)
 	ListUsersByIDs(ctx context.Context, ids []string) ([]User, error)
 }

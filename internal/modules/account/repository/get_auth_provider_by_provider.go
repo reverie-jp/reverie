@@ -12,7 +12,7 @@ import (
 
 func (r *RepositoryImpl) GetAuthProviderByProvider(ctx context.Context, provider string, providerUserID string) (*entity.AuthProvider, error) {
 	row, err := r.q.GetAuthProviderByProvider(ctx, sqlc.GetAuthProviderByProviderParams{
-		Provider:       sqlc.AuthProvider(provider),
+		Provider:       sqlc.AuthProviderType(provider),
 		ProviderUserID: providerUserID,
 	})
 	if err != nil {

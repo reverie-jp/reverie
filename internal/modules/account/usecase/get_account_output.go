@@ -10,6 +10,5 @@ type GetAccountOutput struct {
 	ID          ulid.ULID
 	CustomID    string
 	DisplayName string
-	AvatarURL   *string
 	CreateTime  time.Time
 }

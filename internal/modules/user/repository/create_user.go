@@ -11,7 +11,6 @@ type CreateUserParams struct {
 	ID          ulid.ULID
 	CustomID    string
 	DisplayName string
-	AvatarURL   *string
 }
 
 func (r *RepositoryImpl) CreateUser(ctx context.Context, params CreateUserParams) error {
@@ -19,6 +18,5 @@ func (r *RepositoryImpl) CreateUser(ctx context.Context, params CreateUserParams
 		ID:          params.ID,
 		CustomID:    params.CustomID,
 		DisplayName: params.DisplayName,
-		AvatarUrl:   params.AvatarURL,
 	})
 }

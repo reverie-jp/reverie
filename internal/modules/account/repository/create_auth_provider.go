@@ -17,7 +17,7 @@ func (r *RepositoryImpl) CreateAuthProvider(ctx context.Context, params CreateAu
 	return r.q.CreateAuthProvider(ctx, sqlc.CreateAuthProviderParams{
 		ID:             ulid.New(),
 		UserID:         params.UserID,
-		Provider:       sqlc.AuthProvider(params.Provider),
+		Provider:       sqlc.AuthProviderType(params.Provider),
 		ProviderUserID: params.ProviderUserID,
 	})
 }

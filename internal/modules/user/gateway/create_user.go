@@ -11,6 +11,5 @@ func (g *gatewayImpl) CreateUser(ctx context.Context, params CreateUserParams) e
 		ID:          params.ID,
 		CustomID:    params.CustomID,
 		DisplayName: params.DisplayName,
-		AvatarURL:   params.AvatarURL,
 	})
 }
