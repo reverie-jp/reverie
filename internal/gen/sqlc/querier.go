@@ -6,6 +6,8 @@ package sqlc
 
 import (
 	"context"
+
+	"reverie.jp/reverie/internal/platform/ulid"
 )
 
 type Querier interface {
@@ -13,8 +15,10 @@ type Querier interface {
 	CreateUser(ctx context.Context, arg CreateUserParams) error
 	DeleteUser(ctx context.Context, id string) error
 	GetAuthProviderByProvider(ctx context.Context, arg GetAuthProviderByProviderParams) (AuthProvider, error)
+	GetUserByID(ctx context.Context, id ulid.ULID) (User, error)
 	GetUserByCustomID(ctx context.Context, customID string) (User, error)
 	ListUsersByIDs(ctx context.Context, ids []string) ([]User, error)
+	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
 }
 
 var _ Querier = (*Queries)(nil)

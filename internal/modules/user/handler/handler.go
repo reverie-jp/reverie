@@ -1,0 +1,28 @@
+package handler
+
+import (
+	"reverie.jp/reverie/internal/gen/pb/user/v1/userv1connect"
+	"reverie.jp/reverie/internal/modules/user/usecase"
+)
+
+type Handler struct {
+	userv1connect.UnimplementedUserServiceHandler
+	getUser            *usecase.GetUser
+	updateUser         *usecase.UpdateUser
+	getUserSettings    *usecase.GetUserSettings
+	updateUserSettings *usecase.UpdateUserSettings
+}
+
+func New(
+	getUser *usecase.GetUser,
+	updateUser *usecase.UpdateUser,
+	getUserSettings *usecase.GetUserSettings,
+	updateUserSettings *usecase.UpdateUserSettings,
+) *Handler {
+	return &Handler{
+		getUser:            getUser,
+		updateUser:         updateUser,
+		getUserSettings:    getUserSettings,
+		updateUserSettings: updateUserSettings,
+	}
+}

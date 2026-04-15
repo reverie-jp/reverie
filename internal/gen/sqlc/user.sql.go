@@ -7,6 +7,7 @@ package sqlc
 
 import (
 	"context"
+	"time"
 
 	"reverie.jp/reverie/internal/platform/ulid"
 )
@@ -40,6 +41,32 @@ func (q *Queries) DeleteUser(ctx context.Context, id string) error {
 	return err
 }
 
+const getUserByID = `-- name: GetUserByID :one
+SELECT id, custom_id, custom_id_changed_at, display_name, biography,
+       avatar_media_id, banner_media_id, is_private, birthdate, create_time, update_time
+FROM users
+WHERE id = $1
+`
+
+func (q *Queries) GetUserByID(ctx context.Context, id ulid.ULID) (User, error) {
+	row := q.db.QueryRow(ctx, getUserByID, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.CustomID,
+		&i.CustomIDChangedAt,
+		&i.DisplayName,
+		&i.Biography,
+		&i.AvatarMediaID,
+		&i.BannerMediaID,
+		&i.IsPrivate,
+		&i.Birthdate,
+		&i.CreateTime,
+		&i.UpdateTime,
+	)
+	return i, err
+}
+
 const getUserByCustomID = `-- name: GetUserByCustomID :one
 SELECT id, custom_id, custom_id_changed_at, display_name, biography,
        avatar_media_id, banner_media_id, is_private, birthdate, create_time, update_time
@@ -49,6 +76,52 @@ WHERE custom_id = $1
 
 func (q *Queries) GetUserByCustomID(ctx context.Context, customID string) (User, error) {
 	row := q.db.QueryRow(ctx, getUserByCustomID, customID)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.CustomID,
+		&i.CustomIDChangedAt,
+		&i.DisplayName,
+		&i.Biography,
+		&i.AvatarMediaID,
+		&i.BannerMediaID,
+		&i.IsPrivate,
+		&i.Birthdate,
+		&i.CreateTime,
+		&i.UpdateTime,
+	)
+	return i, err
+}
+
+const updateUser = `-- name: UpdateUser :one
+UPDATE users
+SET
+  display_name = $2,
+  biography    = $3,
+  is_private   = $4,
+  birthdate    = $5,
+  update_time  = NOW()
+WHERE id = $1
+RETURNING id, custom_id, custom_id_changed_at, display_name, biography,
+          avatar_media_id, banner_media_id, is_private, birthdate, create_time, update_time
+`
+
+type UpdateUserParams struct {
+	ID          ulid.ULID  `json:"id"`
+	DisplayName string     `json:"display_name"`
+	Biography   *string    `json:"biography"`
+	IsPrivate   bool       `json:"is_private"`
+	Birthdate   *time.Time `json:"birthdate"`
+}
+
+func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
+	row := q.db.QueryRow(ctx, updateUser,
+		arg.ID,
+		arg.DisplayName,
+		arg.Biography,
+		arg.IsPrivate,
+		arg.Birthdate,
+	)
 	var i User
 	err := row.Scan(
 		&i.ID,
