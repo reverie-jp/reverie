@@ -16,11 +16,14 @@ import (
 	"reverie.jp/reverie/internal/gen/pb/account/v1/accountv1connect"
 	postv1 "reverie.jp/reverie/internal/gen/pb/post/v1"
 	"reverie.jp/reverie/internal/gen/pb/post/v1/postv1connect"
+	timelinev1 "reverie.jp/reverie/internal/gen/pb/timeline/v1"
+	timelinev1connect "reverie.jp/reverie/internal/gen/pb/timeline/v1/timelinev1connect"
 	userv1 "reverie.jp/reverie/internal/gen/pb/user/v1"
 	"reverie.jp/reverie/internal/gen/pb/user/v1/userv1connect"
 	"reverie.jp/reverie/internal/gen/sqlc"
 	"reverie.jp/reverie/internal/modules/account"
 	"reverie.jp/reverie/internal/modules/post"
+	"reverie.jp/reverie/internal/modules/timeline"
 	"reverie.jp/reverie/internal/modules/user"
 	usergw "reverie.jp/reverie/internal/modules/user/gateway"
 	"reverie.jp/reverie/internal/platform/google"
@@ -43,6 +46,7 @@ func initServices(cfg *config.Config, db *pgxpool.Pool, jwtManager *jwt.Manager)
 	accountService := account.InitModule(q, userGateway, tx, googleAuth, jwtManager)
 	userService := user.InitModule(q, userGateway)
 	postService := post.InitModule(q, userGateway)
+	timelineService := timeline.InitModule(q, userGateway)
 
 	return []Service{
 		{
@@ -79,6 +83,18 @@ func initServices(cfg *config.Config, db *pgxpool.Pool, jwtManager *jwt.Manager)
 			},
 			RegisterGatewayHandler: func(ctx context.Context, mux *runtime.ServeMux, addr string, opts []grpc.DialOption) error {
 				return postv1.RegisterPostServiceHandlerFromEndpoint(ctx, mux, addr, opts)
+			},
+		},
+		{
+			Name: timelinev1connect.TimelineServiceName,
+			RegisterConnectHandler: func(mux *http.ServeMux) {
+				mux.Handle(timelinev1connect.NewTimelineServiceHandler(
+					timelineService,
+					connect.WithInterceptors(errorInterceptor, authInterceptor),
+				))
+			},
+			RegisterGatewayHandler: func(ctx context.Context, mux *runtime.ServeMux, addr string, opts []grpc.DialOption) error {
+				return timelinev1.RegisterTimelineServiceHandlerFromEndpoint(ctx, mux, addr, opts)
 			},
 		},
 	}

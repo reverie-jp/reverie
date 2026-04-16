@@ -77,8 +77,8 @@ export interface Post {
   repost_id?: string;
   reply_count: number;
   repost_count: number;
-  favorite_count: number;
-  is_favorited: boolean;
+  like_count: number;
+  is_liked: boolean;
   create_time: string;
 }
 
@@ -93,11 +93,6 @@ export async function socialLogin(
   });
 }
 
-// User API
-export async function getUser(userId: string): Promise<{ user: User }> {
-  return request(`/v1/users/${userId}`);
-}
-
 export interface Account {
   id: string;
   custom_id: string;
@@ -107,6 +102,11 @@ export interface Account {
 
 export async function getAccount(): Promise<{ account: Account }> {
   return request("/v1/account");
+}
+
+// User API
+export async function getUser(userId: string): Promise<{ user: User }> {
+  return request(`/v1/users/${userId}`);
 }
 
 export async function getMe(): Promise<{ user: User }> {
@@ -126,6 +126,10 @@ export async function updateUser(params: {
 }
 
 // Post API
+export async function getPost(postId: string): Promise<{ post: Post }> {
+  return request(`/v1/posts/${postId}`);
+}
+
 export async function createPost(params: {
   text: string;
   reply_to_id?: string;
@@ -141,24 +145,50 @@ export async function deletePost(postId: string): Promise<void> {
   return request(`/v1/posts/${postId}`, { method: "DELETE" });
 }
 
-export async function listTimeline(params?: {
-  limit?: number;
-  cursor?: string;
-}): Promise<{ posts: Post[]; next_cursor?: string }> {
-  const qs = new URLSearchParams();
-  if (params?.limit) qs.set("limit", String(params.limit));
-  if (params?.cursor) qs.set("cursor", params.cursor);
-  const query = qs.toString() ? `?${qs}` : "";
-  return request(`/v1/timeline${query}`);
+export async function likePost(postId: string): Promise<{ post: Post }> {
+  return request(`/v1/posts/${postId}:like`, {
+    method: "POST",
+    body: "{}",
+  });
+}
+
+export async function unlikePost(postId: string): Promise<{ post: Post }> {
+  return request(`/v1/posts/${postId}:unlike`, {
+    method: "POST",
+    body: "{}",
+  });
 }
 
 export async function listUserPosts(
   userId: string,
-  params?: { limit?: number; cursor?: string }
-): Promise<{ posts: Post[]; next_cursor?: string }> {
+  params?: { page_size?: number; page_token?: string }
+): Promise<{ posts: Post[]; next_page_token?: string }> {
   const qs = new URLSearchParams();
-  if (params?.limit) qs.set("limit", String(params.limit));
-  if (params?.cursor) qs.set("cursor", params.cursor);
+  if (params?.page_size) qs.set("page_size", String(params.page_size));
+  if (params?.page_token) qs.set("page_token", params.page_token);
   const query = qs.toString() ? `?${qs}` : "";
   return request(`/v1/users/${userId}/posts${query}`);
+}
+
+// Timeline API
+export async function listPublicTimeline(params?: {
+  page_size?: number;
+  page_token?: string;
+}): Promise<{ posts: Post[]; next_page_token?: string }> {
+  const qs = new URLSearchParams();
+  if (params?.page_size) qs.set("page_size", String(params.page_size));
+  if (params?.page_token) qs.set("page_token", params.page_token);
+  const query = qs.toString() ? `?${qs}` : "";
+  return request(`/v1/timeline/public${query}`);
+}
+
+export async function listFollowingTimeline(params?: {
+  page_size?: number;
+  page_token?: string;
+}): Promise<{ posts: Post[]; next_page_token?: string }> {
+  const qs = new URLSearchParams();
+  if (params?.page_size) qs.set("page_size", String(params.page_size));
+  if (params?.page_token) qs.set("page_token", params.page_token);
+  const query = qs.toString() ? `?${qs}` : "";
+  return request(`/v1/timeline/following${query}`);
 }

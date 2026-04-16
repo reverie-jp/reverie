@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"time"
 
 	postgw "reverie.jp/reverie/internal/modules/post/gateway"
 	"reverie.jp/reverie/internal/platform/ulid"
@@ -27,20 +26,16 @@ func (uc *ListUserPosts) Execute(ctx context.Context, input ListUserPostsInput, 
 		return nil, xerrors.ErrInvalidArgument.WithMessage("invalid user_id")
 	}
 
-	params := postgw.ListUserPostsParams{
+	cursor, err := decodePageToken(input.PageToken)
+	if err != nil {
+		return nil, xerrors.ErrInvalidArgument.WithMessage("invalid page_token")
+	}
+
+	views, err := uc.postGateway.ListUserPosts(ctx, postgw.ListUserPostsParams{
 		AuthorID: targetID,
-		Limit:    input.Limit,
-	}
-
-	if input.Cursor != nil {
-		t, err := time.Parse(time.RFC3339Nano, *input.Cursor)
-		if err != nil {
-			return nil, xerrors.ErrInvalidArgument.WithMessage("invalid cursor")
-		}
-		params.Cursor = &t
-	}
-
-	views, err := uc.postGateway.ListUserPosts(ctx, params, requestorID)
+		Cursor:   cursor,
+		Limit:    normalizePageSize(input.PageSize),
+	}, requestorID)
 	if err != nil {
 		return nil, err
 	}

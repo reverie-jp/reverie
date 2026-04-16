@@ -33,28 +33,55 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
+	// PostServiceGetPostProcedure is the fully-qualified name of the PostService's GetPost RPC.
+	PostServiceGetPostProcedure = "/post.v1.PostService/GetPost"
 	// PostServiceCreatePostProcedure is the fully-qualified name of the PostService's CreatePost RPC.
 	PostServiceCreatePostProcedure = "/post.v1.PostService/CreatePost"
 	// PostServiceDeletePostProcedure is the fully-qualified name of the PostService's DeletePost RPC.
 	PostServiceDeletePostProcedure = "/post.v1.PostService/DeletePost"
-	// PostServiceListTimelineProcedure is the fully-qualified name of the PostService's ListTimeline
+	// PostServiceLikePostProcedure is the fully-qualified name of the PostService's LikePost RPC.
+	PostServiceLikePostProcedure = "/post.v1.PostService/LikePost"
+	// PostServiceUnlikePostProcedure is the fully-qualified name of the PostService's UnlikePost RPC.
+	PostServiceUnlikePostProcedure = "/post.v1.PostService/UnlikePost"
+	// PostServiceListPostRepliesProcedure is the fully-qualified name of the PostService's
+	// ListPostReplies RPC.
+	PostServiceListPostRepliesProcedure = "/post.v1.PostService/ListPostReplies"
+	// PostServiceListPostRepostsProcedure is the fully-qualified name of the PostService's
+	// ListPostReposts RPC.
+	PostServiceListPostRepostsProcedure = "/post.v1.PostService/ListPostReposts"
+	// PostServiceListPostLikesProcedure is the fully-qualified name of the PostService's ListPostLikes
 	// RPC.
-	PostServiceListTimelineProcedure = "/post.v1.PostService/ListTimeline"
+	PostServiceListPostLikesProcedure = "/post.v1.PostService/ListPostLikes"
 	// PostServiceListUserPostsProcedure is the fully-qualified name of the PostService's ListUserPosts
 	// RPC.
 	PostServiceListUserPostsProcedure = "/post.v1.PostService/ListUserPosts"
+	// PostServiceListUserLikedPostsProcedure is the fully-qualified name of the PostService's
+	// ListUserLikedPosts RPC.
+	PostServiceListUserLikedPostsProcedure = "/post.v1.PostService/ListUserLikedPosts"
 )
 
 // PostServiceClient is a client for the post.v1.PostService service.
 type PostServiceClient interface {
+	// Get post detail.
+	GetPost(context.Context, *connect.Request[v1.GetPostRequest]) (*connect.Response[v1.GetPostResponse], error)
 	// Create a new post.
 	CreatePost(context.Context, *connect.Request[v1.CreatePostRequest]) (*connect.Response[v1.CreatePostResponse], error)
 	// Delete a post (only the author can delete).
 	DeletePost(context.Context, *connect.Request[v1.DeletePostRequest]) (*connect.Response[v1.DeletePostResponse], error)
-	// Get public timeline (all posts, newest first).
-	ListTimeline(context.Context, *connect.Request[v1.ListTimelineRequest]) (*connect.Response[v1.ListTimelineResponse], error)
+	// Like a post.
+	LikePost(context.Context, *connect.Request[v1.LikePostRequest]) (*connect.Response[v1.LikePostResponse], error)
+	// Unlike a post.
+	UnlikePost(context.Context, *connect.Request[v1.UnlikePostRequest]) (*connect.Response[v1.UnlikePostResponse], error)
+	// List replies to a post.
+	ListPostReplies(context.Context, *connect.Request[v1.ListPostRepliesRequest]) (*connect.Response[v1.ListPostRepliesResponse], error)
+	// List reposts of a post.
+	ListPostReposts(context.Context, *connect.Request[v1.ListPostRepostsRequest]) (*connect.Response[v1.ListPostRepostsResponse], error)
+	// List users who liked a post.
+	ListPostLikes(context.Context, *connect.Request[v1.ListPostLikesRequest]) (*connect.Response[v1.ListPostLikesResponse], error)
 	// List posts by a specific user.
 	ListUserPosts(context.Context, *connect.Request[v1.ListUserPostsRequest]) (*connect.Response[v1.ListUserPostsResponse], error)
+	// List posts liked by a specific user.
+	ListUserLikedPosts(context.Context, *connect.Request[v1.ListUserLikedPostsRequest]) (*connect.Response[v1.ListUserLikedPostsResponse], error)
 }
 
 // NewPostServiceClient constructs a client for the post.v1.PostService service. By default, it uses
@@ -68,6 +95,12 @@ func NewPostServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 	baseURL = strings.TrimRight(baseURL, "/")
 	postServiceMethods := v1.File_post_v1_post_proto.Services().ByName("PostService").Methods()
 	return &postServiceClient{
+		getPost: connect.NewClient[v1.GetPostRequest, v1.GetPostResponse](
+			httpClient,
+			baseURL+PostServiceGetPostProcedure,
+			connect.WithSchema(postServiceMethods.ByName("GetPost")),
+			connect.WithClientOptions(opts...),
+		),
 		createPost: connect.NewClient[v1.CreatePostRequest, v1.CreatePostResponse](
 			httpClient,
 			baseURL+PostServiceCreatePostProcedure,
@@ -80,10 +113,34 @@ func NewPostServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(postServiceMethods.ByName("DeletePost")),
 			connect.WithClientOptions(opts...),
 		),
-		listTimeline: connect.NewClient[v1.ListTimelineRequest, v1.ListTimelineResponse](
+		likePost: connect.NewClient[v1.LikePostRequest, v1.LikePostResponse](
 			httpClient,
-			baseURL+PostServiceListTimelineProcedure,
-			connect.WithSchema(postServiceMethods.ByName("ListTimeline")),
+			baseURL+PostServiceLikePostProcedure,
+			connect.WithSchema(postServiceMethods.ByName("LikePost")),
+			connect.WithClientOptions(opts...),
+		),
+		unlikePost: connect.NewClient[v1.UnlikePostRequest, v1.UnlikePostResponse](
+			httpClient,
+			baseURL+PostServiceUnlikePostProcedure,
+			connect.WithSchema(postServiceMethods.ByName("UnlikePost")),
+			connect.WithClientOptions(opts...),
+		),
+		listPostReplies: connect.NewClient[v1.ListPostRepliesRequest, v1.ListPostRepliesResponse](
+			httpClient,
+			baseURL+PostServiceListPostRepliesProcedure,
+			connect.WithSchema(postServiceMethods.ByName("ListPostReplies")),
+			connect.WithClientOptions(opts...),
+		),
+		listPostReposts: connect.NewClient[v1.ListPostRepostsRequest, v1.ListPostRepostsResponse](
+			httpClient,
+			baseURL+PostServiceListPostRepostsProcedure,
+			connect.WithSchema(postServiceMethods.ByName("ListPostReposts")),
+			connect.WithClientOptions(opts...),
+		),
+		listPostLikes: connect.NewClient[v1.ListPostLikesRequest, v1.ListPostLikesResponse](
+			httpClient,
+			baseURL+PostServiceListPostLikesProcedure,
+			connect.WithSchema(postServiceMethods.ByName("ListPostLikes")),
 			connect.WithClientOptions(opts...),
 		),
 		listUserPosts: connect.NewClient[v1.ListUserPostsRequest, v1.ListUserPostsResponse](
@@ -92,15 +149,32 @@ func NewPostServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(postServiceMethods.ByName("ListUserPosts")),
 			connect.WithClientOptions(opts...),
 		),
+		listUserLikedPosts: connect.NewClient[v1.ListUserLikedPostsRequest, v1.ListUserLikedPostsResponse](
+			httpClient,
+			baseURL+PostServiceListUserLikedPostsProcedure,
+			connect.WithSchema(postServiceMethods.ByName("ListUserLikedPosts")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // postServiceClient implements PostServiceClient.
 type postServiceClient struct {
-	createPost    *connect.Client[v1.CreatePostRequest, v1.CreatePostResponse]
-	deletePost    *connect.Client[v1.DeletePostRequest, v1.DeletePostResponse]
-	listTimeline  *connect.Client[v1.ListTimelineRequest, v1.ListTimelineResponse]
-	listUserPosts *connect.Client[v1.ListUserPostsRequest, v1.ListUserPostsResponse]
+	getPost            *connect.Client[v1.GetPostRequest, v1.GetPostResponse]
+	createPost         *connect.Client[v1.CreatePostRequest, v1.CreatePostResponse]
+	deletePost         *connect.Client[v1.DeletePostRequest, v1.DeletePostResponse]
+	likePost           *connect.Client[v1.LikePostRequest, v1.LikePostResponse]
+	unlikePost         *connect.Client[v1.UnlikePostRequest, v1.UnlikePostResponse]
+	listPostReplies    *connect.Client[v1.ListPostRepliesRequest, v1.ListPostRepliesResponse]
+	listPostReposts    *connect.Client[v1.ListPostRepostsRequest, v1.ListPostRepostsResponse]
+	listPostLikes      *connect.Client[v1.ListPostLikesRequest, v1.ListPostLikesResponse]
+	listUserPosts      *connect.Client[v1.ListUserPostsRequest, v1.ListUserPostsResponse]
+	listUserLikedPosts *connect.Client[v1.ListUserLikedPostsRequest, v1.ListUserLikedPostsResponse]
+}
+
+// GetPost calls post.v1.PostService.GetPost.
+func (c *postServiceClient) GetPost(ctx context.Context, req *connect.Request[v1.GetPostRequest]) (*connect.Response[v1.GetPostResponse], error) {
+	return c.getPost.CallUnary(ctx, req)
 }
 
 // CreatePost calls post.v1.PostService.CreatePost.
@@ -113,9 +187,29 @@ func (c *postServiceClient) DeletePost(ctx context.Context, req *connect.Request
 	return c.deletePost.CallUnary(ctx, req)
 }
 
-// ListTimeline calls post.v1.PostService.ListTimeline.
-func (c *postServiceClient) ListTimeline(ctx context.Context, req *connect.Request[v1.ListTimelineRequest]) (*connect.Response[v1.ListTimelineResponse], error) {
-	return c.listTimeline.CallUnary(ctx, req)
+// LikePost calls post.v1.PostService.LikePost.
+func (c *postServiceClient) LikePost(ctx context.Context, req *connect.Request[v1.LikePostRequest]) (*connect.Response[v1.LikePostResponse], error) {
+	return c.likePost.CallUnary(ctx, req)
+}
+
+// UnlikePost calls post.v1.PostService.UnlikePost.
+func (c *postServiceClient) UnlikePost(ctx context.Context, req *connect.Request[v1.UnlikePostRequest]) (*connect.Response[v1.UnlikePostResponse], error) {
+	return c.unlikePost.CallUnary(ctx, req)
+}
+
+// ListPostReplies calls post.v1.PostService.ListPostReplies.
+func (c *postServiceClient) ListPostReplies(ctx context.Context, req *connect.Request[v1.ListPostRepliesRequest]) (*connect.Response[v1.ListPostRepliesResponse], error) {
+	return c.listPostReplies.CallUnary(ctx, req)
+}
+
+// ListPostReposts calls post.v1.PostService.ListPostReposts.
+func (c *postServiceClient) ListPostReposts(ctx context.Context, req *connect.Request[v1.ListPostRepostsRequest]) (*connect.Response[v1.ListPostRepostsResponse], error) {
+	return c.listPostReposts.CallUnary(ctx, req)
+}
+
+// ListPostLikes calls post.v1.PostService.ListPostLikes.
+func (c *postServiceClient) ListPostLikes(ctx context.Context, req *connect.Request[v1.ListPostLikesRequest]) (*connect.Response[v1.ListPostLikesResponse], error) {
+	return c.listPostLikes.CallUnary(ctx, req)
 }
 
 // ListUserPosts calls post.v1.PostService.ListUserPosts.
@@ -123,16 +217,33 @@ func (c *postServiceClient) ListUserPosts(ctx context.Context, req *connect.Requ
 	return c.listUserPosts.CallUnary(ctx, req)
 }
 
+// ListUserLikedPosts calls post.v1.PostService.ListUserLikedPosts.
+func (c *postServiceClient) ListUserLikedPosts(ctx context.Context, req *connect.Request[v1.ListUserLikedPostsRequest]) (*connect.Response[v1.ListUserLikedPostsResponse], error) {
+	return c.listUserLikedPosts.CallUnary(ctx, req)
+}
+
 // PostServiceHandler is an implementation of the post.v1.PostService service.
 type PostServiceHandler interface {
+	// Get post detail.
+	GetPost(context.Context, *connect.Request[v1.GetPostRequest]) (*connect.Response[v1.GetPostResponse], error)
 	// Create a new post.
 	CreatePost(context.Context, *connect.Request[v1.CreatePostRequest]) (*connect.Response[v1.CreatePostResponse], error)
 	// Delete a post (only the author can delete).
 	DeletePost(context.Context, *connect.Request[v1.DeletePostRequest]) (*connect.Response[v1.DeletePostResponse], error)
-	// Get public timeline (all posts, newest first).
-	ListTimeline(context.Context, *connect.Request[v1.ListTimelineRequest]) (*connect.Response[v1.ListTimelineResponse], error)
+	// Like a post.
+	LikePost(context.Context, *connect.Request[v1.LikePostRequest]) (*connect.Response[v1.LikePostResponse], error)
+	// Unlike a post.
+	UnlikePost(context.Context, *connect.Request[v1.UnlikePostRequest]) (*connect.Response[v1.UnlikePostResponse], error)
+	// List replies to a post.
+	ListPostReplies(context.Context, *connect.Request[v1.ListPostRepliesRequest]) (*connect.Response[v1.ListPostRepliesResponse], error)
+	// List reposts of a post.
+	ListPostReposts(context.Context, *connect.Request[v1.ListPostRepostsRequest]) (*connect.Response[v1.ListPostRepostsResponse], error)
+	// List users who liked a post.
+	ListPostLikes(context.Context, *connect.Request[v1.ListPostLikesRequest]) (*connect.Response[v1.ListPostLikesResponse], error)
 	// List posts by a specific user.
 	ListUserPosts(context.Context, *connect.Request[v1.ListUserPostsRequest]) (*connect.Response[v1.ListUserPostsResponse], error)
+	// List posts liked by a specific user.
+	ListUserLikedPosts(context.Context, *connect.Request[v1.ListUserLikedPostsRequest]) (*connect.Response[v1.ListUserLikedPostsResponse], error)
 }
 
 // NewPostServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -142,6 +253,12 @@ type PostServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewPostServiceHandler(svc PostServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	postServiceMethods := v1.File_post_v1_post_proto.Services().ByName("PostService").Methods()
+	postServiceGetPostHandler := connect.NewUnaryHandler(
+		PostServiceGetPostProcedure,
+		svc.GetPost,
+		connect.WithSchema(postServiceMethods.ByName("GetPost")),
+		connect.WithHandlerOptions(opts...),
+	)
 	postServiceCreatePostHandler := connect.NewUnaryHandler(
 		PostServiceCreatePostProcedure,
 		svc.CreatePost,
@@ -154,10 +271,34 @@ func NewPostServiceHandler(svc PostServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(postServiceMethods.ByName("DeletePost")),
 		connect.WithHandlerOptions(opts...),
 	)
-	postServiceListTimelineHandler := connect.NewUnaryHandler(
-		PostServiceListTimelineProcedure,
-		svc.ListTimeline,
-		connect.WithSchema(postServiceMethods.ByName("ListTimeline")),
+	postServiceLikePostHandler := connect.NewUnaryHandler(
+		PostServiceLikePostProcedure,
+		svc.LikePost,
+		connect.WithSchema(postServiceMethods.ByName("LikePost")),
+		connect.WithHandlerOptions(opts...),
+	)
+	postServiceUnlikePostHandler := connect.NewUnaryHandler(
+		PostServiceUnlikePostProcedure,
+		svc.UnlikePost,
+		connect.WithSchema(postServiceMethods.ByName("UnlikePost")),
+		connect.WithHandlerOptions(opts...),
+	)
+	postServiceListPostRepliesHandler := connect.NewUnaryHandler(
+		PostServiceListPostRepliesProcedure,
+		svc.ListPostReplies,
+		connect.WithSchema(postServiceMethods.ByName("ListPostReplies")),
+		connect.WithHandlerOptions(opts...),
+	)
+	postServiceListPostRepostsHandler := connect.NewUnaryHandler(
+		PostServiceListPostRepostsProcedure,
+		svc.ListPostReposts,
+		connect.WithSchema(postServiceMethods.ByName("ListPostReposts")),
+		connect.WithHandlerOptions(opts...),
+	)
+	postServiceListPostLikesHandler := connect.NewUnaryHandler(
+		PostServiceListPostLikesProcedure,
+		svc.ListPostLikes,
+		connect.WithSchema(postServiceMethods.ByName("ListPostLikes")),
 		connect.WithHandlerOptions(opts...),
 	)
 	postServiceListUserPostsHandler := connect.NewUnaryHandler(
@@ -166,16 +307,34 @@ func NewPostServiceHandler(svc PostServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(postServiceMethods.ByName("ListUserPosts")),
 		connect.WithHandlerOptions(opts...),
 	)
+	postServiceListUserLikedPostsHandler := connect.NewUnaryHandler(
+		PostServiceListUserLikedPostsProcedure,
+		svc.ListUserLikedPosts,
+		connect.WithSchema(postServiceMethods.ByName("ListUserLikedPosts")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/post.v1.PostService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
+		case PostServiceGetPostProcedure:
+			postServiceGetPostHandler.ServeHTTP(w, r)
 		case PostServiceCreatePostProcedure:
 			postServiceCreatePostHandler.ServeHTTP(w, r)
 		case PostServiceDeletePostProcedure:
 			postServiceDeletePostHandler.ServeHTTP(w, r)
-		case PostServiceListTimelineProcedure:
-			postServiceListTimelineHandler.ServeHTTP(w, r)
+		case PostServiceLikePostProcedure:
+			postServiceLikePostHandler.ServeHTTP(w, r)
+		case PostServiceUnlikePostProcedure:
+			postServiceUnlikePostHandler.ServeHTTP(w, r)
+		case PostServiceListPostRepliesProcedure:
+			postServiceListPostRepliesHandler.ServeHTTP(w, r)
+		case PostServiceListPostRepostsProcedure:
+			postServiceListPostRepostsHandler.ServeHTTP(w, r)
+		case PostServiceListPostLikesProcedure:
+			postServiceListPostLikesHandler.ServeHTTP(w, r)
 		case PostServiceListUserPostsProcedure:
 			postServiceListUserPostsHandler.ServeHTTP(w, r)
+		case PostServiceListUserLikedPostsProcedure:
+			postServiceListUserLikedPostsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -185,6 +344,10 @@ func NewPostServiceHandler(svc PostServiceHandler, opts ...connect.HandlerOption
 // UnimplementedPostServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedPostServiceHandler struct{}
 
+func (UnimplementedPostServiceHandler) GetPost(context.Context, *connect.Request[v1.GetPostRequest]) (*connect.Response[v1.GetPostResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("post.v1.PostService.GetPost is not implemented"))
+}
+
 func (UnimplementedPostServiceHandler) CreatePost(context.Context, *connect.Request[v1.CreatePostRequest]) (*connect.Response[v1.CreatePostResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("post.v1.PostService.CreatePost is not implemented"))
 }
@@ -193,10 +356,30 @@ func (UnimplementedPostServiceHandler) DeletePost(context.Context, *connect.Requ
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("post.v1.PostService.DeletePost is not implemented"))
 }
 
-func (UnimplementedPostServiceHandler) ListTimeline(context.Context, *connect.Request[v1.ListTimelineRequest]) (*connect.Response[v1.ListTimelineResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("post.v1.PostService.ListTimeline is not implemented"))
+func (UnimplementedPostServiceHandler) LikePost(context.Context, *connect.Request[v1.LikePostRequest]) (*connect.Response[v1.LikePostResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("post.v1.PostService.LikePost is not implemented"))
+}
+
+func (UnimplementedPostServiceHandler) UnlikePost(context.Context, *connect.Request[v1.UnlikePostRequest]) (*connect.Response[v1.UnlikePostResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("post.v1.PostService.UnlikePost is not implemented"))
+}
+
+func (UnimplementedPostServiceHandler) ListPostReplies(context.Context, *connect.Request[v1.ListPostRepliesRequest]) (*connect.Response[v1.ListPostRepliesResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("post.v1.PostService.ListPostReplies is not implemented"))
+}
+
+func (UnimplementedPostServiceHandler) ListPostReposts(context.Context, *connect.Request[v1.ListPostRepostsRequest]) (*connect.Response[v1.ListPostRepostsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("post.v1.PostService.ListPostReposts is not implemented"))
+}
+
+func (UnimplementedPostServiceHandler) ListPostLikes(context.Context, *connect.Request[v1.ListPostLikesRequest]) (*connect.Response[v1.ListPostLikesResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("post.v1.PostService.ListPostLikes is not implemented"))
 }
 
 func (UnimplementedPostServiceHandler) ListUserPosts(context.Context, *connect.Request[v1.ListUserPostsRequest]) (*connect.Response[v1.ListUserPostsResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("post.v1.PostService.ListUserPosts is not implemented"))
+}
+
+func (UnimplementedPostServiceHandler) ListUserLikedPosts(context.Context, *connect.Request[v1.ListUserLikedPostsRequest]) (*connect.Response[v1.ListUserLikedPostsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("post.v1.PostService.ListUserLikedPosts is not implemented"))
 }

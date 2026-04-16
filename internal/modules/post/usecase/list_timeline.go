@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"time"
 
 	postgw "reverie.jp/reverie/internal/modules/post/gateway"
 	"reverie.jp/reverie/internal/platform/ulid"
@@ -18,19 +17,15 @@ func NewListTimeline(postGateway postgw.Gateway) *ListTimeline {
 }
 
 func (uc *ListTimeline) Execute(ctx context.Context, input ListTimelineInput, requestorID ulid.ULID) ([]*PostOutput, error) {
-	params := postgw.ListTimelineParams{
-		Limit: input.Limit,
+	cursor, err := decodePageToken(input.PageToken)
+	if err != nil {
+		return nil, xerrors.ErrInvalidArgument.WithMessage("invalid page_token")
 	}
 
-	if input.Cursor != nil {
-		t, err := time.Parse(time.RFC3339Nano, *input.Cursor)
-		if err != nil {
-			return nil, xerrors.ErrInvalidArgument.WithMessage("invalid cursor")
-		}
-		params.Cursor = &t
-	}
-
-	views, err := uc.postGateway.ListTimeline(ctx, params, requestorID)
+	views, err := uc.postGateway.ListTimeline(ctx, postgw.ListTimelineParams{
+		Cursor: cursor,
+		Limit:  normalizePageSize(input.PageSize),
+	}, requestorID)
 	if err != nil {
 		return nil, err
 	}

@@ -40,8 +40,11 @@ type ListUserPostsParams struct {
 }
 
 type Gateway interface {
+	GetPost(ctx context.Context, postID ulid.ULID, requestorID ulid.ULID) (*PostView, error)
 	CreatePost(ctx context.Context, params CreatePostParams) (*PostView, error)
 	DeletePost(ctx context.Context, postID ulid.ULID, authorID ulid.ULID) error
+	LikePost(ctx context.Context, postID ulid.ULID, userID ulid.ULID) (*PostView, error)
+	UnlikePost(ctx context.Context, postID ulid.ULID, userID ulid.ULID) (*PostView, error)
 	ListTimeline(ctx context.Context, params ListTimelineParams, requestorID ulid.ULID) ([]*PostView, error)
 	ListUserPosts(ctx context.Context, params ListUserPostsParams, requestorID ulid.ULID) ([]*PostView, error)
 }

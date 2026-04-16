@@ -10,7 +10,8 @@ import {
 } from "~/components/compose-post-dialog";
 import type { Route } from "./+types/home";
 import {
-  listTimeline,
+  listPublicTimeline,
+  listFollowingTimeline,
   createPost,
   isLoggedIn,
   type Post as ApiPost,
@@ -48,32 +49,32 @@ function apiPostToUiPost(p: ApiPost): Post {
     createdAt: new Date(p.create_time),
     replyCount: p.reply_count ?? 0,
     repostCount: p.repost_count ?? 0,
-    likeCount: p.favorite_count ?? 0,
+    likeCount: p.like_count ?? 0,
   };
 }
 
 export function meta({}: Route.MetaArgs) {
-  return [
-    { title: "Reverie" },
-    { name: "description", content: "Reverie SNS" },
-  ];
+  return [{ title: "Reverie" }];
 }
 
-export default function Home() {
+function TimelineTab({
+  fetcher,
+}: {
+  fetcher: (pageToken?: string) => Promise<{ posts: ApiPost[]; next_page_token?: string }>;
+}) {
   const [posts, setPosts] = useState<Post[]>([]);
-  const [nextCursor, setNextCursor] = useState<string | undefined>();
+  const [nextPageToken, setNextPageToken] = useState<string | undefined>();
   const [loading, setLoading] = useState(false);
-  const [composeMode, setComposeMode] = useState<ComposeMode | null>(null);
   const loggedIn = isLoggedIn();
 
-  const fetchTimeline = useCallback(async (cursor?: string) => {
+  const fetch = useCallback(async (pageToken?: string) => {
     if (!loggedIn) return;
     setLoading(true);
     try {
-      const res = await listTimeline({ limit: 20, cursor });
+      const res = await fetcher(pageToken);
       const newPosts = (res.posts ?? []).map(apiPostToUiPost);
-      setPosts((prev) => cursor ? [...prev, ...newPosts] : newPosts);
-      setNextCursor(res.next_cursor);
+      setPosts((prev) => (pageToken ? [...prev, ...newPosts] : newPosts));
+      setNextPageToken(res.next_page_token || undefined);
     } catch {
       // ignore
     } finally {
@@ -81,27 +82,54 @@ export default function Home() {
     }
   }, [loggedIn]);
 
-  useEffect(() => {
-    fetchTimeline();
-  }, [fetchTimeline]);
+  useEffect(() => { fetch(); }, [fetch]);
+
+  if (!loggedIn) {
+    return (
+      <p className="text-center text-muted-foreground text-sm py-8">
+        ログインして投稿を見る
+      </p>
+    );
+  }
+
+  return (
+    <div>
+      {posts.map((post) => (
+        <PostCard key={post.id} post={post} />
+      ))}
+      {loading && (
+        <p className="text-center text-muted-foreground text-sm py-8">読み込み中...</p>
+      )}
+      {!loading && posts.length === 0 && (
+        <p className="text-center text-muted-foreground text-sm py-8">
+          まだ投稿がありません
+        </p>
+      )}
+      {nextPageToken && !loading && (
+        <button
+          className="w-full py-4 text-sm text-primary"
+          onClick={() => fetch(nextPageToken)}
+        >
+          もっと見る
+        </button>
+      )}
+    </div>
+  );
+}
+
+export default function Home() {
+  const [composeMode, setComposeMode] = useState<ComposeMode | null>(null);
+  const loggedIn = isLoggedIn();
 
   const handlePost = async (content: string) => {
     if (!loggedIn) return;
     try {
-      const res = await createPost({ text: content });
-      const newPost = apiPostToUiPost(res.post);
-      setPosts((prev) => [newPost, ...prev]);
+      await createPost({ text: content });
+      // ページリロードでタイムライン更新（簡易実装）
+      window.location.reload();
     } catch {
-      // fallback: show locally without API
+      // ignore
     }
-  };
-
-  const handleReply = (post: Post) => {
-    setComposeMode({ type: "reply", post });
-  };
-
-  const handleRepost = (post: Post) => {
-    setComposeMode({ type: "repost", post });
   };
 
   return (
@@ -115,57 +143,19 @@ export default function Home() {
         </div>
         <TabsContent value="following">
           <CallList calls={sampleCalls} />
-          <div>
-            {posts.map((post) => (
-              <PostCard
-                key={post.id}
-                post={post}
-                onReply={handleReply}
-                onRepost={handleRepost}
-              />
-            ))}
-            {!loggedIn && (
-              <p className="text-center text-muted-foreground text-sm py-8">
-                ログインして投稿を見る
-              </p>
-            )}
-          </div>
+          <TimelineTab
+            fetcher={(pageToken) =>
+              listFollowingTimeline({ page_size: 20, page_token: pageToken })
+            }
+          />
         </TabsContent>
         <TabsContent value="public">
           <CallList calls={sampleCalls} tab="public" />
-          <div>
-            {posts.map((post) => (
-              <PostCard
-                key={post.id}
-                post={post}
-                onReply={handleReply}
-                onRepost={handleRepost}
-              />
-            ))}
-            {loading && (
-              <p className="text-center text-muted-foreground text-sm py-8">
-                読み込み中...
-              </p>
-            )}
-            {!loading && posts.length === 0 && loggedIn && (
-              <p className="text-center text-muted-foreground text-sm py-8">
-                まだ投稿がありません
-              </p>
-            )}
-            {!loggedIn && (
-              <p className="text-center text-muted-foreground text-sm py-8">
-                ログインして投稿を見る
-              </p>
-            )}
-            {nextCursor && !loading && (
-              <button
-                className="w-full py-4 text-sm text-primary"
-                onClick={() => fetchTimeline(nextCursor)}
-              >
-                もっと見る
-              </button>
-            )}
-          </div>
+          <TimelineTab
+            fetcher={(pageToken) =>
+              listPublicTimeline({ page_size: 20, page_token: pageToken })
+            }
+          />
         </TabsContent>
       </Tabs>
       {loggedIn && (

@@ -7,6 +7,13 @@ import "google/protobuf/timestamp.proto";
 import "user/v1/user.proto";
 
 service PostService {
+  // Get post detail.
+  rpc GetPost(GetPostRequest) returns (GetPostResponse) {
+    option (google.api.http) = {
+      get: "/v1/posts/{post_id}"
+    };
+  }
+
   // Create a new post.
   rpc CreatePost(CreatePostRequest) returns (CreatePostResponse) {
     option (google.api.http) = {
@@ -22,10 +29,40 @@ service PostService {
     };
   }
 
-  // Get public timeline (all posts, newest first).
-  rpc ListTimeline(ListTimelineRequest) returns (ListTimelineResponse) {
+  // Like a post.
+  rpc LikePost(LikePostRequest) returns (LikePostResponse) {
     option (google.api.http) = {
-      get: "/v1/timeline"
+      post: "/v1/posts/{post_id}:like"
+      body: "*"
+    };
+  }
+
+  // Unlike a post.
+  rpc UnlikePost(UnlikePostRequest) returns (UnlikePostResponse) {
+    option (google.api.http) = {
+      post: "/v1/posts/{post_id}:unlike"
+      body: "*"
+    };
+  }
+
+  // List replies to a post.
+  rpc ListPostReplies(ListPostRepliesRequest) returns (ListPostRepliesResponse) {
+    option (google.api.http) = {
+      get: "/v1/posts/{post_id}/replies"
+    };
+  }
+
+  // List reposts of a post.
+  rpc ListPostReposts(ListPostRepostsRequest) returns (ListPostRepostsResponse) {
+    option (google.api.http) = {
+      get: "/v1/posts/{post_id}/reposts"
+    };
+  }
+
+  // List users who liked a post.
+  rpc ListPostLikes(ListPostLikesRequest) returns (ListPostLikesResponse) {
+    option (google.api.http) = {
+      get: "/v1/posts/{post_id}/likes"
     };
   }
 
@@ -33,6 +70,13 @@ service PostService {
   rpc ListUserPosts(ListUserPostsRequest) returns (ListUserPostsResponse) {
     option (google.api.http) = {
       get: "/v1/users/{user_id}/posts"
+    };
+  }
+
+  // List posts liked by a specific user.
+  rpc ListUserLikedPosts(ListUserLikedPostsRequest) returns (ListUserLikedPostsResponse) {
+    option (google.api.http) = {
+      get: "/v1/users/{user_id}/liked_posts"
     };
   }
 }
@@ -47,12 +91,20 @@ message Post {
   optional string repost_id = 5;
   int32 reply_count = 6;
   int32 repost_count = 7;
-  int32 favorite_count = 8;
-  bool is_favorited = 9;
+  int32 like_count = 8;
+  bool is_liked = 9;
   google.protobuf.Timestamp create_time = 10;
 }
 
 // Request / Response
+
+message GetPostRequest {
+  string post_id = 1;
+}
+
+message GetPostResponse {
+  Post post = 1;
+}
 
 message CreatePostRequest {
   string text = 1;
@@ -70,23 +122,73 @@ message DeletePostRequest {
 
 message DeletePostResponse {}
 
-message ListTimelineRequest {
-  int32 limit = 1;
-  optional string cursor = 2; // create_time of the last received post (for pagination)
+message LikePostRequest {
+  string post_id = 1;
 }
 
-message ListTimelineResponse {
+message LikePostResponse {
+  Post post = 1;
+}
+
+message UnlikePostRequest {
+  string post_id = 1;
+}
+
+message UnlikePostResponse {
+  Post post = 1;
+}
+
+message ListPostRepliesRequest {
+  string post_id = 1;
+  int32 page_size = 2;
+  string page_token = 3;
+}
+
+message ListPostRepliesResponse {
   repeated Post posts = 1;
-  optional string next_cursor = 2;
+  string next_page_token = 2;
+}
+
+message ListPostRepostsRequest {
+  string post_id = 1;
+  int32 page_size = 2;
+  string page_token = 3;
+}
+
+message ListPostRepostsResponse {
+  repeated Post posts = 1;
+  string next_page_token = 2;
+}
+
+message ListPostLikesRequest {
+  string post_id = 1;
+  int32 page_size = 2;
+  string page_token = 3;
+}
+
+message ListPostLikesResponse {
+  repeated user.v1.User users = 1;
+  string next_page_token = 2;
 }
 
 message ListUserPostsRequest {
   string user_id = 1;
-  int32 limit = 2;
-  optional string cursor = 3;
+  int32 page_size = 2;
+  string page_token = 3;
 }
 
 message ListUserPostsResponse {
   repeated Post posts = 1;
-  optional string next_cursor = 2;
+  string next_page_token = 2;
+}
+
+message ListUserLikedPostsRequest {
+  string user_id = 1;
+  int32 page_size = 2;
+  string page_token = 3;
+}
+
+message ListUserLikedPostsResponse {
+  repeated Post posts = 1;
+  string next_page_token = 2;
 }

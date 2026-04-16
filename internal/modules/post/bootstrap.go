@@ -11,9 +11,11 @@ import (
 
 func InitModule(q sqlc.Querier, userGateway usergw.Gateway) postv1connect.PostServiceHandler {
 	postGateway := postgw.New(q, userGateway)
+	getPost := usecase.NewGetPost(postGateway)
 	createPost := usecase.NewCreatePost(postGateway)
 	deletePost := usecase.NewDeletePost(postGateway)
-	listTimeline := usecase.NewListTimeline(postGateway)
+	likePost := usecase.NewLikePost(postGateway)
+	unlikePost := usecase.NewUnlikePost(postGateway)
 	listUserPosts := usecase.NewListUserPosts(postGateway)
-	return handler.New(createPost, deletePost, listTimeline, listUserPosts)
+	return handler.New(getPost, createPost, deletePost, likePost, unlikePost, listUserPosts)
 }

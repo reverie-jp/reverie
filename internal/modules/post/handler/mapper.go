@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"time"
+	"encoding/base64"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 	postv1 "reverie.jp/reverie/internal/gen/pb/post/v1"
@@ -15,13 +15,13 @@ func toProtoPost(out *usecase.PostOutput) *postv1.Post {
 	}
 
 	p := &postv1.Post{
-		Id:            out.ID.String(),
-		Text:          out.Text,
-		ReplyCount:    int32(out.ReplyCount),
-		RepostCount:   int32(out.RepostCount),
-		FavoriteCount: int32(out.FavoriteCount),
-		IsFavorited:   out.IsFavorited,
-		CreateTime:    timestamppb.New(out.CreateTime),
+		Id:          out.ID.String(),
+		Text:        out.Text,
+		ReplyCount:  int32(out.ReplyCount),
+		RepostCount: int32(out.RepostCount),
+		LikeCount:   int32(out.FavoriteCount),
+		IsLiked:     out.IsFavorited,
+		CreateTime:  timestamppb.New(out.CreateTime),
 	}
 
 	if out.Author != nil {
@@ -46,11 +46,12 @@ func toProtoPost(out *usecase.PostOutput) *postv1.Post {
 	return p
 }
 
-func nextCursor(posts []*usecase.PostOutput) *string {
+// nextPageToken は最後の投稿の create_time を base64 エンコードしてページトークンにする
+func nextPageToken(posts []*usecase.PostOutput) string {
 	if len(posts) == 0 {
-		return nil
+		return ""
 	}
 	last := posts[len(posts)-1]
-	s := last.CreateTime.UTC().Format(time.RFC3339Nano)
-	return &s
+	raw := last.CreateTime.UTC().Format("2006-01-02T15:04:05.999999999Z")
+	return base64.StdEncoding.EncodeToString([]byte(raw))
 }

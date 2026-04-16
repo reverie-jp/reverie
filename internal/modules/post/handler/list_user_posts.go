@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"connectrpc.com/connect"
-	postv1 "reverie.jp/reverie/internal/gen/pb/post/v1"
 	"reverie.jp/reverie/internal/application/server/interceptor"
+	postv1 "reverie.jp/reverie/internal/gen/pb/post/v1"
 	"reverie.jp/reverie/internal/modules/post/usecase"
 	"reverie.jp/reverie/internal/platform/xerrors"
 )
@@ -17,9 +17,9 @@ func (h *Handler) ListUserPosts(ctx context.Context, req *connect.Request[postv1
 	}
 
 	outputs, err := h.listUserPosts.Execute(ctx, usecase.ListUserPostsInput{
-		UserID: req.Msg.UserId,
-		Cursor: req.Msg.Cursor,
-		Limit:  req.Msg.Limit,
+		UserID:    req.Msg.UserId,
+		PageToken: req.Msg.PageToken,
+		PageSize:  req.Msg.PageSize,
 	}, userID)
 	if err != nil {
 		return nil, err
@@ -31,7 +31,7 @@ func (h *Handler) ListUserPosts(ctx context.Context, req *connect.Request[postv1
 	}
 
 	return connect.NewResponse(&postv1.ListUserPostsResponse{
-		Posts:      posts,
-		NextCursor: nextCursor(outputs),
+		Posts:         posts,
+		NextPageToken: nextPageToken(outputs),
 	}), nil
 }

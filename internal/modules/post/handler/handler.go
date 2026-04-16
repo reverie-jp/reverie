@@ -7,22 +7,28 @@ import (
 
 type Handler struct {
 	postv1connect.UnimplementedPostServiceHandler
+	getPost       *usecase.GetPost
 	createPost    *usecase.CreatePost
 	deletePost    *usecase.DeletePost
-	listTimeline  *usecase.ListTimeline
+	likePost      *usecase.LikePost
+	unlikePost    *usecase.UnlikePost
 	listUserPosts *usecase.ListUserPosts
 }
 
 func New(
+	getPost *usecase.GetPost,
 	createPost *usecase.CreatePost,
 	deletePost *usecase.DeletePost,
-	listTimeline *usecase.ListTimeline,
+	likePost *usecase.LikePost,
+	unlikePost *usecase.UnlikePost,
 	listUserPosts *usecase.ListUserPosts,
 ) *Handler {
 	return &Handler{
+		getPost:       getPost,
 		createPost:    createPost,
 		deletePost:    deletePost,
-		listTimeline:  listTimeline,
+		likePost:      likePost,
+		unlikePost:    unlikePost,
 		listUserPosts: listUserPosts,
 	}
 }

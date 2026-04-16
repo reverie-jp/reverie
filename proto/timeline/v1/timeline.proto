@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package timeline.v1;
+
+import "google/api/annotations.proto";
+import "post/v1/post.proto";
+
+service TimelineService {
+  // Following timeline (posts from followed users).
+  rpc ListFollowingTimeline(ListFollowingTimelineRequest) returns (ListFollowingTimelineResponse) {
+    option (google.api.http) = {
+      get: "/v1/timeline/following"
+    };
+  }
+
+  // Public timeline (all posts, newest first).
+  rpc ListPublicTimeline(ListPublicTimelineRequest) returns (ListPublicTimelineResponse) {
+    option (google.api.http) = {
+      get: "/v1/timeline/public"
+    };
+  }
+}
+
+message ListFollowingTimelineRequest {
+  int32 page_size = 1;
+  string page_token = 2;
+}
+
+message ListFollowingTimelineResponse {
+  repeated post.v1.Post posts = 1;
+  string next_page_token = 2;
+}
+
+message ListPublicTimelineRequest {
+  int32 page_size = 1;
+  string page_token = 2;
+}
+
+message ListPublicTimelineResponse {
+  repeated post.v1.Post posts = 1;
+  string next_page_token = 2;
+}

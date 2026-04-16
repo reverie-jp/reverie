@@ -33,8 +33,8 @@ type Post struct {
 	RepostId      *string                `protobuf:"bytes,5,opt,name=repost_id,json=repostId,proto3,oneof" json:"repost_id,omitempty"`
 	ReplyCount    int32                  `protobuf:"varint,6,opt,name=reply_count,json=replyCount,proto3" json:"reply_count,omitempty"`
 	RepostCount   int32                  `protobuf:"varint,7,opt,name=repost_count,json=repostCount,proto3" json:"repost_count,omitempty"`
-	FavoriteCount int32                  `protobuf:"varint,8,opt,name=favorite_count,json=favoriteCount,proto3" json:"favorite_count,omitempty"`
-	IsFavorited   bool                   `protobuf:"varint,9,opt,name=is_favorited,json=isFavorited,proto3" json:"is_favorited,omitempty"`
+	LikeCount     int32                  `protobuf:"varint,8,opt,name=like_count,json=likeCount,proto3" json:"like_count,omitempty"`
+	IsLiked       bool                   `protobuf:"varint,9,opt,name=is_liked,json=isLiked,proto3" json:"is_liked,omitempty"`
 	CreateTime    *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -119,16 +119,16 @@ func (x *Post) GetRepostCount() int32 {
 	return 0
 }
 
-func (x *Post) GetFavoriteCount() int32 {
+func (x *Post) GetLikeCount() int32 {
 	if x != nil {
-		return x.FavoriteCount
+		return x.LikeCount
 	}
 	return 0
 }
 
-func (x *Post) GetIsFavorited() bool {
+func (x *Post) GetIsLiked() bool {
 	if x != nil {
-		return x.IsFavorited
+		return x.IsLiked
 	}
 	return false
 }
@@ -136,6 +136,94 @@ func (x *Post) GetIsFavorited() bool {
 func (x *Post) GetCreateTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.CreateTime
+	}
+	return nil
+}
+
+type GetPostRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PostId        string                 `protobuf:"bytes,1,opt,name=post_id,json=postId,proto3" json:"post_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetPostRequest) Reset() {
+	*x = GetPostRequest{}
+	mi := &file_post_v1_post_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetPostRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetPostRequest) ProtoMessage() {}
+
+func (x *GetPostRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_post_v1_post_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetPostRequest.ProtoReflect.Descriptor instead.
+func (*GetPostRequest) Descriptor() ([]byte, []int) {
+	return file_post_v1_post_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *GetPostRequest) GetPostId() string {
+	if x != nil {
+		return x.PostId
+	}
+	return ""
+}
+
+type GetPostResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Post          *Post                  `protobuf:"bytes,1,opt,name=post,proto3" json:"post,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetPostResponse) Reset() {
+	*x = GetPostResponse{}
+	mi := &file_post_v1_post_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetPostResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetPostResponse) ProtoMessage() {}
+
+func (x *GetPostResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_post_v1_post_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetPostResponse.ProtoReflect.Descriptor instead.
+func (*GetPostResponse) Descriptor() ([]byte, []int) {
+	return file_post_v1_post_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *GetPostResponse) GetPost() *Post {
+	if x != nil {
+		return x.Post
 	}
 	return nil
 }
@@ -151,7 +239,7 @@ type CreatePostRequest struct {
 
 func (x *CreatePostRequest) Reset() {
 	*x = CreatePostRequest{}
-	mi := &file_post_v1_post_proto_msgTypes[1]
+	mi := &file_post_v1_post_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -163,7 +251,7 @@ func (x *CreatePostRequest) String() string {
 func (*CreatePostRequest) ProtoMessage() {}
 
 func (x *CreatePostRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_post_v1_post_proto_msgTypes[1]
+	mi := &file_post_v1_post_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -176,7 +264,7 @@ func (x *CreatePostRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreatePostRequest.ProtoReflect.Descriptor instead.
 func (*CreatePostRequest) Descriptor() ([]byte, []int) {
-	return file_post_v1_post_proto_rawDescGZIP(), []int{1}
+	return file_post_v1_post_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *CreatePostRequest) GetText() string {
@@ -209,7 +297,7 @@ type CreatePostResponse struct {
 
 func (x *CreatePostResponse) Reset() {
 	*x = CreatePostResponse{}
-	mi := &file_post_v1_post_proto_msgTypes[2]
+	mi := &file_post_v1_post_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -221,7 +309,7 @@ func (x *CreatePostResponse) String() string {
 func (*CreatePostResponse) ProtoMessage() {}
 
 func (x *CreatePostResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_post_v1_post_proto_msgTypes[2]
+	mi := &file_post_v1_post_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -234,7 +322,7 @@ func (x *CreatePostResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreatePostResponse.ProtoReflect.Descriptor instead.
 func (*CreatePostResponse) Descriptor() ([]byte, []int) {
-	return file_post_v1_post_proto_rawDescGZIP(), []int{2}
+	return file_post_v1_post_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *CreatePostResponse) GetPost() *Post {
@@ -253,7 +341,7 @@ type DeletePostRequest struct {
 
 func (x *DeletePostRequest) Reset() {
 	*x = DeletePostRequest{}
-	mi := &file_post_v1_post_proto_msgTypes[3]
+	mi := &file_post_v1_post_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -265,7 +353,7 @@ func (x *DeletePostRequest) String() string {
 func (*DeletePostRequest) ProtoMessage() {}
 
 func (x *DeletePostRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_post_v1_post_proto_msgTypes[3]
+	mi := &file_post_v1_post_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -278,7 +366,7 @@ func (x *DeletePostRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeletePostRequest.ProtoReflect.Descriptor instead.
 func (*DeletePostRequest) Descriptor() ([]byte, []int) {
-	return file_post_v1_post_proto_rawDescGZIP(), []int{3}
+	return file_post_v1_post_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *DeletePostRequest) GetPostId() string {
@@ -296,7 +384,7 @@ type DeletePostResponse struct {
 
 func (x *DeletePostResponse) Reset() {
 	*x = DeletePostResponse{}
-	mi := &file_post_v1_post_proto_msgTypes[4]
+	mi := &file_post_v1_post_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -308,7 +396,7 @@ func (x *DeletePostResponse) String() string {
 func (*DeletePostResponse) ProtoMessage() {}
 
 func (x *DeletePostResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_post_v1_post_proto_msgTypes[4]
+	mi := &file_post_v1_post_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -321,32 +409,31 @@ func (x *DeletePostResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeletePostResponse.ProtoReflect.Descriptor instead.
 func (*DeletePostResponse) Descriptor() ([]byte, []int) {
-	return file_post_v1_post_proto_rawDescGZIP(), []int{4}
+	return file_post_v1_post_proto_rawDescGZIP(), []int{6}
 }
 
-type ListTimelineRequest struct {
+type LikePostRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Limit         int32                  `protobuf:"varint,1,opt,name=limit,proto3" json:"limit,omitempty"`
-	Cursor        *string                `protobuf:"bytes,2,opt,name=cursor,proto3,oneof" json:"cursor,omitempty"` // create_time of the last received post (for pagination)
+	PostId        string                 `protobuf:"bytes,1,opt,name=post_id,json=postId,proto3" json:"post_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ListTimelineRequest) Reset() {
-	*x = ListTimelineRequest{}
-	mi := &file_post_v1_post_proto_msgTypes[5]
+func (x *LikePostRequest) Reset() {
+	*x = LikePostRequest{}
+	mi := &file_post_v1_post_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ListTimelineRequest) String() string {
+func (x *LikePostRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ListTimelineRequest) ProtoMessage() {}
+func (*LikePostRequest) ProtoMessage() {}
 
-func (x *ListTimelineRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_post_v1_post_proto_msgTypes[5]
+func (x *LikePostRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_post_v1_post_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -357,48 +444,40 @@ func (x *ListTimelineRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ListTimelineRequest.ProtoReflect.Descriptor instead.
-func (*ListTimelineRequest) Descriptor() ([]byte, []int) {
-	return file_post_v1_post_proto_rawDescGZIP(), []int{5}
+// Deprecated: Use LikePostRequest.ProtoReflect.Descriptor instead.
+func (*LikePostRequest) Descriptor() ([]byte, []int) {
+	return file_post_v1_post_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *ListTimelineRequest) GetLimit() int32 {
+func (x *LikePostRequest) GetPostId() string {
 	if x != nil {
-		return x.Limit
-	}
-	return 0
-}
-
-func (x *ListTimelineRequest) GetCursor() string {
-	if x != nil && x.Cursor != nil {
-		return *x.Cursor
+		return x.PostId
 	}
 	return ""
 }
 
-type ListTimelineResponse struct {
+type LikePostResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Posts         []*Post                `protobuf:"bytes,1,rep,name=posts,proto3" json:"posts,omitempty"`
-	NextCursor    *string                `protobuf:"bytes,2,opt,name=next_cursor,json=nextCursor,proto3,oneof" json:"next_cursor,omitempty"`
+	Post          *Post                  `protobuf:"bytes,1,opt,name=post,proto3" json:"post,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ListTimelineResponse) Reset() {
-	*x = ListTimelineResponse{}
-	mi := &file_post_v1_post_proto_msgTypes[6]
+func (x *LikePostResponse) Reset() {
+	*x = LikePostResponse{}
+	mi := &file_post_v1_post_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ListTimelineResponse) String() string {
+func (x *LikePostResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ListTimelineResponse) ProtoMessage() {}
+func (*LikePostResponse) ProtoMessage() {}
 
-func (x *ListTimelineResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_post_v1_post_proto_msgTypes[6]
+func (x *LikePostResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_post_v1_post_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -409,21 +488,438 @@ func (x *ListTimelineResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ListTimelineResponse.ProtoReflect.Descriptor instead.
-func (*ListTimelineResponse) Descriptor() ([]byte, []int) {
-	return file_post_v1_post_proto_rawDescGZIP(), []int{6}
+// Deprecated: Use LikePostResponse.ProtoReflect.Descriptor instead.
+func (*LikePostResponse) Descriptor() ([]byte, []int) {
+	return file_post_v1_post_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *ListTimelineResponse) GetPosts() []*Post {
+func (x *LikePostResponse) GetPost() *Post {
+	if x != nil {
+		return x.Post
+	}
+	return nil
+}
+
+type UnlikePostRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PostId        string                 `protobuf:"bytes,1,opt,name=post_id,json=postId,proto3" json:"post_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UnlikePostRequest) Reset() {
+	*x = UnlikePostRequest{}
+	mi := &file_post_v1_post_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UnlikePostRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UnlikePostRequest) ProtoMessage() {}
+
+func (x *UnlikePostRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_post_v1_post_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UnlikePostRequest.ProtoReflect.Descriptor instead.
+func (*UnlikePostRequest) Descriptor() ([]byte, []int) {
+	return file_post_v1_post_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *UnlikePostRequest) GetPostId() string {
+	if x != nil {
+		return x.PostId
+	}
+	return ""
+}
+
+type UnlikePostResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Post          *Post                  `protobuf:"bytes,1,opt,name=post,proto3" json:"post,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UnlikePostResponse) Reset() {
+	*x = UnlikePostResponse{}
+	mi := &file_post_v1_post_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UnlikePostResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UnlikePostResponse) ProtoMessage() {}
+
+func (x *UnlikePostResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_post_v1_post_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UnlikePostResponse.ProtoReflect.Descriptor instead.
+func (*UnlikePostResponse) Descriptor() ([]byte, []int) {
+	return file_post_v1_post_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *UnlikePostResponse) GetPost() *Post {
+	if x != nil {
+		return x.Post
+	}
+	return nil
+}
+
+type ListPostRepliesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PostId        string                 `protobuf:"bytes,1,opt,name=post_id,json=postId,proto3" json:"post_id,omitempty"`
+	PageSize      int32                  `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageToken     string                 `protobuf:"bytes,3,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListPostRepliesRequest) Reset() {
+	*x = ListPostRepliesRequest{}
+	mi := &file_post_v1_post_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListPostRepliesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListPostRepliesRequest) ProtoMessage() {}
+
+func (x *ListPostRepliesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_post_v1_post_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListPostRepliesRequest.ProtoReflect.Descriptor instead.
+func (*ListPostRepliesRequest) Descriptor() ([]byte, []int) {
+	return file_post_v1_post_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *ListPostRepliesRequest) GetPostId() string {
+	if x != nil {
+		return x.PostId
+	}
+	return ""
+}
+
+func (x *ListPostRepliesRequest) GetPageSize() int32 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+func (x *ListPostRepliesRequest) GetPageToken() string {
+	if x != nil {
+		return x.PageToken
+	}
+	return ""
+}
+
+type ListPostRepliesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Posts         []*Post                `protobuf:"bytes,1,rep,name=posts,proto3" json:"posts,omitempty"`
+	NextPageToken string                 `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListPostRepliesResponse) Reset() {
+	*x = ListPostRepliesResponse{}
+	mi := &file_post_v1_post_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListPostRepliesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListPostRepliesResponse) ProtoMessage() {}
+
+func (x *ListPostRepliesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_post_v1_post_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListPostRepliesResponse.ProtoReflect.Descriptor instead.
+func (*ListPostRepliesResponse) Descriptor() ([]byte, []int) {
+	return file_post_v1_post_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *ListPostRepliesResponse) GetPosts() []*Post {
 	if x != nil {
 		return x.Posts
 	}
 	return nil
 }
 
-func (x *ListTimelineResponse) GetNextCursor() string {
-	if x != nil && x.NextCursor != nil {
-		return *x.NextCursor
+func (x *ListPostRepliesResponse) GetNextPageToken() string {
+	if x != nil {
+		return x.NextPageToken
+	}
+	return ""
+}
+
+type ListPostRepostsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PostId        string                 `protobuf:"bytes,1,opt,name=post_id,json=postId,proto3" json:"post_id,omitempty"`
+	PageSize      int32                  `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageToken     string                 `protobuf:"bytes,3,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListPostRepostsRequest) Reset() {
+	*x = ListPostRepostsRequest{}
+	mi := &file_post_v1_post_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListPostRepostsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListPostRepostsRequest) ProtoMessage() {}
+
+func (x *ListPostRepostsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_post_v1_post_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListPostRepostsRequest.ProtoReflect.Descriptor instead.
+func (*ListPostRepostsRequest) Descriptor() ([]byte, []int) {
+	return file_post_v1_post_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *ListPostRepostsRequest) GetPostId() string {
+	if x != nil {
+		return x.PostId
+	}
+	return ""
+}
+
+func (x *ListPostRepostsRequest) GetPageSize() int32 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+func (x *ListPostRepostsRequest) GetPageToken() string {
+	if x != nil {
+		return x.PageToken
+	}
+	return ""
+}
+
+type ListPostRepostsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Posts         []*Post                `protobuf:"bytes,1,rep,name=posts,proto3" json:"posts,omitempty"`
+	NextPageToken string                 `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListPostRepostsResponse) Reset() {
+	*x = ListPostRepostsResponse{}
+	mi := &file_post_v1_post_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListPostRepostsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListPostRepostsResponse) ProtoMessage() {}
+
+func (x *ListPostRepostsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_post_v1_post_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListPostRepostsResponse.ProtoReflect.Descriptor instead.
+func (*ListPostRepostsResponse) Descriptor() ([]byte, []int) {
+	return file_post_v1_post_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *ListPostRepostsResponse) GetPosts() []*Post {
+	if x != nil {
+		return x.Posts
+	}
+	return nil
+}
+
+func (x *ListPostRepostsResponse) GetNextPageToken() string {
+	if x != nil {
+		return x.NextPageToken
+	}
+	return ""
+}
+
+type ListPostLikesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PostId        string                 `protobuf:"bytes,1,opt,name=post_id,json=postId,proto3" json:"post_id,omitempty"`
+	PageSize      int32                  `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageToken     string                 `protobuf:"bytes,3,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListPostLikesRequest) Reset() {
+	*x = ListPostLikesRequest{}
+	mi := &file_post_v1_post_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListPostLikesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListPostLikesRequest) ProtoMessage() {}
+
+func (x *ListPostLikesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_post_v1_post_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListPostLikesRequest.ProtoReflect.Descriptor instead.
+func (*ListPostLikesRequest) Descriptor() ([]byte, []int) {
+	return file_post_v1_post_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *ListPostLikesRequest) GetPostId() string {
+	if x != nil {
+		return x.PostId
+	}
+	return ""
+}
+
+func (x *ListPostLikesRequest) GetPageSize() int32 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+func (x *ListPostLikesRequest) GetPageToken() string {
+	if x != nil {
+		return x.PageToken
+	}
+	return ""
+}
+
+type ListPostLikesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Users         []*v1.User             `protobuf:"bytes,1,rep,name=users,proto3" json:"users,omitempty"`
+	NextPageToken string                 `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListPostLikesResponse) Reset() {
+	*x = ListPostLikesResponse{}
+	mi := &file_post_v1_post_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListPostLikesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListPostLikesResponse) ProtoMessage() {}
+
+func (x *ListPostLikesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_post_v1_post_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListPostLikesResponse.ProtoReflect.Descriptor instead.
+func (*ListPostLikesResponse) Descriptor() ([]byte, []int) {
+	return file_post_v1_post_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *ListPostLikesResponse) GetUsers() []*v1.User {
+	if x != nil {
+		return x.Users
+	}
+	return nil
+}
+
+func (x *ListPostLikesResponse) GetNextPageToken() string {
+	if x != nil {
+		return x.NextPageToken
 	}
 	return ""
 }
@@ -431,15 +927,15 @@ func (x *ListTimelineResponse) GetNextCursor() string {
 type ListUserPostsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Limit         int32                  `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
-	Cursor        *string                `protobuf:"bytes,3,opt,name=cursor,proto3,oneof" json:"cursor,omitempty"`
+	PageSize      int32                  `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageToken     string                 `protobuf:"bytes,3,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ListUserPostsRequest) Reset() {
 	*x = ListUserPostsRequest{}
-	mi := &file_post_v1_post_proto_msgTypes[7]
+	mi := &file_post_v1_post_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -451,7 +947,7 @@ func (x *ListUserPostsRequest) String() string {
 func (*ListUserPostsRequest) ProtoMessage() {}
 
 func (x *ListUserPostsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_post_v1_post_proto_msgTypes[7]
+	mi := &file_post_v1_post_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -464,7 +960,7 @@ func (x *ListUserPostsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListUserPostsRequest.ProtoReflect.Descriptor instead.
 func (*ListUserPostsRequest) Descriptor() ([]byte, []int) {
-	return file_post_v1_post_proto_rawDescGZIP(), []int{7}
+	return file_post_v1_post_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *ListUserPostsRequest) GetUserId() string {
@@ -474,16 +970,16 @@ func (x *ListUserPostsRequest) GetUserId() string {
 	return ""
 }
 
-func (x *ListUserPostsRequest) GetLimit() int32 {
+func (x *ListUserPostsRequest) GetPageSize() int32 {
 	if x != nil {
-		return x.Limit
+		return x.PageSize
 	}
 	return 0
 }
 
-func (x *ListUserPostsRequest) GetCursor() string {
-	if x != nil && x.Cursor != nil {
-		return *x.Cursor
+func (x *ListUserPostsRequest) GetPageToken() string {
+	if x != nil {
+		return x.PageToken
 	}
 	return ""
 }
@@ -491,14 +987,14 @@ func (x *ListUserPostsRequest) GetCursor() string {
 type ListUserPostsResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Posts         []*Post                `protobuf:"bytes,1,rep,name=posts,proto3" json:"posts,omitempty"`
-	NextCursor    *string                `protobuf:"bytes,2,opt,name=next_cursor,json=nextCursor,proto3,oneof" json:"next_cursor,omitempty"`
+	NextPageToken string                 `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ListUserPostsResponse) Reset() {
 	*x = ListUserPostsResponse{}
-	mi := &file_post_v1_post_proto_msgTypes[8]
+	mi := &file_post_v1_post_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -510,7 +1006,7 @@ func (x *ListUserPostsResponse) String() string {
 func (*ListUserPostsResponse) ProtoMessage() {}
 
 func (x *ListUserPostsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_post_v1_post_proto_msgTypes[8]
+	mi := &file_post_v1_post_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -523,7 +1019,7 @@ func (x *ListUserPostsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListUserPostsResponse.ProtoReflect.Descriptor instead.
 func (*ListUserPostsResponse) Descriptor() ([]byte, []int) {
-	return file_post_v1_post_proto_rawDescGZIP(), []int{8}
+	return file_post_v1_post_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *ListUserPostsResponse) GetPosts() []*Post {
@@ -533,9 +1029,121 @@ func (x *ListUserPostsResponse) GetPosts() []*Post {
 	return nil
 }
 
-func (x *ListUserPostsResponse) GetNextCursor() string {
-	if x != nil && x.NextCursor != nil {
-		return *x.NextCursor
+func (x *ListUserPostsResponse) GetNextPageToken() string {
+	if x != nil {
+		return x.NextPageToken
+	}
+	return ""
+}
+
+type ListUserLikedPostsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	PageSize      int32                  `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageToken     string                 `protobuf:"bytes,3,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListUserLikedPostsRequest) Reset() {
+	*x = ListUserLikedPostsRequest{}
+	mi := &file_post_v1_post_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListUserLikedPostsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListUserLikedPostsRequest) ProtoMessage() {}
+
+func (x *ListUserLikedPostsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_post_v1_post_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListUserLikedPostsRequest.ProtoReflect.Descriptor instead.
+func (*ListUserLikedPostsRequest) Descriptor() ([]byte, []int) {
+	return file_post_v1_post_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *ListUserLikedPostsRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *ListUserLikedPostsRequest) GetPageSize() int32 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+func (x *ListUserLikedPostsRequest) GetPageToken() string {
+	if x != nil {
+		return x.PageToken
+	}
+	return ""
+}
+
+type ListUserLikedPostsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Posts         []*Post                `protobuf:"bytes,1,rep,name=posts,proto3" json:"posts,omitempty"`
+	NextPageToken string                 `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListUserLikedPostsResponse) Reset() {
+	*x = ListUserLikedPostsResponse{}
+	mi := &file_post_v1_post_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListUserLikedPostsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListUserLikedPostsResponse) ProtoMessage() {}
+
+func (x *ListUserLikedPostsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_post_v1_post_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListUserLikedPostsResponse.ProtoReflect.Descriptor instead.
+func (*ListUserLikedPostsResponse) Descriptor() ([]byte, []int) {
+	return file_post_v1_post_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *ListUserLikedPostsResponse) GetPosts() []*Post {
+	if x != nil {
+		return x.Posts
+	}
+	return nil
+}
+
+func (x *ListUserLikedPostsResponse) GetNextPageToken() string {
+	if x != nil {
+		return x.NextPageToken
 	}
 	return ""
 }
@@ -544,7 +1152,7 @@ var File_post_v1_post_proto protoreflect.FileDescriptor
 
 const file_post_v1_post_proto_rawDesc = "" +
 	"\n" +
-	"\x12post/v1/post.proto\x12\apost.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x12user/v1/user.proto\"\x81\x03\n" +
+	"\x12post/v1/post.proto\x12\apost.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x12user/v1/user.proto\"\xf1\x02\n" +
 	"\x04Post\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04text\x18\x02 \x01(\tR\x04text\x12%\n" +
@@ -553,15 +1161,20 @@ const file_post_v1_post_proto_rawDesc = "" +
 	"\trepost_id\x18\x05 \x01(\tH\x01R\brepostId\x88\x01\x01\x12\x1f\n" +
 	"\vreply_count\x18\x06 \x01(\x05R\n" +
 	"replyCount\x12!\n" +
-	"\frepost_count\x18\a \x01(\x05R\vrepostCount\x12%\n" +
-	"\x0efavorite_count\x18\b \x01(\x05R\rfavoriteCount\x12!\n" +
-	"\fis_favorited\x18\t \x01(\bR\visFavorited\x12;\n" +
+	"\frepost_count\x18\a \x01(\x05R\vrepostCount\x12\x1d\n" +
+	"\n" +
+	"like_count\x18\b \x01(\x05R\tlikeCount\x12\x19\n" +
+	"\bis_liked\x18\t \x01(\bR\aisLiked\x12;\n" +
 	"\vcreate_time\x18\n" +
 	" \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"createTimeB\x0e\n" +
 	"\f_reply_to_idB\f\n" +
 	"\n" +
-	"_repost_id\"\x8c\x01\n" +
+	"_repost_id\")\n" +
+	"\x0eGetPostRequest\x12\x17\n" +
+	"\apost_id\x18\x01 \x01(\tR\x06postId\"4\n" +
+	"\x0fGetPostResponse\x12!\n" +
+	"\x04post\x18\x01 \x01(\v2\r.post.v1.PostR\x04post\"\x8c\x01\n" +
 	"\x11CreatePostRequest\x12\x12\n" +
 	"\x04text\x18\x01 \x01(\tR\x04text\x12#\n" +
 	"\vreply_to_id\x18\x02 \x01(\tH\x00R\treplyToId\x88\x01\x01\x12 \n" +
@@ -573,33 +1186,69 @@ const file_post_v1_post_proto_rawDesc = "" +
 	"\x04post\x18\x01 \x01(\v2\r.post.v1.PostR\x04post\",\n" +
 	"\x11DeletePostRequest\x12\x17\n" +
 	"\apost_id\x18\x01 \x01(\tR\x06postId\"\x14\n" +
-	"\x12DeletePostResponse\"S\n" +
-	"\x13ListTimelineRequest\x12\x14\n" +
-	"\x05limit\x18\x01 \x01(\x05R\x05limit\x12\x1b\n" +
-	"\x06cursor\x18\x02 \x01(\tH\x00R\x06cursor\x88\x01\x01B\t\n" +
-	"\a_cursor\"q\n" +
-	"\x14ListTimelineResponse\x12#\n" +
-	"\x05posts\x18\x01 \x03(\v2\r.post.v1.PostR\x05posts\x12$\n" +
-	"\vnext_cursor\x18\x02 \x01(\tH\x00R\n" +
-	"nextCursor\x88\x01\x01B\x0e\n" +
-	"\f_next_cursor\"m\n" +
+	"\x12DeletePostResponse\"*\n" +
+	"\x0fLikePostRequest\x12\x17\n" +
+	"\apost_id\x18\x01 \x01(\tR\x06postId\"5\n" +
+	"\x10LikePostResponse\x12!\n" +
+	"\x04post\x18\x01 \x01(\v2\r.post.v1.PostR\x04post\",\n" +
+	"\x11UnlikePostRequest\x12\x17\n" +
+	"\apost_id\x18\x01 \x01(\tR\x06postId\"7\n" +
+	"\x12UnlikePostResponse\x12!\n" +
+	"\x04post\x18\x01 \x01(\v2\r.post.v1.PostR\x04post\"m\n" +
+	"\x16ListPostRepliesRequest\x12\x17\n" +
+	"\apost_id\x18\x01 \x01(\tR\x06postId\x12\x1b\n" +
+	"\tpage_size\x18\x02 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\n" +
+	"page_token\x18\x03 \x01(\tR\tpageToken\"f\n" +
+	"\x17ListPostRepliesResponse\x12#\n" +
+	"\x05posts\x18\x01 \x03(\v2\r.post.v1.PostR\x05posts\x12&\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"m\n" +
+	"\x16ListPostRepostsRequest\x12\x17\n" +
+	"\apost_id\x18\x01 \x01(\tR\x06postId\x12\x1b\n" +
+	"\tpage_size\x18\x02 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\n" +
+	"page_token\x18\x03 \x01(\tR\tpageToken\"f\n" +
+	"\x17ListPostRepostsResponse\x12#\n" +
+	"\x05posts\x18\x01 \x03(\v2\r.post.v1.PostR\x05posts\x12&\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"k\n" +
+	"\x14ListPostLikesRequest\x12\x17\n" +
+	"\apost_id\x18\x01 \x01(\tR\x06postId\x12\x1b\n" +
+	"\tpage_size\x18\x02 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\n" +
+	"page_token\x18\x03 \x01(\tR\tpageToken\"d\n" +
+	"\x15ListPostLikesResponse\x12#\n" +
+	"\x05users\x18\x01 \x03(\v2\r.user.v1.UserR\x05users\x12&\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"k\n" +
 	"\x14ListUserPostsRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x14\n" +
-	"\x05limit\x18\x02 \x01(\x05R\x05limit\x12\x1b\n" +
-	"\x06cursor\x18\x03 \x01(\tH\x00R\x06cursor\x88\x01\x01B\t\n" +
-	"\a_cursor\"r\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1b\n" +
+	"\tpage_size\x18\x02 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\n" +
+	"page_token\x18\x03 \x01(\tR\tpageToken\"d\n" +
 	"\x15ListUserPostsResponse\x12#\n" +
-	"\x05posts\x18\x01 \x03(\v2\r.post.v1.PostR\x05posts\x12$\n" +
-	"\vnext_cursor\x18\x02 \x01(\tH\x00R\n" +
-	"nextCursor\x88\x01\x01B\x0e\n" +
-	"\f_next_cursor2\xa4\x03\n" +
-	"\vPostService\x12[\n" +
+	"\x05posts\x18\x01 \x03(\v2\r.post.v1.PostR\x05posts\x12&\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"p\n" +
+	"\x19ListUserLikedPostsRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1b\n" +
+	"\tpage_size\x18\x02 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\n" +
+	"page_token\x18\x03 \x01(\tR\tpageToken\"i\n" +
+	"\x1aListUserLikedPostsResponse\x12#\n" +
+	"\x05posts\x18\x01 \x03(\v2\r.post.v1.PostR\x05posts\x12&\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken2\xe2\b\n" +
+	"\vPostService\x12Y\n" +
+	"\aGetPost\x12\x17.post.v1.GetPostRequest\x1a\x18.post.v1.GetPostResponse\"\x1b\x82\xd3\xe4\x93\x02\x15\x12\x13/v1/posts/{post_id}\x12[\n" +
 	"\n" +
 	"CreatePost\x12\x1a.post.v1.CreatePostRequest\x1a\x1b.post.v1.CreatePostResponse\"\x14\x82\xd3\xe4\x93\x02\x0e:\x01*\"\t/v1/posts\x12b\n" +
 	"\n" +
-	"DeletePost\x12\x1a.post.v1.DeletePostRequest\x1a\x1b.post.v1.DeletePostResponse\"\x1b\x82\xd3\xe4\x93\x02\x15*\x13/v1/posts/{post_id}\x12a\n" +
-	"\fListTimeline\x12\x1c.post.v1.ListTimelineRequest\x1a\x1d.post.v1.ListTimelineResponse\"\x14\x82\xd3\xe4\x93\x02\x0e\x12\f/v1/timeline\x12q\n" +
-	"\rListUserPosts\x12\x1d.post.v1.ListUserPostsRequest\x1a\x1e.post.v1.ListUserPostsResponse\"!\x82\xd3\xe4\x93\x02\x1b\x12\x19/v1/users/{user_id}/postsB\x88\x01\n" +
+	"DeletePost\x12\x1a.post.v1.DeletePostRequest\x1a\x1b.post.v1.DeletePostResponse\"\x1b\x82\xd3\xe4\x93\x02\x15*\x13/v1/posts/{post_id}\x12d\n" +
+	"\bLikePost\x12\x18.post.v1.LikePostRequest\x1a\x19.post.v1.LikePostResponse\"#\x82\xd3\xe4\x93\x02\x1d:\x01*\"\x18/v1/posts/{post_id}:like\x12l\n" +
+	"\n" +
+	"UnlikePost\x12\x1a.post.v1.UnlikePostRequest\x1a\x1b.post.v1.UnlikePostResponse\"%\x82\xd3\xe4\x93\x02\x1f:\x01*\"\x1a/v1/posts/{post_id}:unlike\x12y\n" +
+	"\x0fListPostReplies\x12\x1f.post.v1.ListPostRepliesRequest\x1a .post.v1.ListPostRepliesResponse\"#\x82\xd3\xe4\x93\x02\x1d\x12\x1b/v1/posts/{post_id}/replies\x12y\n" +
+	"\x0fListPostReposts\x12\x1f.post.v1.ListPostRepostsRequest\x1a .post.v1.ListPostRepostsResponse\"#\x82\xd3\xe4\x93\x02\x1d\x12\x1b/v1/posts/{post_id}/reposts\x12q\n" +
+	"\rListPostLikes\x12\x1d.post.v1.ListPostLikesRequest\x1a\x1e.post.v1.ListPostLikesResponse\"!\x82\xd3\xe4\x93\x02\x1b\x12\x19/v1/posts/{post_id}/likes\x12q\n" +
+	"\rListUserPosts\x12\x1d.post.v1.ListUserPostsRequest\x1a\x1e.post.v1.ListUserPostsResponse\"!\x82\xd3\xe4\x93\x02\x1b\x12\x19/v1/users/{user_id}/posts\x12\x86\x01\n" +
+	"\x12ListUserLikedPosts\x12\".post.v1.ListUserLikedPostsRequest\x1a#.post.v1.ListUserLikedPostsResponse\"'\x82\xd3\xe4\x93\x02!\x12\x1f/v1/users/{user_id}/liked_postsB\x88\x01\n" +
 	"\vcom.post.v1B\tPostProtoP\x01Z1reverie.jp/reverie/internal/gen/pb/post/v1;postv1\xa2\x02\x03PXX\xaa\x02\aPost.V1\xca\x02\aPost\\V1\xe2\x02\x13Post\\V1\\GPBMetadata\xea\x02\bPost::V1b\x06proto3"
 
 var (
@@ -614,39 +1263,69 @@ func file_post_v1_post_proto_rawDescGZIP() []byte {
 	return file_post_v1_post_proto_rawDescData
 }
 
-var file_post_v1_post_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_post_v1_post_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
 var file_post_v1_post_proto_goTypes = []any{
-	(*Post)(nil),                  // 0: post.v1.Post
-	(*CreatePostRequest)(nil),     // 1: post.v1.CreatePostRequest
-	(*CreatePostResponse)(nil),    // 2: post.v1.CreatePostResponse
-	(*DeletePostRequest)(nil),     // 3: post.v1.DeletePostRequest
-	(*DeletePostResponse)(nil),    // 4: post.v1.DeletePostResponse
-	(*ListTimelineRequest)(nil),   // 5: post.v1.ListTimelineRequest
-	(*ListTimelineResponse)(nil),  // 6: post.v1.ListTimelineResponse
-	(*ListUserPostsRequest)(nil),  // 7: post.v1.ListUserPostsRequest
-	(*ListUserPostsResponse)(nil), // 8: post.v1.ListUserPostsResponse
-	(*v1.User)(nil),               // 9: user.v1.User
-	(*timestamppb.Timestamp)(nil), // 10: google.protobuf.Timestamp
+	(*Post)(nil),                       // 0: post.v1.Post
+	(*GetPostRequest)(nil),             // 1: post.v1.GetPostRequest
+	(*GetPostResponse)(nil),            // 2: post.v1.GetPostResponse
+	(*CreatePostRequest)(nil),          // 3: post.v1.CreatePostRequest
+	(*CreatePostResponse)(nil),         // 4: post.v1.CreatePostResponse
+	(*DeletePostRequest)(nil),          // 5: post.v1.DeletePostRequest
+	(*DeletePostResponse)(nil),         // 6: post.v1.DeletePostResponse
+	(*LikePostRequest)(nil),            // 7: post.v1.LikePostRequest
+	(*LikePostResponse)(nil),           // 8: post.v1.LikePostResponse
+	(*UnlikePostRequest)(nil),          // 9: post.v1.UnlikePostRequest
+	(*UnlikePostResponse)(nil),         // 10: post.v1.UnlikePostResponse
+	(*ListPostRepliesRequest)(nil),     // 11: post.v1.ListPostRepliesRequest
+	(*ListPostRepliesResponse)(nil),    // 12: post.v1.ListPostRepliesResponse
+	(*ListPostRepostsRequest)(nil),     // 13: post.v1.ListPostRepostsRequest
+	(*ListPostRepostsResponse)(nil),    // 14: post.v1.ListPostRepostsResponse
+	(*ListPostLikesRequest)(nil),       // 15: post.v1.ListPostLikesRequest
+	(*ListPostLikesResponse)(nil),      // 16: post.v1.ListPostLikesResponse
+	(*ListUserPostsRequest)(nil),       // 17: post.v1.ListUserPostsRequest
+	(*ListUserPostsResponse)(nil),      // 18: post.v1.ListUserPostsResponse
+	(*ListUserLikedPostsRequest)(nil),  // 19: post.v1.ListUserLikedPostsRequest
+	(*ListUserLikedPostsResponse)(nil), // 20: post.v1.ListUserLikedPostsResponse
+	(*v1.User)(nil),                    // 21: user.v1.User
+	(*timestamppb.Timestamp)(nil),      // 22: google.protobuf.Timestamp
 }
 var file_post_v1_post_proto_depIdxs = []int32{
-	9,  // 0: post.v1.Post.author:type_name -> user.v1.User
-	10, // 1: post.v1.Post.create_time:type_name -> google.protobuf.Timestamp
-	0,  // 2: post.v1.CreatePostResponse.post:type_name -> post.v1.Post
-	0,  // 3: post.v1.ListTimelineResponse.posts:type_name -> post.v1.Post
-	0,  // 4: post.v1.ListUserPostsResponse.posts:type_name -> post.v1.Post
-	1,  // 5: post.v1.PostService.CreatePost:input_type -> post.v1.CreatePostRequest
-	3,  // 6: post.v1.PostService.DeletePost:input_type -> post.v1.DeletePostRequest
-	5,  // 7: post.v1.PostService.ListTimeline:input_type -> post.v1.ListTimelineRequest
-	7,  // 8: post.v1.PostService.ListUserPosts:input_type -> post.v1.ListUserPostsRequest
-	2,  // 9: post.v1.PostService.CreatePost:output_type -> post.v1.CreatePostResponse
-	4,  // 10: post.v1.PostService.DeletePost:output_type -> post.v1.DeletePostResponse
-	6,  // 11: post.v1.PostService.ListTimeline:output_type -> post.v1.ListTimelineResponse
-	8,  // 12: post.v1.PostService.ListUserPosts:output_type -> post.v1.ListUserPostsResponse
-	9,  // [9:13] is the sub-list for method output_type
-	5,  // [5:9] is the sub-list for method input_type
-	5,  // [5:5] is the sub-list for extension type_name
-	5,  // [5:5] is the sub-list for extension extendee
-	0,  // [0:5] is the sub-list for field type_name
+	21, // 0: post.v1.Post.author:type_name -> user.v1.User
+	22, // 1: post.v1.Post.create_time:type_name -> google.protobuf.Timestamp
+	0,  // 2: post.v1.GetPostResponse.post:type_name -> post.v1.Post
+	0,  // 3: post.v1.CreatePostResponse.post:type_name -> post.v1.Post
+	0,  // 4: post.v1.LikePostResponse.post:type_name -> post.v1.Post
+	0,  // 5: post.v1.UnlikePostResponse.post:type_name -> post.v1.Post
+	0,  // 6: post.v1.ListPostRepliesResponse.posts:type_name -> post.v1.Post
+	0,  // 7: post.v1.ListPostRepostsResponse.posts:type_name -> post.v1.Post
+	21, // 8: post.v1.ListPostLikesResponse.users:type_name -> user.v1.User
+	0,  // 9: post.v1.ListUserPostsResponse.posts:type_name -> post.v1.Post
+	0,  // 10: post.v1.ListUserLikedPostsResponse.posts:type_name -> post.v1.Post
+	1,  // 11: post.v1.PostService.GetPost:input_type -> post.v1.GetPostRequest
+	3,  // 12: post.v1.PostService.CreatePost:input_type -> post.v1.CreatePostRequest
+	5,  // 13: post.v1.PostService.DeletePost:input_type -> post.v1.DeletePostRequest
+	7,  // 14: post.v1.PostService.LikePost:input_type -> post.v1.LikePostRequest
+	9,  // 15: post.v1.PostService.UnlikePost:input_type -> post.v1.UnlikePostRequest
+	11, // 16: post.v1.PostService.ListPostReplies:input_type -> post.v1.ListPostRepliesRequest
+	13, // 17: post.v1.PostService.ListPostReposts:input_type -> post.v1.ListPostRepostsRequest
+	15, // 18: post.v1.PostService.ListPostLikes:input_type -> post.v1.ListPostLikesRequest
+	17, // 19: post.v1.PostService.ListUserPosts:input_type -> post.v1.ListUserPostsRequest
+	19, // 20: post.v1.PostService.ListUserLikedPosts:input_type -> post.v1.ListUserLikedPostsRequest
+	2,  // 21: post.v1.PostService.GetPost:output_type -> post.v1.GetPostResponse
+	4,  // 22: post.v1.PostService.CreatePost:output_type -> post.v1.CreatePostResponse
+	6,  // 23: post.v1.PostService.DeletePost:output_type -> post.v1.DeletePostResponse
+	8,  // 24: post.v1.PostService.LikePost:output_type -> post.v1.LikePostResponse
+	10, // 25: post.v1.PostService.UnlikePost:output_type -> post.v1.UnlikePostResponse
+	12, // 26: post.v1.PostService.ListPostReplies:output_type -> post.v1.ListPostRepliesResponse
+	14, // 27: post.v1.PostService.ListPostReposts:output_type -> post.v1.ListPostRepostsResponse
+	16, // 28: post.v1.PostService.ListPostLikes:output_type -> post.v1.ListPostLikesResponse
+	18, // 29: post.v1.PostService.ListUserPosts:output_type -> post.v1.ListUserPostsResponse
+	20, // 30: post.v1.PostService.ListUserLikedPosts:output_type -> post.v1.ListUserLikedPostsResponse
+	21, // [21:31] is the sub-list for method output_type
+	11, // [11:21] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_post_v1_post_proto_init() }
@@ -655,18 +1334,14 @@ func file_post_v1_post_proto_init() {
 		return
 	}
 	file_post_v1_post_proto_msgTypes[0].OneofWrappers = []any{}
-	file_post_v1_post_proto_msgTypes[1].OneofWrappers = []any{}
-	file_post_v1_post_proto_msgTypes[5].OneofWrappers = []any{}
-	file_post_v1_post_proto_msgTypes[6].OneofWrappers = []any{}
-	file_post_v1_post_proto_msgTypes[7].OneofWrappers = []any{}
-	file_post_v1_post_proto_msgTypes[8].OneofWrappers = []any{}
+	file_post_v1_post_proto_msgTypes[3].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_post_v1_post_proto_rawDesc), len(file_post_v1_post_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   9,
+			NumMessages:   21,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
