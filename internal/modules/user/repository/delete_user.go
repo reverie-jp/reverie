@@ -7,5 +7,5 @@ import (
 )
 
 func (r *RepositoryImpl) DeleteUser(ctx context.Context, id ulid.ULID) error {
-	return r.q.DeleteUser(ctx, id.String())
+	return r.q.DeleteUser(ctx, id)
 }

@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
@@ -11,24 +11,37 @@ import {
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { ArrowLeft, Camera, ImagePlus, Trash2 } from "lucide-react";
+import { getMe, updateUser, isLoggedIn, type User } from "~/lib/api";
 
 export default function ProfileEdit() {
   const navigate = useNavigate();
 
-  const [name, setName] = useState("自分");
-  const [customId, setCustomId] = useState("me");
-  const [bio, setBio] = useState(
-    "ソフトウェアエンジニア。TypeScript / React が好きです。",
-  );
-  const [location, setLocation] = useState("東京");
-  const [website, setWebsite] = useState("example.com");
+  const [user, setUser] = useState<User | null>(null);
+  const [name, setName] = useState("");
+  const [bio, setBio] = useState("");
+  const [isPrivate, setIsPrivate] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const bannerInputRef = useRef<HTMLInputElement>(null);
 
   const maxBioLength = 160;
+
+  useEffect(() => {
+    if (!isLoggedIn()) {
+      navigate("/login");
+      return;
+    }
+    getMe().then(({ user }) => {
+      setUser(user);
+      setName(user.display_name);
+      setBio(user.biography ?? "");
+      setIsPrivate(user.is_private);
+    }).catch(() => navigate("/login"));
+  }, []);
 
   const handleImageSelect = (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -39,6 +52,27 @@ export default function ProfileEdit() {
     const url = URL.createObjectURL(file);
     setter(url);
     e.target.value = "";
+  };
+
+  const handleSave = async () => {
+    if (!name.trim()) {
+      setError("名前を入力してください");
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    try {
+      await updateUser({
+        display_name: name,
+        biography: bio,
+        is_private: isPrivate,
+      });
+      navigate(-1);
+    } catch (e: any) {
+      setError(e.message ?? "保存に失敗しました");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -70,12 +104,19 @@ export default function ProfileEdit() {
           </div>
           <Button
             className="rounded-full h-8 px-4"
-            onClick={() => navigate(-1)}
+            onClick={handleSave}
+            disabled={saving}
           >
-            保存
+            {saving ? "保存中..." : "保存"}
           </Button>
         </div>
       </div>
+
+      {error && (
+        <div className="mx-4 mt-3 px-3 py-2 bg-destructive/10 text-destructive text-sm rounded-md">
+          {error}
+        </div>
+      )}
 
       {/* Banner */}
       <DropdownMenu>
@@ -154,6 +195,7 @@ export default function ProfileEdit() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="h-10"
+            maxLength={20}
           />
         </div>
 
@@ -161,18 +203,8 @@ export default function ProfileEdit() {
           <div className="flex items-center justify-between">
             <span className="text-xs text-muted-foreground">ユーザーID</span>
             <span className="text-xs text-muted-foreground">
-              30日に1回変更できます
+              @{user?.custom_id ?? ""}
             </span>
-          </div>
-          <div className="relative">
-            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-              @
-            </span>
-            <Input
-              value={customId}
-              onChange={(e) => setCustomId(e.target.value)}
-              className="h-10 pl-6"
-            />
           </div>
         </div>
 
@@ -190,26 +222,7 @@ export default function ProfileEdit() {
             onChange={(e) => setBio(e.target.value)}
             placeholder="自己紹介を入力"
             className="min-h-20"
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <span className="text-xs text-muted-foreground">場所</span>
-          <Input
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            placeholder="場所を入力"
-            className="h-10"
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <span className="text-xs text-muted-foreground">ウェブサイト</span>
-          <Input
-            value={website}
-            onChange={(e) => setWebsite(e.target.value)}
-            placeholder="URLを入力"
-            className="h-10"
+            maxLength={maxBioLength}
           />
         </div>
       </div>

@@ -5,6 +5,7 @@ sql:
     queries:
       - "./internal/modules/account/sql"
       - "./internal/modules/user/sql"
+      - "./internal/modules/post/sql"
     gen:
       go:
         package: "sqlc"
@@ -40,5 +41,3 @@ sql:
               type: Time
               pointer: true
             nullable: true
-    database:
-      uri: "postgres://reverie:reverie@reverie-db:5432/reverie_db"

@@ -30,7 +30,7 @@ func (h *Handler) GetUser(ctx context.Context, req *connect.Request[userv1.GetUs
 			Id:          output.ID.String(),
 			CustomId:    output.CustomID,
 			DisplayName: output.DisplayName,
-			Biography:   output.Biography,
+			Biography:   &output.Biography,
 			IsPrivate:   output.IsPrivate,
 			IsMe:        output.IsMe,
 			CreateTime:  timestamppb.New(output.CreateTime),

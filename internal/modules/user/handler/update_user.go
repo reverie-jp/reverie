@@ -25,7 +25,7 @@ func (h *Handler) UpdateUser(ctx context.Context, req *connect.Request[userv1.Up
 
 	output, err := h.updateUser.Execute(ctx, usecase.UpdateUserInput{
 		DisplayName: u.DisplayName,
-		Biography:   u.Biography,
+		Biography:   derefString(u.Biography),
 		IsPrivate:   u.IsPrivate,
 	}, userID)
 	if err != nil {
@@ -37,7 +37,7 @@ func (h *Handler) UpdateUser(ctx context.Context, req *connect.Request[userv1.Up
 			Id:          output.ID.String(),
 			CustomId:    output.CustomID,
 			DisplayName: output.DisplayName,
-			Biography:   output.Biography,
+			Biography:   &output.Biography,
 			IsPrivate:   output.IsPrivate,
 			IsMe:        true,
 			CreateTime:  timestamppb.New(output.CreateTime),

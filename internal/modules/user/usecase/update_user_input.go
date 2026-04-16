@@ -9,7 +9,7 @@ import (
 
 type UpdateUserInput struct {
 	DisplayName string  `validate:"required,min=1,max=20"`
-	Biography   *string `validate:"omitempty,max=160"`
+	Biography   string `validate:"max=160"`
 	IsPrivate   bool
 	Birthdate   *time.Time
 }

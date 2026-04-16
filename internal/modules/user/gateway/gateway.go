@@ -23,7 +23,7 @@ type CreateUserParams struct {
 type UpdateUserParams struct {
 	ID          ulid.ULID
 	DisplayName string
-	Biography   *string
+	Biography   string
 	IsPrivate   bool
 	Birthdate   *time.Time
 }

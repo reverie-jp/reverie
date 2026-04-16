@@ -33,9 +33,10 @@ func (e *AuthProviderType) Scan(src interface{}) error {
 
 type NullAuthProviderType struct {
 	AuthProviderType AuthProviderType `json:"auth_provider_type"`
-	Valid            bool             `json:"valid"`
+	Valid            bool             `json:"valid"` // Valid is true if AuthProviderType is not NULL
 }
 
+// Scan implements the Scanner interface.
 func (ns *NullAuthProviderType) Scan(value interface{}) error {
 	if value == nil {
 		ns.AuthProviderType, ns.Valid = "", false
@@ -45,11 +46,357 @@ func (ns *NullAuthProviderType) Scan(value interface{}) error {
 	return ns.AuthProviderType.Scan(value)
 }
 
+// Value implements the driver Valuer interface.
 func (ns NullAuthProviderType) Value() (driver.Value, error) {
 	if !ns.Valid {
 		return nil, nil
 	}
 	return string(ns.AuthProviderType), nil
+}
+
+type CallJoinableBy string
+
+const (
+	CallJoinableByAll       CallJoinableBy = "all"
+	CallJoinableByFollowers CallJoinableBy = "followers"
+	CallJoinableByFriends   CallJoinableBy = "friends"
+	CallJoinableByNobody    CallJoinableBy = "nobody"
+)
+
+func (e *CallJoinableBy) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = CallJoinableBy(s)
+	case string:
+		*e = CallJoinableBy(s)
+	default:
+		return fmt.Errorf("unsupported scan type for CallJoinableBy: %T", src)
+	}
+	return nil
+}
+
+type NullCallJoinableBy struct {
+	CallJoinableBy CallJoinableBy `json:"call_joinable_by"`
+	Valid          bool           `json:"valid"` // Valid is true if CallJoinableBy is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullCallJoinableBy) Scan(value interface{}) error {
+	if value == nil {
+		ns.CallJoinableBy, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.CallJoinableBy.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullCallJoinableBy) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.CallJoinableBy), nil
+}
+
+type CallParticipantRole string
+
+const (
+	CallParticipantRoleHost        CallParticipantRole = "host"
+	CallParticipantRoleCoHost      CallParticipantRole = "co-host"
+	CallParticipantRoleParticipant CallParticipantRole = "participant"
+)
+
+func (e *CallParticipantRole) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = CallParticipantRole(s)
+	case string:
+		*e = CallParticipantRole(s)
+	default:
+		return fmt.Errorf("unsupported scan type for CallParticipantRole: %T", src)
+	}
+	return nil
+}
+
+type NullCallParticipantRole struct {
+	CallParticipantRole CallParticipantRole `json:"call_participant_role"`
+	Valid               bool                `json:"valid"` // Valid is true if CallParticipantRole is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullCallParticipantRole) Scan(value interface{}) error {
+	if value == nil {
+		ns.CallParticipantRole, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.CallParticipantRole.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullCallParticipantRole) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.CallParticipantRole), nil
+}
+
+type CallType string
+
+const (
+	CallTypeVoice CallType = "voice"
+	CallTypeVideo CallType = "video"
+)
+
+func (e *CallType) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = CallType(s)
+	case string:
+		*e = CallType(s)
+	default:
+		return fmt.Errorf("unsupported scan type for CallType: %T", src)
+	}
+	return nil
+}
+
+type NullCallType struct {
+	CallType CallType `json:"call_type"`
+	Valid    bool     `json:"valid"` // Valid is true if CallType is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullCallType) Scan(value interface{}) error {
+	if value == nil {
+		ns.CallType, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.CallType.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullCallType) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.CallType), nil
+}
+
+type FileType string
+
+const (
+	FileTypeImage FileType = "image"
+	FileTypeVideo FileType = "video"
+	FileTypeVoice FileType = "voice"
+)
+
+func (e *FileType) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = FileType(s)
+	case string:
+		*e = FileType(s)
+	default:
+		return fmt.Errorf("unsupported scan type for FileType: %T", src)
+	}
+	return nil
+}
+
+type NullFileType struct {
+	FileType FileType `json:"file_type"`
+	Valid    bool     `json:"valid"` // Valid is true if FileType is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullFileType) Scan(value interface{}) error {
+	if value == nil {
+		ns.FileType, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.FileType.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullFileType) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.FileType), nil
+}
+
+type MediaStatus string
+
+const (
+	MediaStatusPending    MediaStatus = "pending"
+	MediaStatusProcessing MediaStatus = "processing"
+	MediaStatusReady      MediaStatus = "ready"
+	MediaStatusFailed     MediaStatus = "failed"
+)
+
+func (e *MediaStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = MediaStatus(s)
+	case string:
+		*e = MediaStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for MediaStatus: %T", src)
+	}
+	return nil
+}
+
+type NullMediaStatus struct {
+	MediaStatus MediaStatus `json:"media_status"`
+	Valid       bool        `json:"valid"` // Valid is true if MediaStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullMediaStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.MediaStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.MediaStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullMediaStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.MediaStatus), nil
+}
+
+type MediaType string
+
+const (
+	MediaTypeImage MediaType = "image"
+	MediaTypeGif   MediaType = "gif"
+	MediaTypeVideo MediaType = "video"
+	MediaTypeAudio MediaType = "audio"
+)
+
+func (e *MediaType) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = MediaType(s)
+	case string:
+		*e = MediaType(s)
+	default:
+		return fmt.Errorf("unsupported scan type for MediaType: %T", src)
+	}
+	return nil
+}
+
+type NullMediaType struct {
+	MediaType MediaType `json:"media_type"`
+	Valid     bool      `json:"valid"` // Valid is true if MediaType is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullMediaType) Scan(value interface{}) error {
+	if value == nil {
+		ns.MediaType, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.MediaType.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullMediaType) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.MediaType), nil
+}
+
+type MediaUsage string
+
+const (
+	MediaUsageUserAvatar MediaUsage = "user_avatar"
+	MediaUsageUserBanner MediaUsage = "user_banner"
+	MediaUsagePost       MediaUsage = "post"
+)
+
+func (e *MediaUsage) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = MediaUsage(s)
+	case string:
+		*e = MediaUsage(s)
+	default:
+		return fmt.Errorf("unsupported scan type for MediaUsage: %T", src)
+	}
+	return nil
+}
+
+type NullMediaUsage struct {
+	MediaUsage MediaUsage `json:"media_usage"`
+	Valid      bool       `json:"valid"` // Valid is true if MediaUsage is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullMediaUsage) Scan(value interface{}) error {
+	if value == nil {
+		ns.MediaUsage, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.MediaUsage.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullMediaUsage) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.MediaUsage), nil
+}
+
+type RoomType string
+
+const (
+	RoomTypeDirect RoomType = "direct"
+	RoomTypeGroup  RoomType = "group"
+)
+
+func (e *RoomType) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = RoomType(s)
+	case string:
+		*e = RoomType(s)
+	default:
+		return fmt.Errorf("unsupported scan type for RoomType: %T", src)
+	}
+	return nil
+}
+
+type NullRoomType struct {
+	RoomType RoomType `json:"room_type"`
+	Valid    bool     `json:"valid"` // Valid is true if RoomType is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullRoomType) Scan(value interface{}) error {
+	if value == nil {
+		ns.RoomType, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.RoomType.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullRoomType) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.RoomType), nil
 }
 
 type AuthProvider struct {
@@ -60,16 +407,134 @@ type AuthProvider struct {
 	CreateTime     time.Time        `json:"create_time"`
 }
 
+type Call struct {
+	ID         ulid.ULID      `json:"id"`
+	Title      string         `json:"title"`
+	Type       CallType       `json:"type"`
+	JoinableBy CallJoinableBy `json:"joinable_by"`
+	HostID     ulid.ULID      `json:"host_id"`
+	StartTime  time.Time      `json:"start_time"`
+	EndTime    *time.Time     `json:"end_time"`
+}
+
+type CallParticipant struct {
+	CallID        ulid.ULID           `json:"call_id"`
+	ParticipantID ulid.ULID           `json:"participant_id"`
+	Role          CallParticipantRole `json:"role"`
+	JoinedAt      time.Time           `json:"joined_at"`
+	LeftAt        *time.Time          `json:"left_at"`
+}
+
+type Medium struct {
+	ID                ulid.ULID     `json:"id"`
+	Usage             MediaUsage    `json:"usage"`
+	Type              NullMediaType `json:"type"`
+	Status            MediaStatus   `json:"status"`
+	Width             *int32        `json:"width"`
+	Height            *int32        `json:"height"`
+	OriginalImageUrl  *string       `json:"original_image_url"`
+	ThumbnailImageUrl *string       `json:"thumbnail_image_url"`
+	VideoUrl          *string       `json:"video_url"`
+	AudioUrl          *string       `json:"audio_url"`
+	DurationSeconds   *int32        `json:"duration_seconds"`
+	CreateTime        time.Time     `json:"create_time"`
+}
+
+type Message struct {
+	ID         ulid.ULID `json:"id"`
+	RoomID     ulid.ULID `json:"room_id"`
+	SenderID   ulid.ULID `json:"sender_id"`
+	Content    *string   `json:"content"`
+	HasFile    bool      `json:"has_file"`
+	IsDeleted  bool      `json:"is_deleted"`
+	IsEdited   bool      `json:"is_edited"`
+	CreateTime time.Time `json:"create_time"`
+}
+
+type MessageFile struct {
+	ID         ulid.ULID    `json:"id"`
+	MessageID  ulid.ULID    `json:"message_id"`
+	MediaID    ulid.ULID    `json:"media_id"`
+	FileType   NullFileType `json:"file_type"`
+	CreateTime time.Time    `json:"create_time"`
+}
+
+type MessageRead struct {
+	ID        ulid.ULID `json:"id"`
+	MessageID ulid.ULID `json:"message_id"`
+	UserID    ulid.ULID `json:"user_id"`
+	ReadAt    time.Time `json:"read_at"`
+}
+
+type PinnedRoom struct {
+	ID       ulid.ULID `json:"id"`
+	UserID   ulid.ULID `json:"user_id"`
+	RoomID   ulid.ULID `json:"room_id"`
+	PinnedAt time.Time `json:"pinned_at"`
+}
+
+type Post struct {
+	ID         ulid.ULID  `json:"id"`
+	AuthorID   ulid.ULID  `json:"author_id"`
+	ReplyToID  *ulid.ULID `json:"reply_to_id"`
+	RepostID   *ulid.ULID `json:"repost_id"`
+	Text       string     `json:"text"`
+	CreateTime time.Time  `json:"create_time"`
+	UpdateTime time.Time  `json:"update_time"`
+}
+
+type PostFavorite struct {
+	UserID     ulid.ULID `json:"user_id"`
+	PostID     ulid.ULID `json:"post_id"`
+	CreateTime time.Time `json:"create_time"`
+}
+
+type PostMedium struct {
+	PostID   ulid.ULID `json:"post_id"`
+	MediaID  ulid.ULID `json:"media_id"`
+	Position int32     `json:"position"`
+}
+
+type Room struct {
+	ID            ulid.ULID `json:"id"`
+	RoomType      RoomType  `json:"room_type"`
+	Name          *string   `json:"name"`
+	GroupImageUrl *string   `json:"group_image_url"`
+	CreateTime    time.Time `json:"create_time"`
+	UpdateTime    time.Time `json:"update_time"`
+}
+
+type RoomMember struct {
+	ID         ulid.ULID  `json:"id"`
+	RoomID     ulid.ULID  `json:"room_id"`
+	UserID     ulid.ULID  `json:"user_id"`
+	LastReadAt *time.Time `json:"last_read_at"`
+	IsMuted    bool       `json:"is_muted"`
+	MuteUntil  *time.Time `json:"mute_until"`
+}
+
 type User struct {
-	ID                  ulid.ULID  `json:"id"`
-	CustomID            string     `json:"custom_id"`
-	CustomIDChangedAt   *time.Time `json:"custom_id_changed_at"`
-	DisplayName         string     `json:"display_name"`
-	Biography           *string    `json:"biography"`
-	AvatarMediaID       *ulid.ULID `json:"avatar_media_id"`
-	BannerMediaID       *ulid.ULID `json:"banner_media_id"`
-	IsPrivate           bool       `json:"is_private"`
-	Birthdate           *time.Time `json:"birthdate"`
-	CreateTime          time.Time  `json:"create_time"`
-	UpdateTime          time.Time  `json:"update_time"`
+	ID                ulid.ULID  `json:"id"`
+	CustomID          string     `json:"custom_id"`
+	CustomIDChangedAt *time.Time `json:"custom_id_changed_at"`
+	DisplayName       string     `json:"display_name"`
+	Biography         string     `json:"biography"`
+	AvatarMediaID     *ulid.ULID `json:"avatar_media_id"`
+	BannerMediaID     *ulid.ULID `json:"banner_media_id"`
+	IsPrivate         bool       `json:"is_private"`
+	Birthdate         *time.Time `json:"birthdate"`
+	CreateTime        time.Time  `json:"create_time"`
+	UpdateTime        time.Time  `json:"update_time"`
+}
+
+type UserBlock struct {
+	BlockerID  ulid.ULID `json:"blocker_id"`
+	BlockedID  ulid.ULID `json:"blocked_id"`
+	CreateTime time.Time `json:"create_time"`
+}
+
+type UserFollow struct {
+	FollowerID ulid.ULID `json:"follower_id"`
+	FollowedID ulid.ULID `json:"followed_id"`
+	CreateTime time.Time `json:"create_time"`
 }

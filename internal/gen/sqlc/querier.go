@@ -11,12 +11,23 @@ import (
 )
 
 type Querier interface {
+	CountPostFavorites(ctx context.Context, postID ulid.ULID) (int64, error)
+	CountPostReplies(ctx context.Context, replyToID *ulid.ULID) (int64, error)
+	CountPostReposts(ctx context.Context, repostID *ulid.ULID) (int64, error)
 	CreateAuthProvider(ctx context.Context, arg CreateAuthProviderParams) error
+	CreatePost(ctx context.Context, arg CreatePostParams) (Post, error)
+	CreatePostFavorite(ctx context.Context, arg CreatePostFavoriteParams) error
 	CreateUser(ctx context.Context, arg CreateUserParams) error
-	DeleteUser(ctx context.Context, id string) error
+	DeletePost(ctx context.Context, arg DeletePostParams) error
+	DeletePostFavorite(ctx context.Context, arg DeletePostFavoriteParams) error
+	DeleteUser(ctx context.Context, id ulid.ULID) error
 	GetAuthProviderByProvider(ctx context.Context, arg GetAuthProviderByProviderParams) (AuthProvider, error)
-	GetUserByID(ctx context.Context, id ulid.ULID) (User, error)
+	GetPostByID(ctx context.Context, id ulid.ULID) (Post, error)
+	GetPostFavorite(ctx context.Context, arg GetPostFavoriteParams) (GetPostFavoriteRow, error)
 	GetUserByCustomID(ctx context.Context, customID string) (User, error)
+	GetUserByID(ctx context.Context, id ulid.ULID) (User, error)
+	ListTimeline(ctx context.Context, arg ListTimelineParams) ([]Post, error)
+	ListUserPosts(ctx context.Context, arg ListUserPostsParams) ([]Post, error)
 	ListUsersByIDs(ctx context.Context, ids []string) ([]User, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
 }

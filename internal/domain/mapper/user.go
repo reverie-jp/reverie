@@ -16,6 +16,7 @@ func ToUser(row *sqlc.User) *entity.User {
 		CustomIDChangedAt: row.CustomIDChangedAt,
 		DisplayName:       row.DisplayName,
 		Biography:         row.Biography,
+
 		AvatarMediaID:     row.AvatarMediaID,
 		BannerMediaID:     row.BannerMediaID,
 		IsPrivate:         row.IsPrivate,

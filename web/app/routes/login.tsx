@@ -1,5 +1,24 @@
-import { useNavigate } from "react-router";
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router";
 import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
+import { socialLogin, setTokens, isLoggedIn } from "~/lib/api";
+
+const IS_DEV = import.meta.env.DEV;
+
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID ?? "";
+const REDIRECT_URI = "http://localhost:5173/login";
+
+function buildGoogleOAuthUrl() {
+  const params = new URLSearchParams({
+    client_id: GOOGLE_CLIENT_ID,
+    redirect_uri: REDIRECT_URI,
+    response_type: "code",
+    scope: "openid email profile",
+    access_type: "offline",
+  });
+  return `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+}
 
 function GoogleIcon({ className }: { className?: string }) {
   return (
@@ -32,19 +51,36 @@ function LineIcon({ className }: { className?: string }) {
   );
 }
 
-function AppleIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="currentColor">
-      <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
-    </svg>
-  );
-}
-
 export default function Login() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [devToken, setDevToken] = useState("");
 
-  const handleSocialLogin = () => {
-    navigate("/");
+  useEffect(() => {
+    if (isLoggedIn()) {
+      navigate("/");
+      return;
+    }
+
+    const code = searchParams.get("code");
+    if (code) {
+      socialLogin("GOOGLE", code)
+        .then(({ token_pair }) => {
+          setTokens(token_pair.access_token, token_pair.refresh_token);
+          navigate("/");
+        })
+        .catch((e) => {
+          console.error("login failed:", e);
+        });
+    }
+  }, [searchParams]);
+
+  const handleGoogleLogin = () => {
+    if (!GOOGLE_CLIENT_ID) {
+      alert("Google Client ID が設定されていません。\n.env.development.local に VITE_GOOGLE_CLIENT_ID を設定してください。");
+      return;
+    }
+    window.location.href = buildGoogleOAuthUrl();
   };
 
   return (
@@ -63,7 +99,7 @@ export default function Login() {
           <Button
             variant="outline"
             className="w-full h-11 gap-3 text-sm font-medium"
-            onClick={handleSocialLogin}
+            onClick={handleGoogleLogin}
           >
             <GoogleIcon className="size-5" />
             Googleで続ける
@@ -72,21 +108,41 @@ export default function Login() {
           <Button
             variant="outline"
             className="w-full h-11 gap-3 text-sm font-medium"
-            onClick={handleSocialLogin}
+            disabled
           >
             <LineIcon className="size-5" />
-            LINEで続ける
-          </Button>
-
-          <Button
-            variant="outline"
-            className="w-full h-11 gap-3 text-sm font-medium"
-            onClick={handleSocialLogin}
-          >
-            <AppleIcon className="size-5" />
-            Appleで続ける
+            LINEで続ける（準備中）
           </Button>
         </div>
+
+        {/* Dev login (development only) */}
+        {IS_DEV && (
+          <div className="border rounded-lg p-4 space-y-2 bg-muted/30">
+            <p className="text-xs font-medium text-muted-foreground">開発用ログイン</p>
+            <p className="text-xs text-muted-foreground">
+              <code>go run ./cmd/seed</code> で取得したトークンを入力
+            </p>
+            <Input
+              placeholder="ACCESS_TOKEN=..."
+              value={devToken}
+              onChange={(e) => setDevToken(e.target.value)}
+              className="h-8 text-xs font-mono"
+            />
+            <Button
+              size="sm"
+              className="w-full h-8 text-xs"
+              onClick={() => {
+                const token = devToken.replace(/^ACCESS_TOKEN=/, "").trim();
+                if (token) {
+                  setTokens(token, "");
+                  navigate("/");
+                }
+              }}
+            >
+              トークンでログイン
+            </Button>
+          </div>
+        )}
 
         {/* Terms */}
         <p className="text-center text-xs text-muted-foreground leading-relaxed">

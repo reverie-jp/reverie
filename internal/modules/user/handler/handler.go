@@ -13,6 +13,13 @@ type Handler struct {
 	updateUserSettings *usecase.UpdateUserSettings
 }
 
+func derefString(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
+}
+
 func New(
 	getUser *usecase.GetUser,
 	updateUser *usecase.UpdateUser,

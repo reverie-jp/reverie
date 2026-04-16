@@ -11,7 +11,7 @@ type User struct {
 	CustomID            string
 	CustomIDChangedAt   *time.Time
 	DisplayName         string
-	Biography           *string
+	Biography           string
 	AvatarMediaID       *ulid.ULID
 	BannerMediaID       *ulid.ULID
 	IsPrivate           bool

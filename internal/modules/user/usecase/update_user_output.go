@@ -10,7 +10,7 @@ type UpdateUserOutput struct {
 	ID          ulid.ULID
 	CustomID    string
 	DisplayName string
-	Biography   *string
+	Biography   string
 	IsPrivate   bool
 	CreateTime  time.Time
 	UpdateTime  time.Time

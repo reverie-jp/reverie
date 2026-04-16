@@ -14,10 +14,13 @@ import (
 	"reverie.jp/reverie/internal/config"
 	accountv1 "reverie.jp/reverie/internal/gen/pb/account/v1"
 	"reverie.jp/reverie/internal/gen/pb/account/v1/accountv1connect"
+	postv1 "reverie.jp/reverie/internal/gen/pb/post/v1"
+	"reverie.jp/reverie/internal/gen/pb/post/v1/postv1connect"
 	userv1 "reverie.jp/reverie/internal/gen/pb/user/v1"
 	"reverie.jp/reverie/internal/gen/pb/user/v1/userv1connect"
 	"reverie.jp/reverie/internal/gen/sqlc"
 	"reverie.jp/reverie/internal/modules/account"
+	"reverie.jp/reverie/internal/modules/post"
 	"reverie.jp/reverie/internal/modules/user"
 	usergw "reverie.jp/reverie/internal/modules/user/gateway"
 	"reverie.jp/reverie/internal/platform/google"
@@ -39,6 +42,7 @@ func initServices(cfg *config.Config, db *pgxpool.Pool, jwtManager *jwt.Manager)
 	userGateway := usergw.New(q)
 	accountService := account.InitModule(q, userGateway, tx, googleAuth, jwtManager)
 	userService := user.InitModule(q, userGateway)
+	postService := post.InitModule(q, userGateway)
 
 	return []Service{
 		{
@@ -63,6 +67,18 @@ func initServices(cfg *config.Config, db *pgxpool.Pool, jwtManager *jwt.Manager)
 			},
 			RegisterGatewayHandler: func(ctx context.Context, mux *runtime.ServeMux, addr string, opts []grpc.DialOption) error {
 				return userv1.RegisterUserServiceHandlerFromEndpoint(ctx, mux, addr, opts)
+			},
+		},
+		{
+			Name: postv1connect.PostServiceName,
+			RegisterConnectHandler: func(mux *http.ServeMux) {
+				mux.Handle(postv1connect.NewPostServiceHandler(
+					postService,
+					connect.WithInterceptors(errorInterceptor, authInterceptor),
+				))
+			},
+			RegisterGatewayHandler: func(ctx context.Context, mux *runtime.ServeMux, addr string, opts []grpc.DialOption) error {
+				return postv1.RegisterPostServiceHandlerFromEndpoint(ctx, mux, addr, opts)
 			},
 		},
 	}

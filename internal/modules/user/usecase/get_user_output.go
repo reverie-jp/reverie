@@ -10,7 +10,7 @@ type GetUserOutput struct {
 	ID          ulid.ULID
 	CustomID    string
 	DisplayName string
-	Biography   *string
+	Biography   string
 	IsPrivate   bool
 	IsMe        bool
 	CreateTime  time.Time
