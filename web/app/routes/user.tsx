@@ -1,5 +1,18 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router";
+import {
+  getUser,
+  getMe,
+  listUserPosts,
+  createPost,
+  likePost,
+  unlikePost,
+  deletePost,
+  isLoggedIn,
+  type User as ApiUser,
+} from "~/lib/api";
+import { useCurrentUser } from "~/lib/use-current-user";
+import { apiPostToUiPost } from "~/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import {
   Avatar,
@@ -16,6 +29,7 @@ import { PostCard, type Post } from "~/components/post-card";
 import {
   ComposePostDialog,
   type ComposeMode,
+  type PostOptions,
 } from "~/components/compose-post-dialog";
 import { GroupAvatar, type Call } from "~/components/call-list";
 import { JoinCallDialog } from "~/components/join-call-dialog";
@@ -49,6 +63,20 @@ interface UserProfile {
   isMe: boolean;
   blockedByThem?: boolean;
   onlineStatus?: "online" | "idle" | "offline";
+}
+
+function apiUserToProfile(u: ApiUser): UserProfile {
+  return {
+    name: u.displayName ?? "",
+    customId: u.customId,
+    bio: u.biography ?? "",
+    joinedAt: new Date(u.createTime),
+    followingCount: u.followingCount ?? 0,
+    followerCount: u.followerCount ?? 0,
+    isFollowing: u.isFollowing ?? false,
+    followsYou: u.isFollowedBy ?? false,
+    isMe: u.isMe,
+  };
 }
 
 interface MutualFollower {
@@ -405,27 +433,86 @@ function FloatingCallBadge({
 }
 
 export default function User({ params }: Route.ComponentProps) {
-  const profile = users[params.id] ?? {
-    ...defaultUser,
-    customId: params.id,
-    name: params.id,
-  };
   const navigate = useNavigate();
+  const currentUser = useCurrentUser();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [apiUserId, setApiUserId] = useState<string | null>(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [isBlocked, setIsBlocked] = useState(false);
   const [showBlockedProfile, setShowBlockedProfile] = useState(false);
   const [composeMode, setComposeMode] = useState<ComposeMode | null>(null);
   const [selectedCall, setSelectedCall] = useState<ProfileCall | null>(null);
 
-  const posts = getUserPosts(params.id);
   const calls = getUserCalls(params.id);
   const likedPosts = getUserLikedPosts();
   const media = getUserMedia(params.id);
-  const mutuals = mutualFollowers[params.id] ?? [];
+  const mutuals: MutualFollower[] = [];
+
+  useEffect(() => {
+    if (!isLoggedIn()) return;
+    setLoadingProfile(true);
+    const fetcher = params.id === "me" ? getMe() : getUser(params.id);
+    fetcher
+      .then(({ user }) => {
+        setProfile(apiUserToProfile(user));
+        setApiUserId(user.id);
+        setLoadingProfile(false);
+      })
+      .catch(() => {
+        setProfile(null);
+        setLoadingProfile(false);
+      });
+  }, [params.id]);
+
+  useEffect(() => {
+    if (!isLoggedIn() || !apiUserId) return;
+    listUserPosts(apiUserId, { pageSize: 20 })
+      .then(({ posts: p }) => setPosts((p ?? []).map(apiPostToUiPost)))
+      .catch(() => setPosts([]));
+  }, [apiUserId]);
+
+  const isMe = params.id === "me" || (profile?.isMe ?? false);
 
   // For other users, show their live call as a floating badge
-  const otherUserLiveCall = !profile.isMe
+  const otherUserLiveCall = !isMe
     ? calls.find((c) => c.status === "live")
     : null;
+
+  if (loadingProfile) {
+    return (
+      <div className="w-full min-h-full flex items-center justify-center">
+        <p className="text-sm text-muted-foreground">読み込み中...</p>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="w-full min-h-full flex items-center justify-center">
+        <p className="text-sm text-muted-foreground">ユーザーが見つかりません</p>
+      </div>
+    );
+  }
+
+  const handlePost = async (content: string, options?: PostOptions) => {
+    try {
+      await createPost({ text: content, replyToId: options?.replyToId, repostId: options?.repostId });
+      const res = await listUserPosts(apiUserId ?? params.id, { pageSize: 20 });
+      setPosts((res.posts ?? []).map(apiPostToUiPost));
+    } catch (e: any) {
+      alert(`投稿に失敗しました: ${e?.message ?? "不明なエラー"}`);
+    }
+  };
+
+  const handleLike = async (postId: string) => { try { await likePost(postId); } catch {} };
+  const handleUnlike = async (postId: string) => { try { await unlikePost(postId); } catch {} };
+  const handleDelete = async (postId: string) => {
+    try {
+      await deletePost(postId);
+      setPosts((prev) => prev.filter((p) => p.id !== postId));
+    } catch {}
+  };
 
   const handleReply = (post: Post) => {
     setComposeMode({ type: "reply", post });
@@ -450,7 +537,7 @@ export default function User({ params }: Route.ComponentProps) {
           <div className="min-w-0 flex-1">
             <h1 className="text-base font-bold truncate">{profile.name}</h1>
           </div>
-          {profile.isMe && (
+          {isMe && (
             <Link
               to="/settings"
               className="inline-flex items-center justify-center size-9 rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
@@ -468,7 +555,7 @@ export default function User({ params }: Route.ComponentProps) {
       <div className="px-4 relative">
         {/* Action button (top-right of profile section) */}
         <div className="absolute top-3 right-4">
-          {profile.isMe ? (
+          {isMe ? (
             <Button
               variant="outline"
               className="rounded-full h-9 px-4"
@@ -478,6 +565,7 @@ export default function User({ params }: Route.ComponentProps) {
             </Button>
           ) : profile.blockedByThem ? null : (
             <FollowButton
+              userId={apiUserId ?? ""}
               customId={profile.customId}
               initialFollowing={profile.isFollowing}
               followsYou={profile.followsYou}
@@ -577,7 +665,7 @@ export default function User({ params }: Route.ComponentProps) {
             </div>
 
             {/* Mutual followers */}
-            {!profile.isMe && mutuals.length > 0 && (
+            {!isMe && mutuals.length > 0 && (
               <Link
                 to={`/users/${profile.customId}/connections?tab=mutual`}
                 className="flex items-center gap-2 mt-3 group"
@@ -657,8 +745,12 @@ export default function User({ params }: Route.ComponentProps) {
                   <PostCard
                     key={post.id}
                     post={post}
+                    currentUserId={apiUserId ?? undefined}
                     onReply={handleReply}
                     onRepost={handleRepost}
+                    onLike={handleLike}
+                    onUnlike={handleUnlike}
+                    onDelete={handleDelete}
                   />
                 ))
               )}
@@ -733,7 +825,7 @@ export default function User({ params }: Route.ComponentProps) {
       <ComposePostDialog
         open={composeMode !== null}
         onClose={() => setComposeMode(null)}
-        onPost={() => setComposeMode(null)}
+        onPost={async (content, options) => { await handlePost(content, options); setComposeMode(null); }}
         mode={composeMode ?? undefined}
       />
       <JoinCallDialog
@@ -748,7 +840,12 @@ export default function User({ params }: Route.ComponentProps) {
           onClick={() => setSelectedCall(otherUserLiveCall)}
         />
       )}
-      {profile.isMe && <ComposeFab />}
+      {isMe && (
+        <ComposeFab
+          onPost={handlePost}
+          currentUser={currentUser ? { name: currentUser.displayName, avatarUrl: undefined } : undefined}
+        />
+      )}
       <BottomNav />
     </div>
   );

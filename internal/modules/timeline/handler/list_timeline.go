@@ -20,8 +20,7 @@ func (h *Handler) ListFollowingTimeline(ctx context.Context, req *connect.Reques
 		return nil, xerrors.ErrUnauthenticated
 	}
 
-	// フォロー機能が未実装のためパブリックタイムラインと同じ動作
-	outputs, err := h.listTimeline.Execute(ctx, usecase.ListTimelineInput{
+	outputs, err := h.listFollowingTimeline.Execute(ctx, usecase.ListTimelineInput{
 		PageToken: req.Msg.PageToken,
 		PageSize:  req.Msg.PageSize,
 	}, userID)
@@ -86,6 +85,27 @@ func toProtoPosts(outputs []*usecase.PostOutput) []*postv1.Post {
 		if o.RepostID != nil {
 			s := o.RepostID.String()
 			p.RepostId = &s
+		}
+		if o.RepostOf != nil {
+			rof := o.RepostOf
+			repostOf := &postv1.Post{
+				Id:          rof.ID.String(),
+				Text:        rof.Text,
+				ReplyCount:  int32(rof.ReplyCount),
+				RepostCount: int32(rof.RepostCount),
+				LikeCount:   int32(rof.FavoriteCount),
+				IsLiked:     rof.IsFavorited,
+				CreateTime:  timestamppb.New(rof.CreateTime),
+			}
+			if rof.Author != nil {
+				repostOf.Author = &userv1.User{
+					Id:          rof.Author.ID.String(),
+					CustomId:    rof.Author.CustomID,
+					DisplayName: rof.Author.DisplayName,
+					IsPrivate:   rof.Author.IsPrivate,
+				}
+			}
+			p.RepostOf = repostOf
 		}
 		posts[i] = p
 	}

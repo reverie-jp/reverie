@@ -11,6 +11,9 @@ type Handler struct {
 	updateUser         *usecase.UpdateUser
 	getUserSettings    *usecase.GetUserSettings
 	updateUserSettings *usecase.UpdateUserSettings
+	followUser         *usecase.FollowUser
+	unfollowUser       *usecase.UnfollowUser
+	searchUsers        *usecase.SearchUsers
 }
 
 func derefString(s *string) string {
@@ -25,11 +28,17 @@ func New(
 	updateUser *usecase.UpdateUser,
 	getUserSettings *usecase.GetUserSettings,
 	updateUserSettings *usecase.UpdateUserSettings,
+	followUser *usecase.FollowUser,
+	unfollowUser *usecase.UnfollowUser,
+	searchUsers *usecase.SearchUsers,
 ) *Handler {
 	return &Handler{
 		getUser:            getUser,
 		updateUser:         updateUser,
 		getUserSettings:    getUserSettings,
 		updateUserSettings: updateUserSettings,
+		followUser:         followUser,
+		unfollowUser:       unfollowUser,
+		searchUsers:        searchUsers,
 	}
 }

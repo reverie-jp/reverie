@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
+import { clearTokens } from "~/lib/api";
 import { Input } from "~/components/ui/input";
 import { Switch } from "~/components/ui/switch";
 import {
@@ -324,6 +325,7 @@ export default function Settings() {
             <AlertDialogAction
               size="lg"
               onClick={() => {
+                clearTokens();
                 setConfirmDialog(null);
                 navigate("/login");
               }}

@@ -7,7 +7,7 @@ import { socialLogin, setTokens, isLoggedIn } from "~/lib/api";
 const IS_DEV = import.meta.env.DEV;
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID ?? "";
-const REDIRECT_URI = "http://localhost:5173/login";
+const REDIRECT_URI = "http://localhost:37610/login";
 
 function buildGoogleOAuthUrl() {
   const params = new URLSearchParams({
@@ -65,8 +65,8 @@ export default function Login() {
     const code = searchParams.get("code");
     if (code) {
       socialLogin("GOOGLE", code)
-        .then(({ token_pair }) => {
-          setTokens(token_pair.access_token, token_pair.refresh_token);
+        .then(({ tokenPair }) => {
+          setTokens(tokenPair.accessToken, tokenPair.refreshToken);
           navigate("/");
         })
         .catch((e) => {

@@ -43,6 +43,10 @@ func toProtoPost(out *usecase.PostOutput) *postv1.Post {
 		p.RepostId = &s
 	}
 
+	if out.RepostOf != nil {
+		p.RepostOf = toProtoPost(out.RepostOf)
+	}
+
 	return p
 }
 

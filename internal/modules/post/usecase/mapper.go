@@ -28,5 +28,9 @@ func toPostOutput(view *postgw.PostView) *PostOutput {
 		}
 	}
 
+	if view.RepostOf != nil {
+		out.RepostOf = toPostOutput(view.RepostOf)
+	}
+
 	return out
 }

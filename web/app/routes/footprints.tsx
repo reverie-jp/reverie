@@ -8,6 +8,7 @@ import { ArrowLeft, Eye, Clock } from "lucide-react";
 import { formatRelativeTime } from "~/components/post-card";
 
 interface FootprintUser {
+  id: string;
   name: string;
   customId: string;
   avatarUrl?: string;
@@ -25,6 +26,7 @@ const receivedFootprints: FootprintItem[] = [
   {
     id: "f1",
     user: {
+      id: "user-tanaka",
       name: "田中太郎",
       customId: "tanaka",
       isFollowing: true,
@@ -35,6 +37,7 @@ const receivedFootprints: FootprintItem[] = [
   {
     id: "f2",
     user: {
+      id: "user-ichiro_dev",
       name: "鈴木一郎",
       customId: "ichiro_dev",
       isFollowing: false,
@@ -45,6 +48,7 @@ const receivedFootprints: FootprintItem[] = [
   {
     id: "f3",
     user: {
+      id: "user-hanako_s",
       name: "佐藤花子",
       customId: "hanako_s",
       isFollowing: true,
@@ -55,6 +59,7 @@ const receivedFootprints: FootprintItem[] = [
   {
     id: "f4",
     user: {
+      id: "user-kenta_t",
       name: "高橋健太",
       customId: "kenta_t",
       isFollowing: false,
@@ -65,6 +70,7 @@ const receivedFootprints: FootprintItem[] = [
   {
     id: "f5",
     user: {
+      id: "user-takuya_k",
       name: "木村拓也",
       customId: "takuya_k",
       isFollowing: true,
@@ -75,6 +81,7 @@ const receivedFootprints: FootprintItem[] = [
   {
     id: "f6",
     user: {
+      id: "user-yosuke_m",
       name: "森田陽介",
       customId: "yosuke_m",
       isFollowing: false,
@@ -85,6 +92,7 @@ const receivedFootprints: FootprintItem[] = [
   {
     id: "f7",
     user: {
+      id: "user-mari_k",
       name: "川口真理",
       customId: "mari_k",
       isFollowing: false,
@@ -95,6 +103,7 @@ const receivedFootprints: FootprintItem[] = [
   {
     id: "f8",
     user: {
+      id: "user-yu_nkmr",
       name: "中村悠",
       customId: "yu_nkmr",
       isFollowing: false,
@@ -108,6 +117,7 @@ const sentFootprints: FootprintItem[] = [
   {
     id: "s1",
     user: {
+      id: "user-hanako_s",
       name: "佐藤花子",
       customId: "hanako_s",
       isFollowing: true,
@@ -118,6 +128,7 @@ const sentFootprints: FootprintItem[] = [
   {
     id: "s2",
     user: {
+      id: "user-misaki_y",
       name: "山田美咲",
       customId: "misaki_y",
       isFollowing: true,
@@ -128,6 +139,7 @@ const sentFootprints: FootprintItem[] = [
   {
     id: "s3",
     user: {
+      id: "user-daisuke_w",
       name: "渡辺大輔",
       customId: "daisuke_w",
       isFollowing: true,
@@ -138,6 +150,7 @@ const sentFootprints: FootprintItem[] = [
   {
     id: "s4",
     user: {
+      id: "user-rina_m",
       name: "松本りな",
       customId: "rina_m",
       isFollowing: false,
@@ -148,6 +161,7 @@ const sentFootprints: FootprintItem[] = [
   {
     id: "s5",
     user: {
+      id: "user-sho_inoue",
       name: "井上翔",
       customId: "sho_inoue",
       isFollowing: false,
@@ -158,6 +172,7 @@ const sentFootprints: FootprintItem[] = [
   {
     id: "s6",
     user: {
+      id: "user-tanaka",
       name: "田中太郎",
       customId: "tanaka",
       isFollowing: true,
@@ -190,6 +205,7 @@ function FootprintRow({ item }: { item: FootprintItem }) {
       </div>
 
       <FollowButton
+        userId={user.id}
         customId={user.customId}
         initialFollowing={user.isFollowing}
         followsYou={user.followsYou}

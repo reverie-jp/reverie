@@ -37,6 +37,12 @@ type Gateway interface {
 	DeleteUser(ctx context.Context, id ulid.ULID) error
 	BuildView(ctx context.Context, id ulid.ULID) (*UserView, error)
 	BuildListViews(ctx context.Context, ids []ulid.ULID) ([]*UserView, error)
+	SearchUsers(ctx context.Context, query string, cursor *time.Time, limit int32) ([]*entity.User, error)
+	FollowUser(ctx context.Context, followerID, followedID ulid.ULID) error
+	UnfollowUser(ctx context.Context, followerID, followedID ulid.ULID) error
+	IsFollowing(ctx context.Context, followerID, followedID ulid.ULID) (bool, error)
+	CountFollowers(ctx context.Context, userID ulid.ULID) (int64, error)
+	CountFollowing(ctx context.Context, userID ulid.ULID) (int64, error)
 }
 
 type gatewayImpl struct {

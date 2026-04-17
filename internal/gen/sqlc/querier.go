@@ -14,20 +14,29 @@ type Querier interface {
 	CountPostFavorites(ctx context.Context, postID ulid.ULID) (int64, error)
 	CountPostReplies(ctx context.Context, replyToID *ulid.ULID) (int64, error)
 	CountPostReposts(ctx context.Context, repostID *ulid.ULID) (int64, error)
+	CountUserFollowers(ctx context.Context, followedID ulid.ULID) (int64, error)
+	CountUserFollowing(ctx context.Context, followerID ulid.ULID) (int64, error)
 	CreateAuthProvider(ctx context.Context, arg CreateAuthProviderParams) error
 	CreatePost(ctx context.Context, arg CreatePostParams) (Post, error)
 	CreatePostFavorite(ctx context.Context, arg CreatePostFavoriteParams) error
 	CreateUser(ctx context.Context, arg CreateUserParams) error
+	CreateUserFollow(ctx context.Context, arg CreateUserFollowParams) error
 	DeletePost(ctx context.Context, arg DeletePostParams) error
 	DeletePostFavorite(ctx context.Context, arg DeletePostFavoriteParams) error
 	DeleteUser(ctx context.Context, id ulid.ULID) error
+	DeleteUserFollow(ctx context.Context, arg DeleteUserFollowParams) error
 	GetAuthProviderByProvider(ctx context.Context, arg GetAuthProviderByProviderParams) (AuthProvider, error)
 	GetPostByID(ctx context.Context, id ulid.ULID) (Post, error)
 	GetPostFavorite(ctx context.Context, arg GetPostFavoriteParams) (GetPostFavoriteRow, error)
 	GetUserByCustomID(ctx context.Context, customID string) (User, error)
 	GetUserByID(ctx context.Context, id ulid.ULID) (User, error)
+	GetUserFollow(ctx context.Context, arg GetUserFollowParams) (UserFollow, error)
+	ListFollowingTimeline(ctx context.Context, arg ListFollowingTimelineParams) ([]Post, error)
+	ListPostReposts(ctx context.Context, arg ListPostRepostsParams) ([]Post, error)
+	ListPostReplies(ctx context.Context, arg ListPostRepliesParams) ([]Post, error)
 	ListTimeline(ctx context.Context, arg ListTimelineParams) ([]Post, error)
 	ListUserPosts(ctx context.Context, arg ListUserPostsParams) ([]Post, error)
+	SearchUsers(ctx context.Context, arg SearchUsersParams) ([]User, error)
 	ListUsersByIDs(ctx context.Context, ids []string) ([]User, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
 }

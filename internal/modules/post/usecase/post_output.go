@@ -24,4 +24,5 @@ type PostOutput struct {
 	FavoriteCount int64
 	IsFavorited   bool
 	CreateTime    time.Time
+	RepostOf      *PostOutput
 }

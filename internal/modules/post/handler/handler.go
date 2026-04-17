@@ -7,12 +7,14 @@ import (
 
 type Handler struct {
 	postv1connect.UnimplementedPostServiceHandler
-	getPost       *usecase.GetPost
-	createPost    *usecase.CreatePost
-	deletePost    *usecase.DeletePost
-	likePost      *usecase.LikePost
-	unlikePost    *usecase.UnlikePost
-	listUserPosts *usecase.ListUserPosts
+	getPost         *usecase.GetPost
+	createPost      *usecase.CreatePost
+	deletePost      *usecase.DeletePost
+	likePost        *usecase.LikePost
+	unlikePost      *usecase.UnlikePost
+	listUserPosts   *usecase.ListUserPosts
+	listPostReplies *usecase.ListPostReplies
+	listPostReposts *usecase.ListPostReposts
 }
 
 func New(
@@ -22,13 +24,17 @@ func New(
 	likePost *usecase.LikePost,
 	unlikePost *usecase.UnlikePost,
 	listUserPosts *usecase.ListUserPosts,
+	listPostReplies *usecase.ListPostReplies,
+	listPostReposts *usecase.ListPostReposts,
 ) *Handler {
 	return &Handler{
-		getPost:       getPost,
-		createPost:    createPost,
-		deletePost:    deletePost,
-		likePost:      likePost,
-		unlikePost:    unlikePost,
-		listUserPosts: listUserPosts,
+		getPost:         getPost,
+		createPost:      createPost,
+		deletePost:      deletePost,
+		likePost:        likePost,
+		unlikePost:      unlikePost,
+		listUserPosts:   listUserPosts,
+		listPostReplies: listPostReplies,
+		listPostReposts: listPostReposts,
 	}
 }

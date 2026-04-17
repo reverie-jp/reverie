@@ -12,5 +12,6 @@ import (
 func InitModule(q sqlc.Querier, userGateway usergw.Gateway) timelinev1connect.TimelineServiceHandler {
 	postGateway := postgw.New(q, userGateway)
 	listTimeline := usecase.NewListTimeline(postGateway)
-	return handler.New(listTimeline)
+	listFollowingTimeline := usecase.NewListFollowingTimeline(postGateway)
+	return handler.New(listTimeline, listFollowingTimeline)
 }

@@ -36,6 +36,7 @@ type Post struct {
 	LikeCount     int32                  `protobuf:"varint,8,opt,name=like_count,json=likeCount,proto3" json:"like_count,omitempty"`
 	IsLiked       bool                   `protobuf:"varint,9,opt,name=is_liked,json=isLiked,proto3" json:"is_liked,omitempty"`
 	CreateTime    *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
+	RepostOf      *Post                  `protobuf:"bytes,11,opt,name=repost_of,json=repostOf,proto3,oneof" json:"repost_of,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -136,6 +137,13 @@ func (x *Post) GetIsLiked() bool {
 func (x *Post) GetCreateTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.CreateTime
+	}
+	return nil
+}
+
+func (x *Post) GetRepostOf() *Post {
+	if x != nil {
+		return x.RepostOf
 	}
 	return nil
 }
@@ -1152,7 +1160,7 @@ var File_post_v1_post_proto protoreflect.FileDescriptor
 
 const file_post_v1_post_proto_rawDesc = "" +
 	"\n" +
-	"\x12post/v1/post.proto\x12\apost.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x12user/v1/user.proto\"\xf1\x02\n" +
+	"\x12post/v1/post.proto\x12\apost.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x12user/v1/user.proto\"\xb0\x03\n" +
 	"\x04Post\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04text\x18\x02 \x01(\tR\x04text\x12%\n" +
@@ -1167,10 +1175,13 @@ const file_post_v1_post_proto_rawDesc = "" +
 	"\bis_liked\x18\t \x01(\bR\aisLiked\x12;\n" +
 	"\vcreate_time\x18\n" +
 	" \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"createTimeB\x0e\n" +
+	"createTime\x12/\n" +
+	"\trepost_of\x18\v \x01(\v2\r.post.v1.PostH\x02R\brepostOf\x88\x01\x01B\x0e\n" +
 	"\f_reply_to_idB\f\n" +
 	"\n" +
-	"_repost_id\")\n" +
+	"_repost_idB\f\n" +
+	"\n" +
+	"_repost_of\")\n" +
 	"\x0eGetPostRequest\x12\x17\n" +
 	"\apost_id\x18\x01 \x01(\tR\x06postId\"4\n" +
 	"\x0fGetPostResponse\x12!\n" +
@@ -1292,40 +1303,41 @@ var file_post_v1_post_proto_goTypes = []any{
 var file_post_v1_post_proto_depIdxs = []int32{
 	21, // 0: post.v1.Post.author:type_name -> user.v1.User
 	22, // 1: post.v1.Post.create_time:type_name -> google.protobuf.Timestamp
-	0,  // 2: post.v1.GetPostResponse.post:type_name -> post.v1.Post
-	0,  // 3: post.v1.CreatePostResponse.post:type_name -> post.v1.Post
-	0,  // 4: post.v1.LikePostResponse.post:type_name -> post.v1.Post
-	0,  // 5: post.v1.UnlikePostResponse.post:type_name -> post.v1.Post
-	0,  // 6: post.v1.ListPostRepliesResponse.posts:type_name -> post.v1.Post
-	0,  // 7: post.v1.ListPostRepostsResponse.posts:type_name -> post.v1.Post
-	21, // 8: post.v1.ListPostLikesResponse.users:type_name -> user.v1.User
-	0,  // 9: post.v1.ListUserPostsResponse.posts:type_name -> post.v1.Post
-	0,  // 10: post.v1.ListUserLikedPostsResponse.posts:type_name -> post.v1.Post
-	1,  // 11: post.v1.PostService.GetPost:input_type -> post.v1.GetPostRequest
-	3,  // 12: post.v1.PostService.CreatePost:input_type -> post.v1.CreatePostRequest
-	5,  // 13: post.v1.PostService.DeletePost:input_type -> post.v1.DeletePostRequest
-	7,  // 14: post.v1.PostService.LikePost:input_type -> post.v1.LikePostRequest
-	9,  // 15: post.v1.PostService.UnlikePost:input_type -> post.v1.UnlikePostRequest
-	11, // 16: post.v1.PostService.ListPostReplies:input_type -> post.v1.ListPostRepliesRequest
-	13, // 17: post.v1.PostService.ListPostReposts:input_type -> post.v1.ListPostRepostsRequest
-	15, // 18: post.v1.PostService.ListPostLikes:input_type -> post.v1.ListPostLikesRequest
-	17, // 19: post.v1.PostService.ListUserPosts:input_type -> post.v1.ListUserPostsRequest
-	19, // 20: post.v1.PostService.ListUserLikedPosts:input_type -> post.v1.ListUserLikedPostsRequest
-	2,  // 21: post.v1.PostService.GetPost:output_type -> post.v1.GetPostResponse
-	4,  // 22: post.v1.PostService.CreatePost:output_type -> post.v1.CreatePostResponse
-	6,  // 23: post.v1.PostService.DeletePost:output_type -> post.v1.DeletePostResponse
-	8,  // 24: post.v1.PostService.LikePost:output_type -> post.v1.LikePostResponse
-	10, // 25: post.v1.PostService.UnlikePost:output_type -> post.v1.UnlikePostResponse
-	12, // 26: post.v1.PostService.ListPostReplies:output_type -> post.v1.ListPostRepliesResponse
-	14, // 27: post.v1.PostService.ListPostReposts:output_type -> post.v1.ListPostRepostsResponse
-	16, // 28: post.v1.PostService.ListPostLikes:output_type -> post.v1.ListPostLikesResponse
-	18, // 29: post.v1.PostService.ListUserPosts:output_type -> post.v1.ListUserPostsResponse
-	20, // 30: post.v1.PostService.ListUserLikedPosts:output_type -> post.v1.ListUserLikedPostsResponse
-	21, // [21:31] is the sub-list for method output_type
-	11, // [11:21] is the sub-list for method input_type
-	11, // [11:11] is the sub-list for extension type_name
-	11, // [11:11] is the sub-list for extension extendee
-	0,  // [0:11] is the sub-list for field type_name
+	0,  // 2: post.v1.Post.repost_of:type_name -> post.v1.Post
+	0,  // 3: post.v1.GetPostResponse.post:type_name -> post.v1.Post
+	0,  // 4: post.v1.CreatePostResponse.post:type_name -> post.v1.Post
+	0,  // 5: post.v1.LikePostResponse.post:type_name -> post.v1.Post
+	0,  // 6: post.v1.UnlikePostResponse.post:type_name -> post.v1.Post
+	0,  // 7: post.v1.ListPostRepliesResponse.posts:type_name -> post.v1.Post
+	0,  // 8: post.v1.ListPostRepostsResponse.posts:type_name -> post.v1.Post
+	21, // 9: post.v1.ListPostLikesResponse.users:type_name -> user.v1.User
+	0,  // 10: post.v1.ListUserPostsResponse.posts:type_name -> post.v1.Post
+	0,  // 11: post.v1.ListUserLikedPostsResponse.posts:type_name -> post.v1.Post
+	1,  // 12: post.v1.PostService.GetPost:input_type -> post.v1.GetPostRequest
+	3,  // 13: post.v1.PostService.CreatePost:input_type -> post.v1.CreatePostRequest
+	5,  // 14: post.v1.PostService.DeletePost:input_type -> post.v1.DeletePostRequest
+	7,  // 15: post.v1.PostService.LikePost:input_type -> post.v1.LikePostRequest
+	9,  // 16: post.v1.PostService.UnlikePost:input_type -> post.v1.UnlikePostRequest
+	11, // 17: post.v1.PostService.ListPostReplies:input_type -> post.v1.ListPostRepliesRequest
+	13, // 18: post.v1.PostService.ListPostReposts:input_type -> post.v1.ListPostRepostsRequest
+	15, // 19: post.v1.PostService.ListPostLikes:input_type -> post.v1.ListPostLikesRequest
+	17, // 20: post.v1.PostService.ListUserPosts:input_type -> post.v1.ListUserPostsRequest
+	19, // 21: post.v1.PostService.ListUserLikedPosts:input_type -> post.v1.ListUserLikedPostsRequest
+	2,  // 22: post.v1.PostService.GetPost:output_type -> post.v1.GetPostResponse
+	4,  // 23: post.v1.PostService.CreatePost:output_type -> post.v1.CreatePostResponse
+	6,  // 24: post.v1.PostService.DeletePost:output_type -> post.v1.DeletePostResponse
+	8,  // 25: post.v1.PostService.LikePost:output_type -> post.v1.LikePostResponse
+	10, // 26: post.v1.PostService.UnlikePost:output_type -> post.v1.UnlikePostResponse
+	12, // 27: post.v1.PostService.ListPostReplies:output_type -> post.v1.ListPostRepliesResponse
+	14, // 28: post.v1.PostService.ListPostReposts:output_type -> post.v1.ListPostRepostsResponse
+	16, // 29: post.v1.PostService.ListPostLikes:output_type -> post.v1.ListPostLikesResponse
+	18, // 30: post.v1.PostService.ListUserPosts:output_type -> post.v1.ListUserPostsResponse
+	20, // 31: post.v1.PostService.ListUserLikedPosts:output_type -> post.v1.ListUserLikedPostsResponse
+	22, // [22:32] is the sub-list for method output_type
+	12, // [12:22] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_post_v1_post_proto_init() }

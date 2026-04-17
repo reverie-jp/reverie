@@ -7,9 +7,13 @@ import (
 
 type Handler struct {
 	timelinev1connect.UnimplementedTimelineServiceHandler
-	listTimeline *usecase.ListTimeline
+	listTimeline          *usecase.ListTimeline
+	listFollowingTimeline *usecase.ListFollowingTimeline
 }
 
-func New(listTimeline *usecase.ListTimeline) *Handler {
-	return &Handler{listTimeline: listTimeline}
+func New(listTimeline *usecase.ListTimeline, listFollowingTimeline *usecase.ListFollowingTimeline) *Handler {
+	return &Handler{
+		listTimeline:          listTimeline,
+		listFollowingTimeline: listFollowingTimeline,
+	}
 }

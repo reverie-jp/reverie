@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useParams } from "react-router";
 import { Button } from "~/components/ui/button";
 import { BottomNav } from "~/components/bottom-nav";
 import { PostCard, type Post } from "~/components/post-card";
@@ -7,32 +8,22 @@ import {
   type ComposeMode,
 } from "~/components/compose-post-dialog";
 import { ArrowLeft } from "lucide-react";
-
-const originalPost: Post = {
-  id: "1",
-  author: { name: "田中太郎", customId: "tanaka", avatarUrl: "" },
-  content: "今日はとてもいい天気ですね。散歩に行ってきました！",
-  createdAt: new Date(Date.now() - 3 * 60_000),
-  replyCount: 2,
-  repostCount: 1,
-  likeCount: 5,
-};
-
-const repostPosts: Post[] = [
-  {
-    id: "rp1",
-    author: { name: "山田美咲", customId: "misaki_y", avatarUrl: "" },
-    content: "ほんとにいい天気だった！",
-    createdAt: new Date(Date.now() - 30 * 60_000),
-    replyCount: 0,
-    repostCount: 0,
-    likeCount: 3,
-    repostOf: originalPost,
-  },
-];
+import { listPostReposts } from "~/lib/api";
+import { apiPostToUiPost } from "~/lib/utils";
 
 export default function PostReposts() {
+  const { id } = useParams();
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
   const [composeMode, setComposeMode] = useState<ComposeMode | null>(null);
+
+  useEffect(() => {
+    if (!id) return;
+    listPostReposts(id)
+      .then((res) => setPosts(res.posts.map(apiPostToUiPost)))
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [id]);
 
   const handleReply = (post: Post) => {
     setComposeMode({ type: "reply", post });
@@ -54,7 +45,17 @@ export default function PostReposts() {
       </div>
 
       <div className="flex-1">
-        {repostPosts.map((post) => (
+        {loading && (
+          <div className="flex justify-center items-center py-12 text-muted-foreground text-sm">
+            読み込み中...
+          </div>
+        )}
+        {!loading && posts.length === 0 && (
+          <div className="flex justify-center items-center py-12 text-muted-foreground text-sm">
+            再投稿はまだありません
+          </div>
+        )}
+        {posts.map((post) => (
           <PostCard key={post.id} post={post} onReply={handleReply} onRepost={handleRepost} />
         ))}
       </div>

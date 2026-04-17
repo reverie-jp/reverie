@@ -16,6 +16,12 @@ type Repository interface {
 	CreateUser(ctx context.Context, params CreateUserParams) error
 	UpdateUser(ctx context.Context, params UpdateUserParams) (*entity.User, error)
 	DeleteUser(ctx context.Context, id ulid.ULID) error
+	SearchUsers(ctx context.Context, query string, cursor *time.Time, limit int32) ([]*entity.User, error)
+	FollowUser(ctx context.Context, followerID, followedID ulid.ULID) error
+	UnfollowUser(ctx context.Context, followerID, followedID ulid.ULID) error
+	IsFollowing(ctx context.Context, followerID, followedID ulid.ULID) (bool, error)
+	CountFollowers(ctx context.Context, userID ulid.ULID) (int64, error)
+	CountFollowing(ctx context.Context, userID ulid.ULID) (int64, error)
 }
 
 type UpdateUserParams struct {

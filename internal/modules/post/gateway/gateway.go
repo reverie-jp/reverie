@@ -18,6 +18,7 @@ type PostView struct {
 	RepostCount   int64
 	FavoriteCount int64
 	IsFavorited   bool
+	RepostOf      *PostView
 }
 
 type CreatePostParams struct {
@@ -33,10 +34,28 @@ type ListTimelineParams struct {
 	Limit  int32
 }
 
+type ListFollowingTimelineParams struct {
+	FollowerID ulid.ULID
+	Cursor     *time.Time
+	Limit      int32
+}
+
 type ListUserPostsParams struct {
 	AuthorID ulid.ULID
 	Cursor   *time.Time
 	Limit    int32
+}
+
+type ListPostRepliesParams struct {
+	PostID ulid.ULID
+	Cursor *time.Time
+	Limit  int32
+}
+
+type ListPostRepostsParams struct {
+	PostID ulid.ULID
+	Cursor *time.Time
+	Limit  int32
 }
 
 type Gateway interface {
@@ -46,7 +65,10 @@ type Gateway interface {
 	LikePost(ctx context.Context, postID ulid.ULID, userID ulid.ULID) (*PostView, error)
 	UnlikePost(ctx context.Context, postID ulid.ULID, userID ulid.ULID) (*PostView, error)
 	ListTimeline(ctx context.Context, params ListTimelineParams, requestorID ulid.ULID) ([]*PostView, error)
+	ListFollowingTimeline(ctx context.Context, params ListFollowingTimelineParams, requestorID ulid.ULID) ([]*PostView, error)
 	ListUserPosts(ctx context.Context, params ListUserPostsParams, requestorID ulid.ULID) ([]*PostView, error)
+	ListPostReposts(ctx context.Context, params ListPostRepostsParams, requestorID ulid.ULID) ([]*PostView, error)
+	ListPostReplies(ctx context.Context, params ListPostRepliesParams, requestorID ulid.ULID) ([]*PostView, error)
 }
 
 type gatewayImpl struct {

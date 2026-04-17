@@ -94,9 +94,9 @@ func Run() error {
 	mux.Handle("/", gwMux)
 
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:5173"},
+		AllowedOrigins:   []string{"http://localhost:37610"},
 		AllowCredentials: true,
-		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
+		AllowedMethods:   []string{"GET", "POST", "PATCH", "DELETE", "OPTIONS"},
 		AllowedHeaders: []string{
 			"Content-Type",
 			"Authorization",

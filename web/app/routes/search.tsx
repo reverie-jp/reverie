@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Link, useSearchParams } from "react-router";
 import {
   Search,
@@ -24,6 +24,7 @@ import {
   ComposePostDialog,
   type ComposeMode,
 } from "~/components/compose-post-dialog";
+import { searchUsers, type User as ApiUser } from "~/lib/api";
 
 // --- Types ---
 
@@ -36,6 +37,7 @@ interface TrendItem {
 }
 
 interface SuggestedUser {
+  id: string;
   name: string;
   customId: string;
   avatarUrl?: string;
@@ -50,6 +52,17 @@ interface HistoryEntry {
   type: SearchType;
 }
 
+function apiUserToSuggested(u: ApiUser): SuggestedUser {
+  return {
+    id: u.id,
+    name: u.displayName,
+    customId: u.customId,
+    bio: u.biography ?? "",
+    isFollowing: u.isFollowing ?? false,
+    followsYou: u.isFollowedBy ?? false,
+  };
+}
+
 // --- Sample data ---
 
 const sampleTrends: TrendItem[] = [
@@ -62,6 +75,7 @@ const sampleTrends: TrendItem[] = [
 
 const sampleSuggestedUsers: SuggestedUser[] = [
   {
+    id: "user-tanaka",
     name: "田中太郎",
     customId: "tanaka",
     avatarUrl: "",
@@ -70,6 +84,7 @@ const sampleSuggestedUsers: SuggestedUser[] = [
     followsYou: false,
   },
   {
+    id: "user-hanako_s",
     name: "佐藤花子",
     customId: "hanako_s",
     avatarUrl: "",
@@ -78,6 +93,7 @@ const sampleSuggestedUsers: SuggestedUser[] = [
     followsYou: true,
   },
   {
+    id: "user-ichiro_dev",
     name: "鈴木一郎",
     customId: "ichiro_dev",
     avatarUrl: "",
@@ -86,6 +102,7 @@ const sampleSuggestedUsers: SuggestedUser[] = [
     followsYou: false,
   },
   {
+    id: "user-misaki_y",
     name: "山田美咲",
     customId: "misaki_y",
     avatarUrl: "",
@@ -94,6 +111,7 @@ const sampleSuggestedUsers: SuggestedUser[] = [
     followsYou: true,
   },
   {
+    id: "user-kenta_t",
     name: "高橋健太",
     customId: "kenta_t",
     avatarUrl: "",
@@ -102,6 +120,7 @@ const sampleSuggestedUsers: SuggestedUser[] = [
     followsYou: false,
   },
   {
+    id: "user-yu_nkmr",
     name: "中村悠",
     customId: "yu_nkmr",
     avatarUrl: "",
@@ -110,6 +129,7 @@ const sampleSuggestedUsers: SuggestedUser[] = [
     followsYou: false,
   },
   {
+    id: "user-aoi_kb",
     name: "小林あおい",
     customId: "aoi_kb",
     avatarUrl: "",
@@ -118,6 +138,7 @@ const sampleSuggestedUsers: SuggestedUser[] = [
     followsYou: true,
   },
   {
+    id: "user-daisuke_w",
     name: "渡辺大輔",
     customId: "daisuke_w",
     avatarUrl: "",
@@ -126,6 +147,7 @@ const sampleSuggestedUsers: SuggestedUser[] = [
     followsYou: false,
   },
   {
+    id: "user-sakura_ito",
     name: "伊藤さくら",
     customId: "sakura_ito",
     avatarUrl: "",
@@ -134,6 +156,7 @@ const sampleSuggestedUsers: SuggestedUser[] = [
     followsYou: false,
   },
   {
+    id: "user-rina_m",
     name: "松本りな",
     customId: "rina_m",
     avatarUrl: "",
@@ -197,6 +220,7 @@ const samplePostResults: Post[] = [
 
 const sampleUserResults: SuggestedUser[] = [
   {
+    id: "user-tanaka",
     name: "田中太郎",
     customId: "tanaka",
     avatarUrl: "",
@@ -205,6 +229,7 @@ const sampleUserResults: SuggestedUser[] = [
     followsYou: false,
   },
   {
+    id: "user-ichiro_dev",
     name: "鈴木一郎",
     customId: "ichiro_dev",
     avatarUrl: "",
@@ -213,6 +238,7 @@ const sampleUserResults: SuggestedUser[] = [
     followsYou: true,
   },
   {
+    id: "user-kenta_t",
     name: "高橋健太",
     customId: "kenta_t",
     avatarUrl: "",
@@ -416,6 +442,7 @@ function UserRow({ user }: { user: SuggestedUser }) {
         </p>
       </div>
       <FollowButton
+        userId={user.id}
         customId={user.customId}
         initialFollowing={user.isFollowing}
         followsYou={user.followsYou}
@@ -465,10 +492,24 @@ export default function SearchPage() {
   const [committedQuery, setCommittedQuery] = useState(initialQuery);
   const [committedType, setCommittedType] = useState<SearchType>(initialType);
   const [history, setHistory] = useState(sampleHistory);
+  const [userResults, setUserResults] = useState<SuggestedUser[]>([]);
+  const [userResultsLoading, setUserResultsLoading] = useState(false);
   const [selectedCall, setSelectedCall] = useState<Call | null>(null);
   const [composeMode, setComposeMode] = useState<ComposeMode | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!committedQuery.trim()) {
+      setUserResults([]);
+      return;
+    }
+    setUserResultsLoading(true);
+    searchUsers(committedQuery, { pageSize: 20 })
+      .then((res) => setUserResults((res.users ?? []).map(apiUserToSuggested)))
+      .catch(console.error)
+      .finally(() => setUserResultsLoading(false));
+  }, [committedQuery]);
 
   const hasResults = committedQuery.trim().length > 0;
   const showOverlay = isFocused && !hasResults;
@@ -626,11 +667,13 @@ export default function SearchPage() {
               )}
             </TabsContent>
             <TabsContent value="users">
-              {sampleUserResults.length === 0 ? (
+              {userResultsLoading ? (
+                <div className="flex justify-center items-center py-12 text-muted-foreground text-sm">読み込み中...</div>
+              ) : userResults.length === 0 ? (
                 <EmptyResult query={committedQuery} />
               ) : (
                 <div>
-                  {sampleUserResults.map((user) => (
+                  {userResults.map((user) => (
                     <UserRow key={user.customId} user={user} />
                   ))}
                 </div>

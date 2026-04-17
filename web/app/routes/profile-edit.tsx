@@ -37,9 +37,9 @@ export default function ProfileEdit() {
     }
     getMe().then(({ user }) => {
       setUser(user);
-      setName(user.display_name);
+      setName(user.displayName);
       setBio(user.biography ?? "");
-      setIsPrivate(user.is_private);
+      setIsPrivate(user.isPrivate);
     }).catch(() => navigate("/login"));
   }, []);
 
@@ -63,9 +63,9 @@ export default function ProfileEdit() {
     setError(null);
     try {
       await updateUser({
-        display_name: name,
+        displayName: name,
         biography: bio,
-        is_private: isPrivate,
+        isPrivate: isPrivate,
       });
       navigate(-1);
     } catch (e: any) {
@@ -203,7 +203,7 @@ export default function ProfileEdit() {
           <div className="flex items-center justify-between">
             <span className="text-xs text-muted-foreground">ユーザーID</span>
             <span className="text-xs text-muted-foreground">
-              @{user?.custom_id ?? ""}
+              @{user?.customId ?? ""}
             </span>
           </div>
         </div>

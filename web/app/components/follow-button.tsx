@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { followUser, unfollowUser } from "~/lib/api";
 import { Button } from "~/components/ui/button";
 import {
   ConfirmActionDialog,
@@ -24,6 +25,7 @@ import {
 } from "lucide-react";
 
 export function FollowButton({
+  userId,
   customId,
   initialFollowing,
   followsYou = false,
@@ -31,6 +33,7 @@ export function FollowButton({
   onFollowChange,
   onBlockChange,
 }: {
+  userId: string;
   customId: string;
   initialFollowing: boolean;
   /** Whether this user follows you */
@@ -90,6 +93,7 @@ export function FollowButton({
               setConfirmAction("unfollow");
             } else {
               updateFollowing(true);
+              followUser(userId).catch(() => updateFollowing(false));
             }
           }}
         >
@@ -188,7 +192,10 @@ export function FollowButton({
         action={confirmAction}
         customId={customId}
         onConfirm={() => {
-          if (confirmAction === "unfollow") updateFollowing(false);
+          if (confirmAction === "unfollow") {
+            updateFollowing(false);
+            unfollowUser(userId).catch(() => updateFollowing(true));
+          }
           if (confirmAction === "mute") setIsMuted(true);
           if (confirmAction === "repost-mute") setIsRepostMuted(true);
           if (confirmAction === "block") {

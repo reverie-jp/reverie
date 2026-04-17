@@ -11,27 +11,36 @@ export type ComposeMode =
   | { type: "reply"; post: Post }
   | { type: "repost"; post: Post };
 
+export interface PostOptions {
+  replyToId?: string;
+  repostId?: string;
+}
+
 export function ComposePostDialog({
   open,
   onClose,
   onPost,
   mode = { type: "new" },
+  currentUser,
 }: {
   open: boolean;
   onClose: () => void;
-  onPost?: (content: string) => void;
+  onPost?: (content: string, options?: PostOptions) => void;
   mode?: ComposeMode;
+  currentUser?: { name: string; avatarUrl?: string };
 }) {
   const [content, setContent] = useState("");
 
   const handlePost = () => {
-    onPost?.(content);
+    const options: PostOptions = {};
+    if (mode.type === "reply") options.replyToId = mode.post.id;
+    if (mode.type === "repost") options.repostId = mode.post.id;
+    onPost?.(content, options);
     setContent("");
     onClose();
   };
 
   const handleDraft = () => {
-    // TODO: 下書き保存処理
     setContent("");
     onClose();
   };
@@ -48,6 +57,8 @@ export function ComposePostDialog({
       : mode.type === "repost"
         ? "コメントを追加..."
         : "いまどうしてる？";
+
+  const myInitials = currentUser?.name?.slice(0, 2) ?? "自";
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -66,8 +77,8 @@ export function ComposePostDialog({
               </Avatar>
               <div className="w-px flex-1 bg-border my-1" />
               <Avatar className="size-8">
-                <AvatarImage src="" alt="自分" />
-                <AvatarFallback className="text-xs">自分</AvatarFallback>
+                <AvatarImage src={currentUser?.avatarUrl} alt={currentUser?.name} />
+                <AvatarFallback className="text-xs">{myInitials}</AvatarFallback>
               </Avatar>
             </div>
             <div className="flex-1 min-w-0">
@@ -93,8 +104,8 @@ export function ComposePostDialog({
         ) : (
           <div className="flex gap-3">
             <Avatar className="size-10 shrink-0">
-              <AvatarImage src="" alt="自分" />
-              <AvatarFallback>自分</AvatarFallback>
+              <AvatarImage src={currentUser?.avatarUrl} alt={currentUser?.name} />
+              <AvatarFallback>{myInitials}</AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
               <Textarea
@@ -149,7 +160,7 @@ export function ComposePostDialog({
           </Button>
           <Button
             onClick={handlePost}
-            disabled={content.trim().length === 0}
+            disabled={content.trim().length === 0 && mode.type !== "repost"}
             className="h-8 px-3 gap-1.5"
           >
             {mode.type === "reply"

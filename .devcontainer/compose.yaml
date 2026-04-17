@@ -8,6 +8,11 @@ services:
       POSTGRES_DB: reverie_db
     ports:
       - 5432:5432
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U reverie -d reverie_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   reverie-api:
     build:
@@ -18,10 +23,23 @@ services:
       - 37611:37611
       - 50051:50051
     env_file:
-      - ../.env.development.local
-    command: sleep infinity
+      - ../.env.development
+    command: sh -c "migrate -source file:///reverie-api/migrations -database \"$$DATABASE_DSN?sslmode=disable\" up && air"
     depends_on:
-      - reverie-db
+      reverie-db:
+        condition: service_healthy
+
+  reverie-web:
+    build:
+      context: .
+    volumes:
+      - ..:/reverie-api:cached
+    ports:
+      - 37610:37610
+    working_dir: /reverie-api/web
+    command: sh -c "npm install && npm run dev"
+    depends_on:
+      - reverie-api
 
   reverie-pgadmin:
     container_name: reverie-pgadmin

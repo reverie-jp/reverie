@@ -33,7 +33,10 @@ type Repository interface {
 	DeletePost(ctx context.Context, postID ulid.ULID, authorID ulid.ULID) error
 	GetPostByID(ctx context.Context, id ulid.ULID) (*entity.Post, error)
 	ListTimeline(ctx context.Context, params ListTimelineParams) ([]*entity.Post, error)
+	ListFollowingTimeline(ctx context.Context, params ListFollowingTimelineParams) ([]*entity.Post, error)
 	ListUserPosts(ctx context.Context, params ListUserPostsParams) ([]*entity.Post, error)
+	ListPostReposts(ctx context.Context, params ListPostRepostsParams) ([]*entity.Post, error)
+	ListPostReplies(ctx context.Context, params ListPostRepliesParams) ([]*entity.Post, error)
 	CountPostReplies(ctx context.Context, postID ulid.ULID) (int64, error)
 	CountPostReposts(ctx context.Context, postID ulid.ULID) (int64, error)
 	CountPostFavorites(ctx context.Context, postID ulid.ULID) (int64, error)

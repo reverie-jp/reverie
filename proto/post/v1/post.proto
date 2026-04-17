@@ -94,6 +94,7 @@ message Post {
   int32 like_count = 8;
   bool is_liked = 9;
   google.protobuf.Timestamp create_time = 10;
+  optional Post repost_of = 11;
 }
 
 // Request / Response

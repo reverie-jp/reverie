@@ -17,5 +17,7 @@ func InitModule(q sqlc.Querier, userGateway usergw.Gateway) postv1connect.PostSe
 	likePost := usecase.NewLikePost(postGateway)
 	unlikePost := usecase.NewUnlikePost(postGateway)
 	listUserPosts := usecase.NewListUserPosts(postGateway)
-	return handler.New(getPost, createPost, deletePost, likePost, unlikePost, listUserPosts)
+	listPostReplies := usecase.NewListPostReplies(postGateway)
+	listPostReposts := usecase.NewListPostReposts(postGateway)
+	return handler.New(getPost, createPost, deletePost, likePost, unlikePost, listUserPosts, listPostReplies, listPostReposts)
 }

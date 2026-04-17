@@ -166,10 +166,141 @@ func (q *Queries) GetPostFavorite(ctx context.Context, arg GetPostFavoriteParams
 	return i, err
 }
 
+const listPostReposts = `-- name: ListPostReposts :many
+SELECT id, author_id, reply_to_id, repost_id, text, create_time, update_time
+FROM posts
+WHERE repost_id = $1
+  AND ($2::timestamptz IS NULL OR create_time < $2)
+ORDER BY create_time DESC
+LIMIT $3
+`
+
+type ListPostRepostsParams struct {
+	RepostID *ulid.ULID `json:"repost_id"`
+	Column2  time.Time  `json:"column_2"`
+	Limit    int32      `json:"limit"`
+}
+
+func (q *Queries) ListPostReposts(ctx context.Context, arg ListPostRepostsParams) ([]Post, error) {
+	rows, err := q.db.Query(ctx, listPostReposts, arg.RepostID, arg.Column2, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Post{}
+	for rows.Next() {
+		var i Post
+		if err := rows.Scan(
+			&i.ID,
+			&i.AuthorID,
+			&i.ReplyToID,
+			&i.RepostID,
+			&i.Text,
+			&i.CreateTime,
+			&i.UpdateTime,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listFollowingTimeline = `-- name: ListFollowingTimeline :many
+SELECT id, author_id, reply_to_id, repost_id, text, create_time, update_time
+FROM posts
+WHERE reply_to_id IS NULL
+  AND author_id IN (SELECT followed_id FROM user_follows WHERE follower_id = $1)
+  AND ($2::timestamptz IS NULL OR create_time < $2)
+ORDER BY create_time DESC
+LIMIT $3
+`
+
+type ListFollowingTimelineParams struct {
+	FollowerID ulid.ULID `json:"follower_id"`
+	Column2    time.Time `json:"column_2"`
+	Limit      int32     `json:"limit"`
+}
+
+func (q *Queries) ListFollowingTimeline(ctx context.Context, arg ListFollowingTimelineParams) ([]Post, error) {
+	rows, err := q.db.Query(ctx, listFollowingTimeline, arg.FollowerID, arg.Column2, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Post{}
+	for rows.Next() {
+		var i Post
+		if err := rows.Scan(
+			&i.ID,
+			&i.AuthorID,
+			&i.ReplyToID,
+			&i.RepostID,
+			&i.Text,
+			&i.CreateTime,
+			&i.UpdateTime,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listPostReplies = `-- name: ListPostReplies :many
+SELECT id, author_id, reply_to_id, repost_id, text, create_time, update_time
+FROM posts
+WHERE reply_to_id = $1
+  AND ($2::timestamptz IS NULL OR create_time < $2)
+ORDER BY create_time DESC
+LIMIT $3
+`
+
+type ListPostRepliesParams struct {
+	ReplyToID *ulid.ULID `json:"reply_to_id"`
+	Column2   time.Time  `json:"column_2"`
+	Limit     int32      `json:"limit"`
+}
+
+func (q *Queries) ListPostReplies(ctx context.Context, arg ListPostRepliesParams) ([]Post, error) {
+	rows, err := q.db.Query(ctx, listPostReplies, arg.ReplyToID, arg.Column2, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Post{}
+	for rows.Next() {
+		var i Post
+		if err := rows.Scan(
+			&i.ID,
+			&i.AuthorID,
+			&i.ReplyToID,
+			&i.RepostID,
+			&i.Text,
+			&i.CreateTime,
+			&i.UpdateTime,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listTimeline = `-- name: ListTimeline :many
 SELECT id, author_id, reply_to_id, repost_id, text, create_time, update_time
 FROM posts
-WHERE ($1::timestamptz IS NULL OR create_time < $1)
+WHERE reply_to_id IS NULL
+  AND ($1::timestamptz IS NULL OR create_time < $1)
 ORDER BY create_time DESC
 LIMIT $2
 `
@@ -211,6 +342,7 @@ const listUserPosts = `-- name: ListUserPosts :many
 SELECT id, author_id, reply_to_id, repost_id, text, create_time, update_time
 FROM posts
 WHERE author_id = $1
+  AND reply_to_id IS NULL
   AND ($2::timestamptz IS NULL OR create_time < $2)
 ORDER BY create_time DESC
 LIMIT $3

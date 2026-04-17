@@ -1,9 +1,15 @@
 import { useState } from "react";
 import { Pencil } from "lucide-react";
 import { Button } from "~/components/ui/button";
-import { ComposePostDialog } from "~/components/compose-post-dialog";
+import { ComposePostDialog, type PostOptions } from "~/components/compose-post-dialog";
 
-export function ComposeFab({ onPost }: { onPost?: (content: string) => void }) {
+export function ComposeFab({
+  onPost,
+  currentUser,
+}: {
+  onPost?: (content: string, options?: PostOptions) => void;
+  currentUser?: { name: string; avatarUrl?: string };
+}) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -18,6 +24,7 @@ export function ComposeFab({ onPost }: { onPost?: (content: string) => void }) {
         open={open}
         onClose={() => setOpen(false)}
         onPost={onPost}
+        currentUser={currentUser}
       />
     </>
   );

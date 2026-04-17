@@ -12,6 +12,28 @@ import (
 	"reverie.jp/reverie/internal/platform/ulid"
 )
 
+const countUserFollowers = `-- name: CountUserFollowers :one
+SELECT COUNT(*) FROM user_follows WHERE followed_id = $1
+`
+
+func (q *Queries) CountUserFollowers(ctx context.Context, followedID ulid.ULID) (int64, error) {
+	row := q.db.QueryRow(ctx, countUserFollowers, followedID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countUserFollowing = `-- name: CountUserFollowing :one
+SELECT COUNT(*) FROM user_follows WHERE follower_id = $1
+`
+
+func (q *Queries) CountUserFollowing(ctx context.Context, followerID ulid.ULID) (int64, error) {
+	row := q.db.QueryRow(ctx, countUserFollowing, followerID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createUser = `-- name: CreateUser :exec
 INSERT INTO users (id, custom_id, display_name)
 VALUES ($1, $2, $3)
@@ -28,6 +50,22 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
 	return err
 }
 
+const createUserFollow = `-- name: CreateUserFollow :exec
+INSERT INTO user_follows (follower_id, followed_id)
+VALUES ($1, $2)
+ON CONFLICT DO NOTHING
+`
+
+type CreateUserFollowParams struct {
+	FollowerID ulid.ULID `json:"follower_id"`
+	FollowedID ulid.ULID `json:"followed_id"`
+}
+
+func (q *Queries) CreateUserFollow(ctx context.Context, arg CreateUserFollowParams) error {
+	_, err := q.db.Exec(ctx, createUserFollow, arg.FollowerID, arg.FollowedID)
+	return err
+}
+
 const deleteUser = `-- name: DeleteUser :exec
 DELETE FROM users WHERE id = $1
 `
@@ -35,6 +73,69 @@ DELETE FROM users WHERE id = $1
 func (q *Queries) DeleteUser(ctx context.Context, id ulid.ULID) error {
 	_, err := q.db.Exec(ctx, deleteUser, id)
 	return err
+}
+
+const deleteUserFollow = `-- name: DeleteUserFollow :exec
+DELETE FROM user_follows
+WHERE follower_id = $1 AND followed_id = $2
+`
+
+type DeleteUserFollowParams struct {
+	FollowerID ulid.ULID `json:"follower_id"`
+	FollowedID ulid.ULID `json:"followed_id"`
+}
+
+func (q *Queries) DeleteUserFollow(ctx context.Context, arg DeleteUserFollowParams) error {
+	_, err := q.db.Exec(ctx, deleteUserFollow, arg.FollowerID, arg.FollowedID)
+	return err
+}
+
+const searchUsers = `-- name: SearchUsers :many
+SELECT id, custom_id, custom_id_changed_at, display_name, biography,
+       avatar_media_id, banner_media_id, is_private, birthdate, create_time, update_time
+FROM users
+WHERE (custom_id ILIKE '%' || $1 || '%' OR display_name ILIKE '%' || $1 || '%')
+  AND ($2::timestamptz IS NULL OR create_time < $2)
+ORDER BY create_time DESC
+LIMIT $3
+`
+
+type SearchUsersParams struct {
+	Query   string    `json:"query"`
+	Column2 time.Time `json:"column_2"`
+	Limit   int32     `json:"limit"`
+}
+
+func (q *Queries) SearchUsers(ctx context.Context, arg SearchUsersParams) ([]User, error) {
+	rows, err := q.db.Query(ctx, searchUsers, arg.Query, arg.Column2, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []User{}
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.CustomID,
+			&i.CustomIDChangedAt,
+			&i.DisplayName,
+			&i.Biography,
+			&i.AvatarMediaID,
+			&i.BannerMediaID,
+			&i.IsPrivate,
+			&i.Birthdate,
+			&i.CreateTime,
+			&i.UpdateTime,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getUserByCustomID = `-- name: GetUserByCustomID :one
@@ -86,6 +187,24 @@ func (q *Queries) GetUserByID(ctx context.Context, id ulid.ULID) (User, error) {
 		&i.CreateTime,
 		&i.UpdateTime,
 	)
+	return i, err
+}
+
+const getUserFollow = `-- name: GetUserFollow :one
+SELECT follower_id, followed_id, create_time
+FROM user_follows
+WHERE follower_id = $1 AND followed_id = $2
+`
+
+type GetUserFollowParams struct {
+	FollowerID ulid.ULID `json:"follower_id"`
+	FollowedID ulid.ULID `json:"followed_id"`
+}
+
+func (q *Queries) GetUserFollow(ctx context.Context, arg GetUserFollowParams) (UserFollow, error) {
+	row := q.db.QueryRow(ctx, getUserFollow, arg.FollowerID, arg.FollowedID)
+	var i UserFollow
+	err := row.Scan(&i.FollowerID, &i.FollowedID, &i.CreateTime)
 	return i, err
 }
 

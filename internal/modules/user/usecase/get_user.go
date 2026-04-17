@@ -5,7 +5,6 @@ import (
 
 	usergw "reverie.jp/reverie/internal/modules/user/gateway"
 	"reverie.jp/reverie/internal/platform/ulid"
-	"reverie.jp/reverie/internal/platform/xerrors"
 )
 
 type GetUser struct {
@@ -21,26 +20,45 @@ func (uc *GetUser) Execute(ctx context.Context, input GetUserInput, requestorID 
 		return nil, err
 	}
 
-	targetID, err := ulid.Parse(input.UserID)
-	if err != nil {
-		return nil, xerrors.ErrInvalidArgument.WithMessage("invalid user_id")
-	}
-
-	user, err := uc.userGateway.GetUserByID(ctx, targetID)
+	user, err := resolveUser(ctx, uc.userGateway, input.UserID)
 	if err != nil {
 		return nil, err
 	}
-	if user == nil {
-		return nil, xerrors.ErrUserNotFound
+
+	isMe := user.ID == requestorID
+
+	followerCount, err := uc.userGateway.CountFollowers(ctx, user.ID)
+	if err != nil {
+		return nil, err
+	}
+	followingCount, err := uc.userGateway.CountFollowing(ctx, user.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	var isFollowing, isFollowedBy bool
+	if !isMe {
+		isFollowing, err = uc.userGateway.IsFollowing(ctx, requestorID, user.ID)
+		if err != nil {
+			return nil, err
+		}
+		isFollowedBy, err = uc.userGateway.IsFollowing(ctx, user.ID, requestorID)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &GetUserOutput{
-		ID:          user.ID,
-		CustomID:    user.CustomID,
-		DisplayName: user.DisplayName,
-		Biography:   user.Biography,
-		IsPrivate:   user.IsPrivate,
-		IsMe:        user.ID == requestorID,
-		CreateTime:  user.CreateTime,
+		ID:             user.ID,
+		CustomID:       user.CustomID,
+		DisplayName:    user.DisplayName,
+		Biography:      user.Biography,
+		IsPrivate:      user.IsPrivate,
+		IsMe:           isMe,
+		IsFollowing:    isFollowing,
+		IsFollowedBy:   isFollowedBy,
+		FollowerCount:  followerCount,
+		FollowingCount: followingCount,
+		CreateTime:     user.CreateTime,
 	}, nil
 }

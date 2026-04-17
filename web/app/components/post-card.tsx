@@ -18,11 +18,13 @@ import {
   Flag,
   Link2,
   ClipboardCopy,
+  Trash2,
 } from "lucide-react";
 
 export interface Post {
   id: string;
   author: {
+    id?: string;
     name: string;
     customId: string;
     avatarUrl?: string;
@@ -32,6 +34,7 @@ export interface Post {
   replyCount: number;
   repostCount: number;
   likeCount: number;
+  isLiked?: boolean;
   repostOf?: Post;
   replyTo?: Post;
 }
@@ -53,16 +56,38 @@ export function formatRelativeTime(date: Date): string {
 
 export function PostCard({
   post,
+  currentUserId,
   onReply,
   onRepost,
+  onLike,
+  onUnlike,
+  onDelete,
 }: {
   post: Post;
+  currentUserId?: string;
   onReply?: (post: Post) => void;
   onRepost?: (post: Post) => void;
+  onLike?: (postId: string) => void;
+  onUnlike?: (postId: string) => void;
+  onDelete?: (postId: string) => void;
 }) {
   const initials = post.author.name.slice(0, 2);
-  const [liked, setLiked] = useState(false);
+  const [liked, setLiked] = useState(post.isLiked ?? false);
+  const [likeCount, setLikeCount] = useState(post.likeCount);
+  const isMe = !!currentUserId && post.author.id === currentUserId;
   const navigate = useNavigate();
+
+  const handleLikeToggle = () => {
+    if (liked) {
+      setLiked(false);
+      setLikeCount((c) => Math.max(0, c - 1));
+      onUnlike?.(post.id);
+    } else {
+      setLiked(true);
+      setLikeCount((c) => c + 1);
+      onLike?.(post.id);
+    }
+  };
 
   return (
     <article
@@ -134,14 +159,12 @@ export function PostCard({
             )}
           </button>
           <button
-            onClick={() => setLiked(!liked)}
+            onClick={handleLikeToggle}
             className={`flex items-center gap-1.5 transition-colors group ${liked ? "text-pink-400" : "text-muted-foreground hover:text-pink-400"}`}
           >
             <Heart className={`size-4 ${liked ? "fill-current" : ""}`} />
-            {(post.likeCount > 0 || liked) && (
-              <span className="text-xs">
-                {post.likeCount + (liked ? 1 : 0)}
-              </span>
+            {likeCount > 0 && (
+              <span className="text-xs">{likeCount}</span>
             )}
           </button>
           <DropdownMenu>
@@ -170,18 +193,30 @@ export function PostCard({
                 テキストをコピー
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                <UserMinus className="size-4" />
-                フォローをやめる
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Flag className="size-4" />
-                通報する
-              </DropdownMenuItem>
-              <DropdownMenuItem className="text-destructive">
-                <ShieldBan className="size-4" />
-                ブロック
-              </DropdownMenuItem>
+              {isMe ? (
+                <DropdownMenuItem
+                  className="text-destructive"
+                  onClick={() => onDelete?.(post.id)}
+                >
+                  <Trash2 className="size-4" />
+                  削除する
+                </DropdownMenuItem>
+              ) : (
+                <>
+                  <DropdownMenuItem>
+                    <UserMinus className="size-4" />
+                    フォローをやめる
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Flag className="size-4" />
+                    通報する
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="text-destructive">
+                    <ShieldBan className="size-4" />
+                    ブロック
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

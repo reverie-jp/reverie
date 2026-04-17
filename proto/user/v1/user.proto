@@ -37,6 +37,29 @@ service UserService {
     };
   }
 
+  // Follow a user.
+  rpc FollowUser(FollowUserRequest) returns (FollowUserResponse) {
+    option (google.api.http) = {
+      post: "/v1/users/{user_id}:follow"
+      body: "*"
+    };
+  }
+
+  // Unfollow a user.
+  rpc UnfollowUser(UnfollowUserRequest) returns (UnfollowUserResponse) {
+    option (google.api.http) = {
+      post: "/v1/users/{user_id}:unfollow"
+      body: "*"
+    };
+  }
+
+  // Search users by display name or custom ID.
+  rpc SearchUsers(SearchUsersRequest) returns (SearchUsersResponse) {
+    option (google.api.http) = {
+      get: "/v1/users"
+    };
+  }
+
 }
 
 // Enums
@@ -117,4 +140,31 @@ message UpdateUserSettingsRequest {
 
 message UpdateUserSettingsResponse {
   UserSettings settings = 1;
+}
+
+message FollowUserRequest {
+  string user_id = 1;
+}
+
+message FollowUserResponse {
+  User user = 1;
+}
+
+message UnfollowUserRequest {
+  string user_id = 1;
+}
+
+message UnfollowUserResponse {
+  User user = 1;
+}
+
+message SearchUsersRequest {
+  string query = 1;
+  int32 page_size = 2;
+  string page_token = 3;
+}
+
+message SearchUsersResponse {
+  repeated User users = 1;
+  string next_page_token = 2;
 }

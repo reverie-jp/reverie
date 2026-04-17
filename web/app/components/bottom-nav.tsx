@@ -1,5 +1,5 @@
 import { NavLink } from "react-router";
-import { Home, Search, MessageCircle, Bell, CircleUserRound } from "lucide-react";
+import { Home, Search, MessageCircle, Bell, CircleUserRound, Settings } from "lucide-react";
 
 export function BottomNav() {
   return (
@@ -19,6 +19,9 @@ export function BottomNav() {
         </NavLink>
         <NavLink to="/users/me" className={navLinkClass}>
           <CircleUserRound className="size-6" />
+        </NavLink>
+        <NavLink to="/settings" className={navLinkClass}>
+          <Settings className="size-6" />
         </NavLink>
       </div>
     </nav>
