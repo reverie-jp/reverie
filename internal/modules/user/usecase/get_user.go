@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"reverie.jp/reverie/internal/modules/user/gateway"
+	"reverie.jp/reverie/internal/platform/ulid"
 	"reverie.jp/reverie/internal/platform/xerrors"
 )
 
@@ -20,7 +21,12 @@ func (uc *GetUser) Execute(ctx context.Context, input GetUserInput) (*GetUserOut
 		return nil, err
 	}
 
-	view, err := uc.userGateway.BuildView(ctx, input.RequesterID, input.TargetID)
+	targetID, err := uc.resolveTargetID(ctx, input)
+	if err != nil {
+		return nil, err
+	}
+
+	view, err := uc.userGateway.BuildView(ctx, input.RequesterID, targetID)
 	if err != nil {
 		return nil, err
 	}
@@ -29,4 +35,18 @@ func (uc *GetUser) Execute(ctx context.Context, input GetUserInput) (*GetUserOut
 	}
 
 	return &GetUserOutput{View: view}, nil
+}
+
+func (uc *GetUser) resolveTargetID(ctx context.Context, input GetUserInput) (ulid.ULID, error) {
+	if !input.TargetID.IsZero() {
+		return input.TargetID, nil
+	}
+	user, err := uc.userGateway.GetUserByCustomID(ctx, input.TargetCustomID)
+	if err != nil {
+		return ulid.ULID{}, err
+	}
+	if user == nil {
+		return ulid.ULID{}, xerrors.ErrUserNotFound
+	}
+	return user.ID, nil
 }

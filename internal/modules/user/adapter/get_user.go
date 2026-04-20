@@ -8,7 +8,6 @@ import (
 	"reverie.jp/reverie/internal/application/server/interceptor"
 	userv1 "reverie.jp/reverie/internal/gen/pb/user/v1"
 	"reverie.jp/reverie/internal/modules/user/usecase"
-	"reverie.jp/reverie/internal/platform/ulid"
 	"reverie.jp/reverie/internal/platform/xerrors"
 )
 
@@ -18,14 +17,9 @@ func FromGetUserRequest(ctx context.Context, req *connect.Request[userv1.GetUser
 		return usecase.GetUserInput{}, xerrors.ErrUnauthenticated
 	}
 
-	targetID, err := ulid.Parse(req.Msg.UserId)
-	if err != nil {
-		return usecase.GetUserInput{}, xerrors.ErrInvalidArgument.WithMessage("invalid user_id")
-	}
-
 	return usecase.GetUserInput{
-		RequesterID: requesterID,
-		TargetID:    targetID,
+		RequesterID:    requesterID,
+		TargetCustomID: req.Msg.CustomId,
 	}, nil
 }
 

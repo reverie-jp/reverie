@@ -456,7 +456,7 @@ func (x *GetMyUserResponse) GetUser() *User {
 
 type GetUserRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	CustomId      string                 `protobuf:"bytes,1,opt,name=custom_id,json=customId,proto3" json:"custom_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -491,9 +491,9 @@ func (*GetUserRequest) Descriptor() ([]byte, []int) {
 	return file_user_v1_user_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *GetUserRequest) GetUserId() string {
+func (x *GetUserRequest) GetCustomId() string {
 	if x != nil {
-		return x.UserId
+		return x.CustomId
 	}
 	return ""
 }
@@ -858,9 +858,9 @@ const file_user_v1_user_proto_rawDesc = "" +
 	"\x12default_visibility\x18\x05 \x01(\x0e2\x17.user.v1.PostVisibilityR\x11defaultVisibility\"\x12\n" +
 	"\x10GetMyUserRequest\"6\n" +
 	"\x11GetMyUserResponse\x12!\n" +
-	"\x04user\x18\x01 \x01(\v2\r.user.v1.UserR\x04user\")\n" +
-	"\x0eGetUserRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\"4\n" +
+	"\x04user\x18\x01 \x01(\v2\r.user.v1.UserR\x04user\"-\n" +
+	"\x0eGetUserRequest\x12\x1b\n" +
+	"\tcustom_id\x18\x01 \x01(\tR\bcustomId\"4\n" +
 	"\x0fGetUserResponse\x12!\n" +
 	"\x04user\x18\x01 \x01(\v2\r.user.v1.UserR\x04user\"s\n" +
 	"\x11UpdateUserRequest\x12!\n" +
@@ -886,10 +886,10 @@ const file_user_v1_user_proto_rawDesc = "" +
 	"\x0ePostVisibility\x12\x1f\n" +
 	"\x1bPOST_VISIBILITY_UNSPECIFIED\x10\x00\x12\x1a\n" +
 	"\x16POST_VISIBILITY_PUBLIC\x10\x01\x12\x1d\n" +
-	"\x19POST_VISIBILITY_FOLLOWERS\x10\x022\x98\x04\n" +
+	"\x19POST_VISIBILITY_FOLLOWERS\x10\x022\x9a\x04\n" +
 	"\vUserService\x12X\n" +
-	"\tGetMyUser\x12\x19.user.v1.GetMyUserRequest\x1a\x1a.user.v1.GetMyUserResponse\"\x14\x82\xd3\xe4\x93\x02\x0e\x12\f/v1/users/me\x12Y\n" +
-	"\aGetUser\x12\x17.user.v1.GetUserRequest\x1a\x18.user.v1.GetUserResponse\"\x1b\x82\xd3\xe4\x93\x02\x15\x12\x13/v1/users/{user_id}\x12^\n" +
+	"\tGetMyUser\x12\x19.user.v1.GetMyUserRequest\x1a\x1a.user.v1.GetMyUserResponse\"\x14\x82\xd3\xe4\x93\x02\x0e\x12\f/v1/users/me\x12[\n" +
+	"\aGetUser\x12\x17.user.v1.GetUserRequest\x1a\x18.user.v1.GetUserResponse\"\x1d\x82\xd3\xe4\x93\x02\x17\x12\x15/v1/users/{custom_id}\x12^\n" +
 	"\n" +
 	"UpdateUser\x12\x1a.user.v1.UpdateUserRequest\x1a\x1b.user.v1.UpdateUserResponse\"\x17\x82\xd3\xe4\x93\x02\x11:\x01*2\f/v1/users/me\x12s\n" +
 	"\x0fGetUserSettings\x12\x1f.user.v1.GetUserSettingsRequest\x1a .user.v1.GetUserSettingsResponse\"\x1d\x82\xd3\xe4\x93\x02\x17\x12\x15/v1/users/me/settings\x12\x7f\n" +

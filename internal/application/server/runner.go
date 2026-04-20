@@ -97,10 +97,13 @@ func Run() error {
 		AllowedOrigins:   []string{"http://localhost:5173"},
 		AllowCredentials: true,
 		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
-		AllowedHeaders: []string{
-			"Content-Type",
-			"Authorization",
+		AllowedHeaders: []string{"*"},
+		ExposedHeaders: []string{
 			"Connect-Protocol-Version",
+			"Connect-Accept-Encoding",
+			"Connect-Content-Encoding",
+			"Grpc-Status",
+			"Grpc-Message",
 		},
 	})
 

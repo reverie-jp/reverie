@@ -1,5 +1,14 @@
-import { useNavigate } from "react-router";
+import { redirect } from "react-router";
 import { Button } from "~/components/ui/button";
+import { tokenStore } from "~/lib/api-client";
+import type { Route } from "./+types/login";
+
+export const clientLoader = (_args: Route.ClientLoaderArgs) => {
+  if (tokenStore.getAccessToken()) {
+    return redirect("/");
+  }
+  return null;
+};
 
 function GoogleIcon({ className }: { className?: string }) {
   return (
@@ -24,33 +33,29 @@ function GoogleIcon({ className }: { className?: string }) {
   );
 }
 
-function LineIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="#06C755">
-      <path d="M24 10.304c0-5.369-5.383-9.738-12-9.738S0 4.935 0 10.304c0 4.814 4.27 8.846 10.035 9.608.391.084.922.258 1.057.592.121.303.079.778.039 1.084l-.171 1.027c-.053.303-.242 1.186 1.039.647 1.281-.54 6.911-4.069 9.428-6.967C23.309 14.253 24 12.38 24 10.304zm-16.66 3.088a.348.348 0 0 1-.348.348H4.51a.348.348 0 0 1-.348-.348V8.585a.348.348 0 0 1 .348-.348h.695a.348.348 0 0 1 .348.348v4.112h1.938a.348.348 0 0 1 .348.348v.347zm2.097 0a.348.348 0 0 1-.348.348h-.694a.348.348 0 0 1-.348-.348V8.585a.348.348 0 0 1 .348-.348h.694a.348.348 0 0 1 .348.348v4.807zm5.628 0a.348.348 0 0 1-.348.348h-.694a.35.35 0 0 1-.273-.132l-1.98-2.678v2.462a.348.348 0 0 1-.348.348h-.694a.348.348 0 0 1-.349-.348V8.585a.348.348 0 0 1 .349-.348h.694a.35.35 0 0 1 .272.131l1.981 2.679V8.585a.348.348 0 0 1 .348-.348h.694a.348.348 0 0 1 .348.348v4.807zm3.839-3.764a.348.348 0 0 1-.348.348h-1.938v.96h1.938a.348.348 0 0 1 .348.348v.695a.348.348 0 0 1-.348.348h-1.938v.96h1.938a.348.348 0 0 1 .348.348v.347a.348.348 0 0 1-.348.348h-2.98a.348.348 0 0 1-.349-.348V8.585a.348.348 0 0 1 .349-.348h2.98a.348.348 0 0 1 .348.348v.695z" />
-    </svg>
-  );
-}
-
-function AppleIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="currentColor">
-      <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
-    </svg>
-  );
-}
-
 export default function Login() {
-  const navigate = useNavigate();
-
-  const handleSocialLogin = () => {
-    navigate("/");
+  const handleGoogleLogin = () => {
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    const redirectUri = import.meta.env.VITE_GOOGLE_REDIRECT_URI;
+    if (!clientId || !redirectUri) {
+      console.error(
+        "VITE_GOOGLE_CLIENT_ID / VITE_GOOGLE_REDIRECT_URI are not set",
+      );
+      return;
+    }
+    const params = new URLSearchParams({
+      client_id: clientId,
+      redirect_uri: redirectUri,
+      response_type: "code",
+      scope: "openid email profile",
+      prompt: "select_account",
+    });
+    window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
   };
 
   return (
     <div className="w-full min-h-full flex flex-col items-center justify-center px-6">
       <div className="w-full max-w-sm flex flex-col gap-10">
-        {/* Logo / App name */}
         <div className="text-center">
           <h1 className="text-3xl font-bold tracking-tight">Reverie</h1>
           <p className="text-sm text-muted-foreground mt-2">
@@ -58,37 +63,17 @@ export default function Login() {
           </p>
         </div>
 
-        {/* Social login buttons */}
         <div className="flex flex-col gap-3">
           <Button
             variant="outline"
             className="w-full h-11 gap-3 text-sm font-medium"
-            onClick={handleSocialLogin}
+            onClick={handleGoogleLogin}
           >
             <GoogleIcon className="size-5" />
             Googleで続ける
           </Button>
-
-          <Button
-            variant="outline"
-            className="w-full h-11 gap-3 text-sm font-medium"
-            onClick={handleSocialLogin}
-          >
-            <LineIcon className="size-5" />
-            LINEで続ける
-          </Button>
-
-          <Button
-            variant="outline"
-            className="w-full h-11 gap-3 text-sm font-medium"
-            onClick={handleSocialLogin}
-          >
-            <AppleIcon className="size-5" />
-            Appleで続ける
-          </Button>
         </div>
 
-        {/* Terms */}
         <p className="text-center text-xs text-muted-foreground leading-relaxed">
           続行することで、
           <button

@@ -17,7 +17,7 @@ service UserService {
   // Get user profile (includes online status).
   rpc GetUser(GetUserRequest) returns (GetUserResponse) {
     option (google.api.http) = {
-      get: "/v1/users/{user_id}"
+      get: "/v1/users/{custom_id}"
     };
   }
 
@@ -100,7 +100,7 @@ message GetMyUserResponse {
 }
 
 message GetUserRequest {
-  string user_id = 1;
+  string custom_id = 1;
 }
 
 message GetUserResponse {
