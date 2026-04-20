@@ -9,7 +9,7 @@ import (
 type User struct {
 	ID                ulid.ULID
 	CustomID          string
-	CustomIDChangedAt *time.Time
+	CustomIDChangeTime *time.Time
 	DisplayName       string
 	Biography         *string
 	Location          *string

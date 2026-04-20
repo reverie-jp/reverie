@@ -3,7 +3,7 @@ CREATE DOMAIN ulid AS TEXT CHECK (LENGTH(VALUE) = 26);
 CREATE TABLE IF NOT EXISTS users (
     id ulid PRIMARY KEY,
     custom_id VARCHAR(15) NOT NULL UNIQUE,
-    custom_id_changed_at TIMESTAMPTZ,
+    custom_id_change_time TIMESTAMPTZ,
     display_name VARCHAR(20) NOT NULL DEFAULT 'unknown',
     biography TEXT,
     location VARCHAR(100),

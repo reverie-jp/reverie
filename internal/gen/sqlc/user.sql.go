@@ -43,7 +43,7 @@ func (q *Queries) DeleteUser(ctx context.Context, id string) error {
 }
 
 const getUserByCustomID = `-- name: GetUserByCustomID :one
-SELECT id, custom_id, custom_id_changed_at, display_name, biography, location, website, avatar_url, banner_url, is_private, create_time, update_time FROM users
+SELECT id, custom_id, custom_id_change_time, display_name, biography, location, website, avatar_url, banner_url, is_private, create_time, update_time FROM users
 WHERE custom_id = $1
 `
 
@@ -53,7 +53,7 @@ func (q *Queries) GetUserByCustomID(ctx context.Context, customID string) (User,
 	err := row.Scan(
 		&i.ID,
 		&i.CustomID,
-		&i.CustomIDChangedAt,
+		&i.CustomIDChangeTime,
 		&i.DisplayName,
 		&i.Biography,
 		&i.Location,
@@ -68,7 +68,7 @@ func (q *Queries) GetUserByCustomID(ctx context.Context, customID string) (User,
 }
 
 const listUsersByIDs = `-- name: ListUsersByIDs :many
-SELECT id, custom_id, custom_id_changed_at, display_name, biography, location, website, avatar_url, banner_url, is_private, create_time, update_time FROM users
+SELECT id, custom_id, custom_id_change_time, display_name, biography, location, website, avatar_url, banner_url, is_private, create_time, update_time FROM users
 WHERE id = ANY($1::text[])
 `
 
@@ -84,7 +84,7 @@ func (q *Queries) ListUsersByIDs(ctx context.Context, ids []string) ([]User, err
 		if err := rows.Scan(
 			&i.ID,
 			&i.CustomID,
-			&i.CustomIDChangedAt,
+			&i.CustomIDChangeTime,
 			&i.DisplayName,
 			&i.Biography,
 			&i.Location,

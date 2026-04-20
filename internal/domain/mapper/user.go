@@ -13,7 +13,7 @@ func ToUser(row *sqlc.User) *entity.User {
 	return &entity.User{
 		ID:                row.ID,
 		CustomID:          row.CustomID,
-		CustomIDChangedAt: row.CustomIDChangedAt,
+		CustomIDChangeTime: row.CustomIDChangeTime,
 		DisplayName:       row.DisplayName,
 		Biography:         row.Biography,
 		Location:          row.Location,

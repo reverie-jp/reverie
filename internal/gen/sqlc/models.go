@@ -62,18 +62,18 @@ type RefreshToken struct {
 }
 
 type User struct {
-	ID                ulid.ULID  `json:"id"`
-	CustomID          string     `json:"custom_id"`
-	CustomIDChangedAt *time.Time `json:"custom_id_changed_at"`
-	DisplayName       string     `json:"display_name"`
-	Biography         *string    `json:"biography"`
-	Location          *string    `json:"location"`
-	Website           *string    `json:"website"`
-	AvatarUrl         *string    `json:"avatar_url"`
-	BannerUrl         *string    `json:"banner_url"`
-	IsPrivate         bool       `json:"is_private"`
-	CreateTime        time.Time  `json:"create_time"`
-	UpdateTime        time.Time  `json:"update_time"`
+	ID                 ulid.ULID  `json:"id"`
+	CustomID           string     `json:"custom_id"`
+	CustomIDChangeTime *time.Time `json:"custom_id_change_time"`
+	DisplayName        string     `json:"display_name"`
+	Biography          *string    `json:"biography"`
+	Location           *string    `json:"location"`
+	Website            *string    `json:"website"`
+	AvatarUrl          *string    `json:"avatar_url"`
+	BannerUrl          *string    `json:"banner_url"`
+	IsPrivate          bool       `json:"is_private"`
+	CreateTime         time.Time  `json:"create_time"`
+	UpdateTime         time.Time  `json:"update_time"`
 }
 
 type UserAuthProvider struct {
