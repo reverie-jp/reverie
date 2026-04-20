@@ -23,8 +23,6 @@ const (
 	AccountService_SocialLogin_FullMethodName   = "/account.v1.AccountService/SocialLogin"
 	AccountService_RefreshToken_FullMethodName  = "/account.v1.AccountService/RefreshToken"
 	AccountService_Logout_FullMethodName        = "/account.v1.AccountService/Logout"
-	AccountService_ListDevices_FullMethodName   = "/account.v1.AccountService/ListDevices"
-	AccountService_RevokeDevice_FullMethodName  = "/account.v1.AccountService/RevokeDevice"
 )
 
 // AccountServiceClient is the client API for AccountService service.
@@ -39,10 +37,6 @@ type AccountServiceClient interface {
 	RefreshToken(ctx context.Context, in *RefreshTokenRequest, opts ...grpc.CallOption) (*RefreshTokenResponse, error)
 	// Log out and invalidate session.
 	Logout(ctx context.Context, in *LogoutRequest, opts ...grpc.CallOption) (*LogoutResponse, error)
-	// List logged-in devices.
-	ListDevices(ctx context.Context, in *ListDevicesRequest, opts ...grpc.CallOption) (*ListDevicesResponse, error)
-	// Revoke a device's login.
-	RevokeDevice(ctx context.Context, in *RevokeDeviceRequest, opts ...grpc.CallOption) (*RevokeDeviceResponse, error)
 }
 
 type accountServiceClient struct {
@@ -93,26 +87,6 @@ func (c *accountServiceClient) Logout(ctx context.Context, in *LogoutRequest, op
 	return out, nil
 }
 
-func (c *accountServiceClient) ListDevices(ctx context.Context, in *ListDevicesRequest, opts ...grpc.CallOption) (*ListDevicesResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ListDevicesResponse)
-	err := c.cc.Invoke(ctx, AccountService_ListDevices_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *accountServiceClient) RevokeDevice(ctx context.Context, in *RevokeDeviceRequest, opts ...grpc.CallOption) (*RevokeDeviceResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(RevokeDeviceResponse)
-	err := c.cc.Invoke(ctx, AccountService_RevokeDevice_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // AccountServiceServer is the server API for AccountService service.
 // All implementations must embed UnimplementedAccountServiceServer
 // for forward compatibility.
@@ -125,10 +99,6 @@ type AccountServiceServer interface {
 	RefreshToken(context.Context, *RefreshTokenRequest) (*RefreshTokenResponse, error)
 	// Log out and invalidate session.
 	Logout(context.Context, *LogoutRequest) (*LogoutResponse, error)
-	// List logged-in devices.
-	ListDevices(context.Context, *ListDevicesRequest) (*ListDevicesResponse, error)
-	// Revoke a device's login.
-	RevokeDevice(context.Context, *RevokeDeviceRequest) (*RevokeDeviceResponse, error)
 	mustEmbedUnimplementedAccountServiceServer()
 }
 
@@ -150,12 +120,6 @@ func (UnimplementedAccountServiceServer) RefreshToken(context.Context, *RefreshT
 }
 func (UnimplementedAccountServiceServer) Logout(context.Context, *LogoutRequest) (*LogoutResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Logout not implemented")
-}
-func (UnimplementedAccountServiceServer) ListDevices(context.Context, *ListDevicesRequest) (*ListDevicesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListDevices not implemented")
-}
-func (UnimplementedAccountServiceServer) RevokeDevice(context.Context, *RevokeDeviceRequest) (*RevokeDeviceResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RevokeDevice not implemented")
 }
 func (UnimplementedAccountServiceServer) mustEmbedUnimplementedAccountServiceServer() {}
 func (UnimplementedAccountServiceServer) testEmbeddedByValue()                        {}
@@ -250,42 +214,6 @@ func _AccountService_Logout_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AccountService_ListDevices_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListDevicesRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AccountServiceServer).ListDevices(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: AccountService_ListDevices_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccountServiceServer).ListDevices(ctx, req.(*ListDevicesRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _AccountService_RevokeDevice_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RevokeDeviceRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AccountServiceServer).RevokeDevice(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: AccountService_RevokeDevice_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccountServiceServer).RevokeDevice(ctx, req.(*RevokeDeviceRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // AccountService_ServiceDesc is the grpc.ServiceDesc for AccountService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -308,14 +236,6 @@ var AccountService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Logout",
 			Handler:    _AccountService_Logout_Handler,
-		},
-		{
-			MethodName: "ListDevices",
-			Handler:    _AccountService_ListDevices_Handler,
-		},
-		{
-			MethodName: "RevokeDevice",
-			Handler:    _AccountService_RevokeDevice_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

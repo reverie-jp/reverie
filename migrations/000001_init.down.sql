@@ -1,4 +1,5 @@
 -- drop tables
+DROP TABLE IF EXISTS refresh_tokens;
 DROP TABLE IF EXISTS user_auth_providers;
 DROP TABLE IF EXISTS users;
 

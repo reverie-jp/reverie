@@ -44,12 +44,6 @@ const (
 	AccountServiceRefreshTokenProcedure = "/account.v1.AccountService/RefreshToken"
 	// AccountServiceLogoutProcedure is the fully-qualified name of the AccountService's Logout RPC.
 	AccountServiceLogoutProcedure = "/account.v1.AccountService/Logout"
-	// AccountServiceListDevicesProcedure is the fully-qualified name of the AccountService's
-	// ListDevices RPC.
-	AccountServiceListDevicesProcedure = "/account.v1.AccountService/ListDevices"
-	// AccountServiceRevokeDeviceProcedure is the fully-qualified name of the AccountService's
-	// RevokeDevice RPC.
-	AccountServiceRevokeDeviceProcedure = "/account.v1.AccountService/RevokeDevice"
 )
 
 // AccountServiceClient is a client for the account.v1.AccountService service.
@@ -62,10 +56,6 @@ type AccountServiceClient interface {
 	RefreshToken(context.Context, *connect.Request[v1.RefreshTokenRequest]) (*connect.Response[v1.RefreshTokenResponse], error)
 	// Log out and invalidate session.
 	Logout(context.Context, *connect.Request[v1.LogoutRequest]) (*connect.Response[v1.LogoutResponse], error)
-	// List logged-in devices.
-	ListDevices(context.Context, *connect.Request[v1.ListDevicesRequest]) (*connect.Response[v1.ListDevicesResponse], error)
-	// Revoke a device's login.
-	RevokeDevice(context.Context, *connect.Request[v1.RevokeDeviceRequest]) (*connect.Response[v1.RevokeDeviceResponse], error)
 }
 
 // NewAccountServiceClient constructs a client for the account.v1.AccountService service. By
@@ -103,18 +93,6 @@ func NewAccountServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(accountServiceMethods.ByName("Logout")),
 			connect.WithClientOptions(opts...),
 		),
-		listDevices: connect.NewClient[v1.ListDevicesRequest, v1.ListDevicesResponse](
-			httpClient,
-			baseURL+AccountServiceListDevicesProcedure,
-			connect.WithSchema(accountServiceMethods.ByName("ListDevices")),
-			connect.WithClientOptions(opts...),
-		),
-		revokeDevice: connect.NewClient[v1.RevokeDeviceRequest, v1.RevokeDeviceResponse](
-			httpClient,
-			baseURL+AccountServiceRevokeDeviceProcedure,
-			connect.WithSchema(accountServiceMethods.ByName("RevokeDevice")),
-			connect.WithClientOptions(opts...),
-		),
 	}
 }
 
@@ -124,8 +102,6 @@ type accountServiceClient struct {
 	socialLogin   *connect.Client[v1.SocialLoginRequest, v1.SocialLoginResponse]
 	refreshToken  *connect.Client[v1.RefreshTokenRequest, v1.RefreshTokenResponse]
 	logout        *connect.Client[v1.LogoutRequest, v1.LogoutResponse]
-	listDevices   *connect.Client[v1.ListDevicesRequest, v1.ListDevicesResponse]
-	revokeDevice  *connect.Client[v1.RevokeDeviceRequest, v1.RevokeDeviceResponse]
 }
 
 // DeleteAccount calls account.v1.AccountService.DeleteAccount.
@@ -148,16 +124,6 @@ func (c *accountServiceClient) Logout(ctx context.Context, req *connect.Request[
 	return c.logout.CallUnary(ctx, req)
 }
 
-// ListDevices calls account.v1.AccountService.ListDevices.
-func (c *accountServiceClient) ListDevices(ctx context.Context, req *connect.Request[v1.ListDevicesRequest]) (*connect.Response[v1.ListDevicesResponse], error) {
-	return c.listDevices.CallUnary(ctx, req)
-}
-
-// RevokeDevice calls account.v1.AccountService.RevokeDevice.
-func (c *accountServiceClient) RevokeDevice(ctx context.Context, req *connect.Request[v1.RevokeDeviceRequest]) (*connect.Response[v1.RevokeDeviceResponse], error) {
-	return c.revokeDevice.CallUnary(ctx, req)
-}
-
 // AccountServiceHandler is an implementation of the account.v1.AccountService service.
 type AccountServiceHandler interface {
 	// Delete account permanently.
@@ -168,10 +134,6 @@ type AccountServiceHandler interface {
 	RefreshToken(context.Context, *connect.Request[v1.RefreshTokenRequest]) (*connect.Response[v1.RefreshTokenResponse], error)
 	// Log out and invalidate session.
 	Logout(context.Context, *connect.Request[v1.LogoutRequest]) (*connect.Response[v1.LogoutResponse], error)
-	// List logged-in devices.
-	ListDevices(context.Context, *connect.Request[v1.ListDevicesRequest]) (*connect.Response[v1.ListDevicesResponse], error)
-	// Revoke a device's login.
-	RevokeDevice(context.Context, *connect.Request[v1.RevokeDeviceRequest]) (*connect.Response[v1.RevokeDeviceResponse], error)
 }
 
 // NewAccountServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -205,18 +167,6 @@ func NewAccountServiceHandler(svc AccountServiceHandler, opts ...connect.Handler
 		connect.WithSchema(accountServiceMethods.ByName("Logout")),
 		connect.WithHandlerOptions(opts...),
 	)
-	accountServiceListDevicesHandler := connect.NewUnaryHandler(
-		AccountServiceListDevicesProcedure,
-		svc.ListDevices,
-		connect.WithSchema(accountServiceMethods.ByName("ListDevices")),
-		connect.WithHandlerOptions(opts...),
-	)
-	accountServiceRevokeDeviceHandler := connect.NewUnaryHandler(
-		AccountServiceRevokeDeviceProcedure,
-		svc.RevokeDevice,
-		connect.WithSchema(accountServiceMethods.ByName("RevokeDevice")),
-		connect.WithHandlerOptions(opts...),
-	)
 	return "/account.v1.AccountService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case AccountServiceDeleteAccountProcedure:
@@ -227,10 +177,6 @@ func NewAccountServiceHandler(svc AccountServiceHandler, opts ...connect.Handler
 			accountServiceRefreshTokenHandler.ServeHTTP(w, r)
 		case AccountServiceLogoutProcedure:
 			accountServiceLogoutHandler.ServeHTTP(w, r)
-		case AccountServiceListDevicesProcedure:
-			accountServiceListDevicesHandler.ServeHTTP(w, r)
-		case AccountServiceRevokeDeviceProcedure:
-			accountServiceRevokeDeviceHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -254,12 +200,4 @@ func (UnimplementedAccountServiceHandler) RefreshToken(context.Context, *connect
 
 func (UnimplementedAccountServiceHandler) Logout(context.Context, *connect.Request[v1.LogoutRequest]) (*connect.Response[v1.LogoutResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("account.v1.AccountService.Logout is not implemented"))
-}
-
-func (UnimplementedAccountServiceHandler) ListDevices(context.Context, *connect.Request[v1.ListDevicesRequest]) (*connect.Response[v1.ListDevicesResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("account.v1.AccountService.ListDevices is not implemented"))
-}
-
-func (UnimplementedAccountServiceHandler) RevokeDevice(context.Context, *connect.Request[v1.RevokeDeviceRequest]) (*connect.Response[v1.RevokeDeviceResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("account.v1.AccountService.RevokeDevice is not implemented"))
 }

@@ -3,7 +3,6 @@ syntax = "proto3";
 package account.v1;
 
 import "google/api/annotations.proto";
-import "google/protobuf/timestamp.proto";
 
 service AccountService {
   // Delete account permanently.
@@ -36,20 +35,6 @@ service AccountService {
       body: "*"
     };
   }
-
-  // List logged-in devices.
-  rpc ListDevices(ListDevicesRequest) returns (ListDevicesResponse) {
-    option (google.api.http) = {
-      get: "/v1/account/devices"
-    };
-  }
-
-  // Revoke a device's login.
-  rpc RevokeDevice(RevokeDeviceRequest) returns (RevokeDeviceResponse) {
-    option (google.api.http) = {
-      post: "/v1/account/devices/{device_id}:revoke"
-    };
-  }
 }
 
 // Enums
@@ -60,13 +45,6 @@ enum AuthProvider {
 }
 
 // Resources
-
-message Device {
-  string id = 1;
-  string device_name = 2;
-  google.protobuf.Timestamp last_active_time = 3;
-  bool is_current = 4;
-}
 
 message TokenPair {
   string access_token = 1;
@@ -102,18 +80,8 @@ message RefreshTokenResponse {
   TokenPair token_pair = 1;
 }
 
-message LogoutRequest {}
+message LogoutRequest {
+  string refresh_token = 1;
+}
 
 message LogoutResponse {}
-
-message ListDevicesRequest {}
-
-message ListDevicesResponse {
-  repeated Device devices = 1;
-}
-
-message RevokeDeviceRequest {
-  string device_id = 1;
-}
-
-message RevokeDeviceResponse {}

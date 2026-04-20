@@ -54,17 +54,22 @@ func (m *Manager) GenerateAccessToken(userID ulid.ULID) (string, error) {
 	return token.SignedString([]byte(m.secretKey))
 }
 
-func (m *Manager) GenerateRefreshToken(userID ulid.ULID) (string, error) {
+func (m *Manager) GenerateRefreshToken(userID ulid.ULID) (string, time.Time, error) {
+	expireTime := time.Now().Add(m.refreshExpiration)
 	claims := &Claims{
 		TokenType: TokenTypeRefresh,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Subject:   userID.String(),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(m.refreshExpiration)),
+			ExpiresAt: jwt.NewNumericDate(expireTime),
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(m.secretKey))
+	signed, err := token.SignedString([]byte(m.secretKey))
+	if err != nil {
+		return "", time.Time{}, err
+	}
+	return signed, expireTime, nil
 }
 
 func (m *Manager) VerifyToken(tokenString string) (*Claims, error) {

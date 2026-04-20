@@ -53,6 +53,14 @@ func (ns NullAuthProvider) Value() (driver.Value, error) {
 	return string(ns.AuthProvider), nil
 }
 
+type RefreshToken struct {
+	ID         ulid.ULID `json:"id"`
+	UserID     ulid.ULID `json:"user_id"`
+	TokenHash  string    `json:"token_hash"`
+	ExpireTime time.Time `json:"expire_time"`
+	CreateTime time.Time `json:"create_time"`
+}
+
 type User struct {
 	ID                ulid.ULID  `json:"id"`
 	CustomID          string     `json:"custom_id"`

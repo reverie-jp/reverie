@@ -10,7 +10,6 @@ import (
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -69,74 +68,6 @@ func (AuthProvider) EnumDescriptor() ([]byte, []int) {
 	return file_account_v1_account_proto_rawDescGZIP(), []int{0}
 }
 
-type Device struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	Id             string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	DeviceName     string                 `protobuf:"bytes,2,opt,name=device_name,json=deviceName,proto3" json:"device_name,omitempty"`
-	LastActiveTime *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=last_active_time,json=lastActiveTime,proto3" json:"last_active_time,omitempty"`
-	IsCurrent      bool                   `protobuf:"varint,4,opt,name=is_current,json=isCurrent,proto3" json:"is_current,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
-}
-
-func (x *Device) Reset() {
-	*x = Device{}
-	mi := &file_account_v1_account_proto_msgTypes[0]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Device) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Device) ProtoMessage() {}
-
-func (x *Device) ProtoReflect() protoreflect.Message {
-	mi := &file_account_v1_account_proto_msgTypes[0]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Device.ProtoReflect.Descriptor instead.
-func (*Device) Descriptor() ([]byte, []int) {
-	return file_account_v1_account_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *Device) GetId() string {
-	if x != nil {
-		return x.Id
-	}
-	return ""
-}
-
-func (x *Device) GetDeviceName() string {
-	if x != nil {
-		return x.DeviceName
-	}
-	return ""
-}
-
-func (x *Device) GetLastActiveTime() *timestamppb.Timestamp {
-	if x != nil {
-		return x.LastActiveTime
-	}
-	return nil
-}
-
-func (x *Device) GetIsCurrent() bool {
-	if x != nil {
-		return x.IsCurrent
-	}
-	return false
-}
-
 type TokenPair struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	AccessToken   string                 `protobuf:"bytes,1,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"`
@@ -147,7 +78,7 @@ type TokenPair struct {
 
 func (x *TokenPair) Reset() {
 	*x = TokenPair{}
-	mi := &file_account_v1_account_proto_msgTypes[1]
+	mi := &file_account_v1_account_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -159,7 +90,7 @@ func (x *TokenPair) String() string {
 func (*TokenPair) ProtoMessage() {}
 
 func (x *TokenPair) ProtoReflect() protoreflect.Message {
-	mi := &file_account_v1_account_proto_msgTypes[1]
+	mi := &file_account_v1_account_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -172,7 +103,7 @@ func (x *TokenPair) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TokenPair.ProtoReflect.Descriptor instead.
 func (*TokenPair) Descriptor() ([]byte, []int) {
-	return file_account_v1_account_proto_rawDescGZIP(), []int{1}
+	return file_account_v1_account_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *TokenPair) GetAccessToken() string {
@@ -199,7 +130,7 @@ type DeleteAccountRequest struct {
 
 func (x *DeleteAccountRequest) Reset() {
 	*x = DeleteAccountRequest{}
-	mi := &file_account_v1_account_proto_msgTypes[2]
+	mi := &file_account_v1_account_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -211,7 +142,7 @@ func (x *DeleteAccountRequest) String() string {
 func (*DeleteAccountRequest) ProtoMessage() {}
 
 func (x *DeleteAccountRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_account_v1_account_proto_msgTypes[2]
+	mi := &file_account_v1_account_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -224,7 +155,7 @@ func (x *DeleteAccountRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteAccountRequest.ProtoReflect.Descriptor instead.
 func (*DeleteAccountRequest) Descriptor() ([]byte, []int) {
-	return file_account_v1_account_proto_rawDescGZIP(), []int{2}
+	return file_account_v1_account_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *DeleteAccountRequest) GetConfirmCustomId() string {
@@ -242,7 +173,7 @@ type DeleteAccountResponse struct {
 
 func (x *DeleteAccountResponse) Reset() {
 	*x = DeleteAccountResponse{}
-	mi := &file_account_v1_account_proto_msgTypes[3]
+	mi := &file_account_v1_account_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -254,7 +185,7 @@ func (x *DeleteAccountResponse) String() string {
 func (*DeleteAccountResponse) ProtoMessage() {}
 
 func (x *DeleteAccountResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_account_v1_account_proto_msgTypes[3]
+	mi := &file_account_v1_account_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -267,7 +198,7 @@ func (x *DeleteAccountResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteAccountResponse.ProtoReflect.Descriptor instead.
 func (*DeleteAccountResponse) Descriptor() ([]byte, []int) {
-	return file_account_v1_account_proto_rawDescGZIP(), []int{3}
+	return file_account_v1_account_proto_rawDescGZIP(), []int{2}
 }
 
 type SocialLoginRequest struct {
@@ -281,7 +212,7 @@ type SocialLoginRequest struct {
 
 func (x *SocialLoginRequest) Reset() {
 	*x = SocialLoginRequest{}
-	mi := &file_account_v1_account_proto_msgTypes[4]
+	mi := &file_account_v1_account_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -293,7 +224,7 @@ func (x *SocialLoginRequest) String() string {
 func (*SocialLoginRequest) ProtoMessage() {}
 
 func (x *SocialLoginRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_account_v1_account_proto_msgTypes[4]
+	mi := &file_account_v1_account_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -306,7 +237,7 @@ func (x *SocialLoginRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SocialLoginRequest.ProtoReflect.Descriptor instead.
 func (*SocialLoginRequest) Descriptor() ([]byte, []int) {
-	return file_account_v1_account_proto_rawDescGZIP(), []int{4}
+	return file_account_v1_account_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *SocialLoginRequest) GetProvider() AuthProvider {
@@ -334,7 +265,7 @@ type SocialLoginResponse struct {
 
 func (x *SocialLoginResponse) Reset() {
 	*x = SocialLoginResponse{}
-	mi := &file_account_v1_account_proto_msgTypes[5]
+	mi := &file_account_v1_account_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -346,7 +277,7 @@ func (x *SocialLoginResponse) String() string {
 func (*SocialLoginResponse) ProtoMessage() {}
 
 func (x *SocialLoginResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_account_v1_account_proto_msgTypes[5]
+	mi := &file_account_v1_account_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -359,7 +290,7 @@ func (x *SocialLoginResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SocialLoginResponse.ProtoReflect.Descriptor instead.
 func (*SocialLoginResponse) Descriptor() ([]byte, []int) {
-	return file_account_v1_account_proto_rawDescGZIP(), []int{5}
+	return file_account_v1_account_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *SocialLoginResponse) GetTokenPair() *TokenPair {
@@ -385,7 +316,7 @@ type RefreshTokenRequest struct {
 
 func (x *RefreshTokenRequest) Reset() {
 	*x = RefreshTokenRequest{}
-	mi := &file_account_v1_account_proto_msgTypes[6]
+	mi := &file_account_v1_account_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -397,7 +328,7 @@ func (x *RefreshTokenRequest) String() string {
 func (*RefreshTokenRequest) ProtoMessage() {}
 
 func (x *RefreshTokenRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_account_v1_account_proto_msgTypes[6]
+	mi := &file_account_v1_account_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -410,7 +341,7 @@ func (x *RefreshTokenRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RefreshTokenRequest.ProtoReflect.Descriptor instead.
 func (*RefreshTokenRequest) Descriptor() ([]byte, []int) {
-	return file_account_v1_account_proto_rawDescGZIP(), []int{6}
+	return file_account_v1_account_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *RefreshTokenRequest) GetRefreshToken() string {
@@ -429,7 +360,7 @@ type RefreshTokenResponse struct {
 
 func (x *RefreshTokenResponse) Reset() {
 	*x = RefreshTokenResponse{}
-	mi := &file_account_v1_account_proto_msgTypes[7]
+	mi := &file_account_v1_account_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -441,7 +372,7 @@ func (x *RefreshTokenResponse) String() string {
 func (*RefreshTokenResponse) ProtoMessage() {}
 
 func (x *RefreshTokenResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_account_v1_account_proto_msgTypes[7]
+	mi := &file_account_v1_account_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -454,7 +385,7 @@ func (x *RefreshTokenResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RefreshTokenResponse.ProtoReflect.Descriptor instead.
 func (*RefreshTokenResponse) Descriptor() ([]byte, []int) {
-	return file_account_v1_account_proto_rawDescGZIP(), []int{7}
+	return file_account_v1_account_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *RefreshTokenResponse) GetTokenPair() *TokenPair {
@@ -466,13 +397,14 @@ func (x *RefreshTokenResponse) GetTokenPair() *TokenPair {
 
 type LogoutRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	RefreshToken  string                 `protobuf:"bytes,1,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *LogoutRequest) Reset() {
 	*x = LogoutRequest{}
-	mi := &file_account_v1_account_proto_msgTypes[8]
+	mi := &file_account_v1_account_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -484,7 +416,7 @@ func (x *LogoutRequest) String() string {
 func (*LogoutRequest) ProtoMessage() {}
 
 func (x *LogoutRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_account_v1_account_proto_msgTypes[8]
+	mi := &file_account_v1_account_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -497,7 +429,14 @@ func (x *LogoutRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LogoutRequest.ProtoReflect.Descriptor instead.
 func (*LogoutRequest) Descriptor() ([]byte, []int) {
-	return file_account_v1_account_proto_rawDescGZIP(), []int{8}
+	return file_account_v1_account_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *LogoutRequest) GetRefreshToken() string {
+	if x != nil {
+		return x.RefreshToken
+	}
+	return ""
 }
 
 type LogoutResponse struct {
@@ -508,7 +447,7 @@ type LogoutResponse struct {
 
 func (x *LogoutResponse) Reset() {
 	*x = LogoutResponse{}
-	mi := &file_account_v1_account_proto_msgTypes[9]
+	mi := &file_account_v1_account_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -520,7 +459,7 @@ func (x *LogoutResponse) String() string {
 func (*LogoutResponse) ProtoMessage() {}
 
 func (x *LogoutResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_account_v1_account_proto_msgTypes[9]
+	mi := &file_account_v1_account_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -533,167 +472,7 @@ func (x *LogoutResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LogoutResponse.ProtoReflect.Descriptor instead.
 func (*LogoutResponse) Descriptor() ([]byte, []int) {
-	return file_account_v1_account_proto_rawDescGZIP(), []int{9}
-}
-
-type ListDevicesRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ListDevicesRequest) Reset() {
-	*x = ListDevicesRequest{}
-	mi := &file_account_v1_account_proto_msgTypes[10]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListDevicesRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListDevicesRequest) ProtoMessage() {}
-
-func (x *ListDevicesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_account_v1_account_proto_msgTypes[10]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListDevicesRequest.ProtoReflect.Descriptor instead.
-func (*ListDevicesRequest) Descriptor() ([]byte, []int) {
-	return file_account_v1_account_proto_rawDescGZIP(), []int{10}
-}
-
-type ListDevicesResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Devices       []*Device              `protobuf:"bytes,1,rep,name=devices,proto3" json:"devices,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ListDevicesResponse) Reset() {
-	*x = ListDevicesResponse{}
-	mi := &file_account_v1_account_proto_msgTypes[11]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListDevicesResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListDevicesResponse) ProtoMessage() {}
-
-func (x *ListDevicesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_account_v1_account_proto_msgTypes[11]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListDevicesResponse.ProtoReflect.Descriptor instead.
-func (*ListDevicesResponse) Descriptor() ([]byte, []int) {
-	return file_account_v1_account_proto_rawDescGZIP(), []int{11}
-}
-
-func (x *ListDevicesResponse) GetDevices() []*Device {
-	if x != nil {
-		return x.Devices
-	}
-	return nil
-}
-
-type RevokeDeviceRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	DeviceId      string                 `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *RevokeDeviceRequest) Reset() {
-	*x = RevokeDeviceRequest{}
-	mi := &file_account_v1_account_proto_msgTypes[12]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *RevokeDeviceRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RevokeDeviceRequest) ProtoMessage() {}
-
-func (x *RevokeDeviceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_account_v1_account_proto_msgTypes[12]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use RevokeDeviceRequest.ProtoReflect.Descriptor instead.
-func (*RevokeDeviceRequest) Descriptor() ([]byte, []int) {
-	return file_account_v1_account_proto_rawDescGZIP(), []int{12}
-}
-
-func (x *RevokeDeviceRequest) GetDeviceId() string {
-	if x != nil {
-		return x.DeviceId
-	}
-	return ""
-}
-
-type RevokeDeviceResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *RevokeDeviceResponse) Reset() {
-	*x = RevokeDeviceResponse{}
-	mi := &file_account_v1_account_proto_msgTypes[13]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *RevokeDeviceResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RevokeDeviceResponse) ProtoMessage() {}
-
-func (x *RevokeDeviceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_account_v1_account_proto_msgTypes[13]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use RevokeDeviceResponse.ProtoReflect.Descriptor instead.
-func (*RevokeDeviceResponse) Descriptor() ([]byte, []int) {
-	return file_account_v1_account_proto_rawDescGZIP(), []int{13}
+	return file_account_v1_account_proto_rawDescGZIP(), []int{8}
 }
 
 var File_account_v1_account_proto protoreflect.FileDescriptor
@@ -701,14 +480,7 @@ var File_account_v1_account_proto protoreflect.FileDescriptor
 const file_account_v1_account_proto_rawDesc = "" +
 	"\n" +
 	"\x18account/v1/account.proto\x12\n" +
-	"account.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x9e\x01\n" +
-	"\x06Device\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1f\n" +
-	"\vdevice_name\x18\x02 \x01(\tR\n" +
-	"deviceName\x12D\n" +
-	"\x10last_active_time\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\x0elastActiveTime\x12\x1d\n" +
-	"\n" +
-	"is_current\x18\x04 \x01(\bR\tisCurrent\"S\n" +
+	"account.v1\x1a\x1cgoogle/api/annotations.proto\"S\n" +
 	"\tTokenPair\x12!\n" +
 	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\x12#\n" +
 	"\rrefresh_token\x18\x02 \x01(\tR\frefreshToken\"B\n" +
@@ -726,25 +498,18 @@ const file_account_v1_account_proto_rawDesc = "" +
 	"\rrefresh_token\x18\x01 \x01(\tR\frefreshToken\"L\n" +
 	"\x14RefreshTokenResponse\x124\n" +
 	"\n" +
-	"token_pair\x18\x01 \x01(\v2\x15.account.v1.TokenPairR\ttokenPair\"\x0f\n" +
-	"\rLogoutRequest\"\x10\n" +
-	"\x0eLogoutResponse\"\x14\n" +
-	"\x12ListDevicesRequest\"C\n" +
-	"\x13ListDevicesResponse\x12,\n" +
-	"\adevices\x18\x01 \x03(\v2\x12.account.v1.DeviceR\adevices\"2\n" +
-	"\x13RevokeDeviceRequest\x12\x1b\n" +
-	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\"\x16\n" +
-	"\x14RevokeDeviceResponse*G\n" +
+	"token_pair\x18\x01 \x01(\v2\x15.account.v1.TokenPairR\ttokenPair\"4\n" +
+	"\rLogoutRequest\x12#\n" +
+	"\rrefresh_token\x18\x01 \x01(\tR\frefreshToken\"\x10\n" +
+	"\x0eLogoutResponse*G\n" +
 	"\fAuthProvider\x12\x1d\n" +
 	"\x19AUTH_PROVIDER_UNSPECIFIED\x10\x00\x12\x18\n" +
-	"\x14AUTH_PROVIDER_GOOGLE\x10\x012\xb8\x05\n" +
+	"\x14AUTH_PROVIDER_GOOGLE\x10\x012\xc7\x03\n" +
 	"\x0eAccountService\x12i\n" +
 	"\rDeleteAccount\x12 .account.v1.DeleteAccountRequest\x1a!.account.v1.DeleteAccountResponse\"\x13\x82\xd3\xe4\x93\x02\r*\v/v1/account\x12r\n" +
 	"\vSocialLogin\x12\x1e.account.v1.SocialLoginRequest\x1a\x1f.account.v1.SocialLoginResponse\"\"\x82\xd3\xe4\x93\x02\x1c:\x01*\"\x17/v1/account:socialLogin\x12v\n" +
 	"\fRefreshToken\x12\x1f.account.v1.RefreshTokenRequest\x1a .account.v1.RefreshTokenResponse\"#\x82\xd3\xe4\x93\x02\x1d:\x01*\"\x18/v1/account:refreshToken\x12^\n" +
-	"\x06Logout\x12\x19.account.v1.LogoutRequest\x1a\x1a.account.v1.LogoutResponse\"\x1d\x82\xd3\xe4\x93\x02\x17:\x01*\"\x12/v1/account:logout\x12k\n" +
-	"\vListDevices\x12\x1e.account.v1.ListDevicesRequest\x1a\x1f.account.v1.ListDevicesResponse\"\x1b\x82\xd3\xe4\x93\x02\x15\x12\x13/v1/account/devices\x12\x81\x01\n" +
-	"\fRevokeDevice\x12\x1f.account.v1.RevokeDeviceRequest\x1a .account.v1.RevokeDeviceResponse\".\x82\xd3\xe4\x93\x02(\"&/v1/account/devices/{device_id}:revokeB\xa0\x01\n" +
+	"\x06Logout\x12\x19.account.v1.LogoutRequest\x1a\x1a.account.v1.LogoutResponse\"\x1d\x82\xd3\xe4\x93\x02\x17:\x01*\"\x12/v1/account:logoutB\xa0\x01\n" +
 	"\x0ecom.account.v1B\fAccountProtoP\x01Z7reverie.jp/reverie/internal/gen/pb/account/v1;accountv1\xa2\x02\x03AXX\xaa\x02\n" +
 	"Account.V1\xca\x02\n" +
 	"Account\\V1\xe2\x02\x16Account\\V1\\GPBMetadata\xea\x02\vAccount::V1b\x06proto3"
@@ -762,48 +527,36 @@ func file_account_v1_account_proto_rawDescGZIP() []byte {
 }
 
 var file_account_v1_account_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_account_v1_account_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
+var file_account_v1_account_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_account_v1_account_proto_goTypes = []any{
 	(AuthProvider)(0),             // 0: account.v1.AuthProvider
-	(*Device)(nil),                // 1: account.v1.Device
-	(*TokenPair)(nil),             // 2: account.v1.TokenPair
-	(*DeleteAccountRequest)(nil),  // 3: account.v1.DeleteAccountRequest
-	(*DeleteAccountResponse)(nil), // 4: account.v1.DeleteAccountResponse
-	(*SocialLoginRequest)(nil),    // 5: account.v1.SocialLoginRequest
-	(*SocialLoginResponse)(nil),   // 6: account.v1.SocialLoginResponse
-	(*RefreshTokenRequest)(nil),   // 7: account.v1.RefreshTokenRequest
-	(*RefreshTokenResponse)(nil),  // 8: account.v1.RefreshTokenResponse
-	(*LogoutRequest)(nil),         // 9: account.v1.LogoutRequest
-	(*LogoutResponse)(nil),        // 10: account.v1.LogoutResponse
-	(*ListDevicesRequest)(nil),    // 11: account.v1.ListDevicesRequest
-	(*ListDevicesResponse)(nil),   // 12: account.v1.ListDevicesResponse
-	(*RevokeDeviceRequest)(nil),   // 13: account.v1.RevokeDeviceRequest
-	(*RevokeDeviceResponse)(nil),  // 14: account.v1.RevokeDeviceResponse
-	(*timestamppb.Timestamp)(nil), // 15: google.protobuf.Timestamp
+	(*TokenPair)(nil),             // 1: account.v1.TokenPair
+	(*DeleteAccountRequest)(nil),  // 2: account.v1.DeleteAccountRequest
+	(*DeleteAccountResponse)(nil), // 3: account.v1.DeleteAccountResponse
+	(*SocialLoginRequest)(nil),    // 4: account.v1.SocialLoginRequest
+	(*SocialLoginResponse)(nil),   // 5: account.v1.SocialLoginResponse
+	(*RefreshTokenRequest)(nil),   // 6: account.v1.RefreshTokenRequest
+	(*RefreshTokenResponse)(nil),  // 7: account.v1.RefreshTokenResponse
+	(*LogoutRequest)(nil),         // 8: account.v1.LogoutRequest
+	(*LogoutResponse)(nil),        // 9: account.v1.LogoutResponse
 }
 var file_account_v1_account_proto_depIdxs = []int32{
-	15, // 0: account.v1.Device.last_active_time:type_name -> google.protobuf.Timestamp
-	0,  // 1: account.v1.SocialLoginRequest.provider:type_name -> account.v1.AuthProvider
-	2,  // 2: account.v1.SocialLoginResponse.token_pair:type_name -> account.v1.TokenPair
-	2,  // 3: account.v1.RefreshTokenResponse.token_pair:type_name -> account.v1.TokenPair
-	1,  // 4: account.v1.ListDevicesResponse.devices:type_name -> account.v1.Device
-	3,  // 5: account.v1.AccountService.DeleteAccount:input_type -> account.v1.DeleteAccountRequest
-	5,  // 6: account.v1.AccountService.SocialLogin:input_type -> account.v1.SocialLoginRequest
-	7,  // 7: account.v1.AccountService.RefreshToken:input_type -> account.v1.RefreshTokenRequest
-	9,  // 8: account.v1.AccountService.Logout:input_type -> account.v1.LogoutRequest
-	11, // 9: account.v1.AccountService.ListDevices:input_type -> account.v1.ListDevicesRequest
-	13, // 10: account.v1.AccountService.RevokeDevice:input_type -> account.v1.RevokeDeviceRequest
-	4,  // 11: account.v1.AccountService.DeleteAccount:output_type -> account.v1.DeleteAccountResponse
-	6,  // 12: account.v1.AccountService.SocialLogin:output_type -> account.v1.SocialLoginResponse
-	8,  // 13: account.v1.AccountService.RefreshToken:output_type -> account.v1.RefreshTokenResponse
-	10, // 14: account.v1.AccountService.Logout:output_type -> account.v1.LogoutResponse
-	12, // 15: account.v1.AccountService.ListDevices:output_type -> account.v1.ListDevicesResponse
-	14, // 16: account.v1.AccountService.RevokeDevice:output_type -> account.v1.RevokeDeviceResponse
-	11, // [11:17] is the sub-list for method output_type
-	5,  // [5:11] is the sub-list for method input_type
-	5,  // [5:5] is the sub-list for extension type_name
-	5,  // [5:5] is the sub-list for extension extendee
-	0,  // [0:5] is the sub-list for field type_name
+	0, // 0: account.v1.SocialLoginRequest.provider:type_name -> account.v1.AuthProvider
+	1, // 1: account.v1.SocialLoginResponse.token_pair:type_name -> account.v1.TokenPair
+	1, // 2: account.v1.RefreshTokenResponse.token_pair:type_name -> account.v1.TokenPair
+	2, // 3: account.v1.AccountService.DeleteAccount:input_type -> account.v1.DeleteAccountRequest
+	4, // 4: account.v1.AccountService.SocialLogin:input_type -> account.v1.SocialLoginRequest
+	6, // 5: account.v1.AccountService.RefreshToken:input_type -> account.v1.RefreshTokenRequest
+	8, // 6: account.v1.AccountService.Logout:input_type -> account.v1.LogoutRequest
+	3, // 7: account.v1.AccountService.DeleteAccount:output_type -> account.v1.DeleteAccountResponse
+	5, // 8: account.v1.AccountService.SocialLogin:output_type -> account.v1.SocialLoginResponse
+	7, // 9: account.v1.AccountService.RefreshToken:output_type -> account.v1.RefreshTokenResponse
+	9, // 10: account.v1.AccountService.Logout:output_type -> account.v1.LogoutResponse
+	7, // [7:11] is the sub-list for method output_type
+	3, // [3:7] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_account_v1_account_proto_init() }
@@ -817,7 +570,7 @@ func file_account_v1_account_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_account_v1_account_proto_rawDesc), len(file_account_v1_account_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   14,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

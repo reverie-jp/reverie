@@ -65,8 +65,16 @@ func (uc *SocialLogin) Execute(ctx context.Context, input SocialLoginInput) (*So
 		return nil, xerrors.ErrSocialLoginFailed.WithCause(err)
 	}
 
-	refreshToken, err := uc.jwtManager.GenerateRefreshToken(userID)
+	refreshToken, refreshExpireTime, err := uc.jwtManager.GenerateRefreshToken(userID)
 	if err != nil {
+		return nil, xerrors.ErrSocialLoginFailed.WithCause(err)
+	}
+
+	if err := uc.accountRepo.CreateRefreshToken(ctx, accountrepo.CreateRefreshTokenParams{
+		UserID:     userID,
+		RawToken:   refreshToken,
+		ExpireTime: refreshExpireTime,
+	}); err != nil {
 		return nil, xerrors.ErrSocialLoginFailed.WithCause(err)
 	}
 
