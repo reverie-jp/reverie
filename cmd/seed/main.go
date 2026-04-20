@@ -76,6 +76,54 @@ func main() {
 			biography:   "",
 			posts:       []string{},
 		},
+		{
+			customID:    "nyamada",
+			displayName: "にゃまだ",
+			biography:   "猫好きエンジニア🐱 コードと猫に囲まれた生活を送ってます。たまに飯テロ投稿します",
+			posts: []string{
+				"うちの猫がキーボードの上に乗ってきてコードが全部にゃにゃにゃになった",
+				"猫の寝顔見てたら仕事やる気なくなってきた これはしょうがない",
+				"新しいライブラリ試したら思ったより簡単で拍子抜け 🐾",
+				"猫缶の種類を増やしたら気に入ってくれた 飼い主冥利に尽きる",
+				"深夜のコーディングお供は猫と緑茶です",
+			},
+		},
+		{
+			customID:    "rewrite",
+			displayName: "リライト",
+			biography:   "文章書くのが好き ✍️ 小説・エッセイ・たまに詩も。言葉を探す日々",
+			posts: []string{
+				"書きかけの小説が止まってる。主人公が何をしたいのか自分でもわからなくなってきた",
+				"いい文章読んだあとってしばらく何も書けなくなるの自分だけ？",
+				"カフェで書いてたら隣の人の会話が気になりすぎて全然進まなかった ☕",
+				"タイトルだけ思い浮かんで中身が全然ない作品が5本溜まってる",
+				"今日は500文字だけ書けた。それでもゼロよりましだと言い聞かせる",
+			},
+		},
+		{
+			customID:    "homagusa",
+			displayName: "ほま草",
+			biography:   "植物と料理と昼寝 🌿 自給自足の夢を見ながら都会に住んでいます",
+			posts: []string{
+				"ベランダのバジルが育ちすぎてパスタに追いつかない 🌿",
+				"今日の昼ごはんは自家製味噌で作った味噌汁。最高すぎて泣きそう",
+				"スーパーで買った野菜の根っこ植えたら芽が出た 感動",
+				"昼寝しすぎて夜眠れなくなるの繰り返しをもう3年やってる",
+				"料理してる時間が一番頭空っぽになれる気がする 🍳",
+			},
+		},
+		{
+			customID:    "markun",
+			displayName: "まぁくん",
+			biography:   "スポーツ観戦とドライブが好き 🚗 週末はだいたい外にいます",
+			posts: []string{
+				"昨日の試合熱すぎた！！あの逆転劇は一生語り継ぐ",
+				"久々に遠出したら知らない道に迷い込んでそれがすごくよかった",
+				"スタジアムで食べるチキンってなんであんなにうまいんだろ 🍗",
+				"早起きしてドライブしたら朝日がやばかった。写真撮れなかったのが悔やまれる",
+				"好きなチームが負けて落ち込んでるので慰めて",
+			},
+		},
 	}
 
 	// ── 各ユーザーを作成 or 取得 ──────────────────────────────────
@@ -158,20 +206,14 @@ func main() {
 		fmt.Fprintf(os.Stderr, "投稿を作成: @%s (%d件)\n", cu.def.customID, len(cu.def.posts))
 	}
 
-	// ── testuser のトークンを出力 ──────────────────────────────────
-	var testuserID ulid.ULID
+	// ── 全ユーザーのトークンを出力 ──────────────────────────────────
 	for _, cu := range created {
-		if cu.def.customID == "testuser" {
-			testuserID = cu.id
-			break
+		accessToken, err := jwtManager.GenerateAccessToken(cu.id)
+		if err != nil {
+			log.Fatalf("failed to generate access token for %s: %v", cu.def.customID, err)
 		}
+		fmt.Printf("# @%s (%s)\n", cu.def.customID, cu.def.displayName)
+		fmt.Printf("USER_ID=%s\n", cu.id.String())
+		fmt.Printf("ACCESS_TOKEN=%s\n\n", accessToken)
 	}
-
-	accessToken, err := jwtManager.GenerateAccessToken(testuserID)
-	if err != nil {
-		log.Fatalf("failed to generate access token: %v", err)
-	}
-
-	fmt.Printf("USER_ID=%s\n", testuserID.String())
-	fmt.Printf("ACCESS_TOKEN=%s\n", accessToken)
 }

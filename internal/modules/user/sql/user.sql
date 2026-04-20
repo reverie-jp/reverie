@@ -63,3 +63,23 @@ SELECT COUNT(*) FROM user_follows WHERE followed_id = $1;
 
 -- name: CountUserFollowing :one
 SELECT COUNT(*) FROM user_follows WHERE follower_id = $1;
+
+-- name: ListFollowers :many
+SELECT u.id, u.custom_id, u.custom_id_changed_at, u.display_name, u.biography,
+       u.avatar_media_id, u.banner_media_id, u.is_private, u.birthdate, u.create_time, u.update_time
+FROM users u
+JOIN user_follows f ON f.follower_id = u.id
+WHERE f.followed_id = $1
+  AND ($2::timestamptz IS NULL OR f.create_time < $2)
+ORDER BY f.create_time DESC
+LIMIT $3;
+
+-- name: ListFollowing :many
+SELECT u.id, u.custom_id, u.custom_id_changed_at, u.display_name, u.biography,
+       u.avatar_media_id, u.banner_media_id, u.is_private, u.birthdate, u.create_time, u.update_time
+FROM users u
+JOIN user_follows f ON f.followed_id = u.id
+WHERE f.follower_id = $1
+  AND ($2::timestamptz IS NULL OR f.create_time < $2)
+ORDER BY f.create_time DESC
+LIMIT $3;

@@ -1,5 +1,5 @@
-import { useState, useRef, useCallback } from "react";
-import { Link } from "react-router";
+import { useState, useRef, useCallback, useEffect } from "react";
+import { Link, useNavigate } from "react-router";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
@@ -12,114 +12,21 @@ import {
   Trash2,
   MailCheck,
   ChevronRight,
+  MessageSquarePlus,
 } from "lucide-react";
+import {
+  listRooms,
+  markRoomAsRead,
+  pinRoom,
+  unpinRoom,
+  muteRoom,
+  unmuteRoom,
+  leaveRoom,
+  type Room,
+} from "~/lib/api";
 
-type OnlineStatus = "online" | "idle" | "offline";
-
-interface ChatThread {
-  id: string;
-  participant: {
-    name: string;
-    customId: string;
-    avatarUrl: string;
-    status: OnlineStatus;
-  };
-  lastMessage: string;
-  lastMessageAt: Date;
-  unreadCount: number;
-  isLastMessageMine: boolean;
-  pinned?: boolean;
-  muted?: boolean;
-}
-
-const statusColor: Record<OnlineStatus, string> = {
-  online: "bg-green-500",
-  idle: "bg-yellow-500",
-  offline: "bg-gray-400",
-};
-
-const chatThreads: ChatThread[] = [
-  {
-    id: "chat1",
-    participant: {
-      name: "佐藤花子",
-      customId: "hanako_s",
-      avatarUrl: "",
-      status: "online",
-    },
-    lastMessage: "了解です！明日の予定について確認しますね。",
-    lastMessageAt: new Date(Date.now() - 5 * 60_000),
-    unreadCount: 2,
-    isLastMessageMine: false,
-  },
-  {
-    id: "chat2",
-    participant: {
-      name: "鈴木一郎",
-      customId: "ichiro_dev",
-      avatarUrl: "",
-      status: "online",
-    },
-    lastMessage: "コードレビューありがとうございました！",
-    lastMessageAt: new Date(Date.now() - 30 * 60_000),
-    unreadCount: 0,
-    isLastMessageMine: true,
-  },
-  {
-    id: "chat3",
-    participant: {
-      name: "山田美咲",
-      customId: "misaki_y",
-      avatarUrl: "",
-      status: "idle",
-    },
-    lastMessage: "写真送りました！見てみてください 📷",
-    lastMessageAt: new Date(Date.now() - 2 * 3_600_000),
-    unreadCount: 1,
-    isLastMessageMine: false,
-  },
-  {
-    id: "chat4",
-    participant: {
-      name: "高橋健太",
-      customId: "kenta_t",
-      avatarUrl: "",
-      status: "offline",
-    },
-    lastMessage: "来週のミーティング、水曜日に変更できますか？",
-    lastMessageAt: new Date(Date.now() - 5 * 3_600_000),
-    unreadCount: 0,
-    isLastMessageMine: false,
-  },
-  {
-    id: "chat5",
-    participant: {
-      name: "中村悠",
-      customId: "yu_nkmr",
-      avatarUrl: "",
-      status: "offline",
-    },
-    lastMessage: "おつかれさまです！",
-    lastMessageAt: new Date(Date.now() - 86_400_000),
-    unreadCount: 0,
-    isLastMessageMine: true,
-  },
-  {
-    id: "chat6",
-    participant: {
-      name: "田中太郎",
-      customId: "tanaka",
-      avatarUrl: "",
-      status: "idle",
-    },
-    lastMessage: "新しいプロジェクトの件、相談させてください。",
-    lastMessageAt: new Date(Date.now() - 2 * 86_400_000),
-    unreadCount: 0,
-    isLastMessageMine: false,
-  },
-];
-
-function formatChatTime(date: Date): string {
+function formatChatTime(dateStr: string): string {
+  const date = new Date(dateStr);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffMinutes = Math.floor(diffMs / 60_000);
@@ -133,13 +40,27 @@ function formatChatTime(date: Date): string {
   return `${date.getMonth() + 1}/${date.getDate()}`;
 }
 
+function getRoomDisplayName(room: Room): string {
+  if (room.roomType === "direct" && room.otherUser) {
+    return room.otherUser.displayName;
+  }
+  return room.name ?? "グループ";
+}
+
+function getRoomCustomId(room: Room): string | null {
+  if (room.roomType === "direct" && room.otherUser) {
+    return room.otherUser.customId;
+  }
+  return null;
+}
+
 // --- Swipeable row ---
 
 const SWIPE_THRESHOLD = 60;
 const BUTTON_WIDTH = 64;
 
 function SwipeableChatRow({
-  thread,
+  room,
   openSwipeId,
   onSwipeOpen,
   onMarkAsRead,
@@ -147,7 +68,7 @@ function SwipeableChatRow({
   onToggleMute,
   onDelete,
 }: {
-  thread: ChatThread;
+  room: Room;
   openSwipeId: string | null;
   onSwipeOpen: (id: string | null) => void;
   onMarkAsRead: (id: string) => void;
@@ -155,7 +76,7 @@ function SwipeableChatRow({
   onToggleMute: (id: string) => void;
   onDelete: (id: string) => void;
 }) {
-  const hasUnread = thread.unreadCount > 0;
+  const hasUnread = room.unreadCount > 0;
   const actionWidth = BUTTON_WIDTH * (hasUnread ? 4 : 3);
 
   const startX = useRef(0);
@@ -163,7 +84,7 @@ function SwipeableChatRow({
   const rowRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
 
-  const isOpen = openSwipeId === thread.id;
+  const isOpen = openSwipeId === room.id;
 
   const setTranslate = useCallback((x: number) => {
     if (rowRef.current) {
@@ -174,9 +95,7 @@ function SwipeableChatRow({
   const handleTouchStart = (e: React.TouchEvent) => {
     startX.current = e.touches[0].clientX;
     isDragging.current = false;
-    if (rowRef.current) {
-      rowRef.current.style.transition = "none";
-    }
+    if (rowRef.current) rowRef.current.style.transition = "none";
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -185,18 +104,14 @@ function SwipeableChatRow({
     const next = Math.min(0, Math.max(-actionWidth, base + diff));
     currentX.current = next;
     setTranslate(next);
-    if (Math.abs(diff) > 10) {
-      isDragging.current = true;
-    }
+    if (Math.abs(diff) > 10) isDragging.current = true;
   };
 
   const handleTouchEnd = () => {
-    if (rowRef.current) {
-      rowRef.current.style.transition = "transform 0.2s ease-out";
-    }
+    if (rowRef.current) rowRef.current.style.transition = "transform 0.2s ease-out";
     if (currentX.current < -SWIPE_THRESHOLD) {
       setTranslate(-actionWidth);
-      onSwipeOpen(thread.id);
+      onSwipeOpen(room.id);
     } else {
       setTranslate(0);
       onSwipeOpen(null);
@@ -204,10 +119,11 @@ function SwipeableChatRow({
   };
 
   const displayX = isOpen ? -actionWidth : 0;
+  const displayName = getRoomDisplayName(room);
+  const customId = getRoomCustomId(room);
 
   return (
     <div className="relative overflow-hidden border-b">
-      {/* Action buttons behind */}
       <div
         className="absolute inset-y-0 right-0 flex items-stretch"
         style={{ width: actionWidth }}
@@ -215,10 +131,7 @@ function SwipeableChatRow({
         {hasUnread && (
           <button
             className="flex-1 flex flex-col items-center justify-center gap-1 bg-blue-500 text-white text-xs"
-            onClick={() => {
-              onMarkAsRead(thread.id);
-              onSwipeOpen(null);
-            }}
+            onClick={() => { onMarkAsRead(room.id); onSwipeOpen(null); }}
           >
             <MailCheck className="size-5" />
             既読
@@ -226,103 +139,78 @@ function SwipeableChatRow({
         )}
         <button
           className="flex-1 flex flex-col items-center justify-center gap-1 bg-violet-500 text-white text-xs"
-          onClick={() => {
-            onToggleMute(thread.id);
-            onSwipeOpen(null);
-          }}
+          onClick={() => { onToggleMute(room.id); onSwipeOpen(null); }}
         >
           <BellOff className="size-5" />
-          {thread.muted ? "通知ON" : "ミュート"}
+          {room.isMuted ? "通知ON" : "ミュート"}
         </button>
         <button
           className="flex-1 flex flex-col items-center justify-center gap-1 bg-amber-500 text-white text-xs"
-          onClick={() => {
-            onTogglePin(thread.id);
-            onSwipeOpen(null);
-          }}
+          onClick={() => { onTogglePin(room.id); onSwipeOpen(null); }}
         >
           <Pin className="size-5" />
-          {thread.pinned ? "解除" : "ピン"}
+          {room.isPinned ? "解除" : "ピン"}
         </button>
         <button
           className="flex-1 flex flex-col items-center justify-center gap-1 bg-red-500 text-white text-xs"
-          onClick={() => {
-            onDelete(thread.id);
-            onSwipeOpen(null);
-          }}
+          onClick={() => { onDelete(room.id); onSwipeOpen(null); }}
         >
           <Trash2 className="size-5" />
-          削除
+          退出
         </button>
       </div>
 
-      {/* Foreground row */}
       <div
         ref={rowRef}
         className="relative bg-background"
-        style={{
-          transform: `translateX(${displayX}px)`,
-          transition: "transform 0.2s ease-out",
-        }}
+        style={{ transform: `translateX(${displayX}px)`, transition: "transform 0.2s ease-out" }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
         <div className="flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors">
+          {customId ? (
+            <Link
+              to={`/users/${customId}`}
+              className="relative shrink-0"
+              onClick={(e) => { if (isDragging.current) e.preventDefault(); e.stopPropagation(); }}
+            >
+              <Avatar className="size-12">
+                <AvatarFallback>{displayName.slice(0, 2)}</AvatarFallback>
+              </Avatar>
+            </Link>
+          ) : (
+            <div className="relative shrink-0">
+              <Avatar className="size-12">
+                <AvatarFallback>{displayName.slice(0, 2)}</AvatarFallback>
+              </Avatar>
+            </div>
+          )}
           <Link
-            to={`/users/${thread.participant.customId}`}
-            className="relative shrink-0"
-            onClick={(e) => {
-              if (isDragging.current) e.preventDefault();
-              e.stopPropagation();
-            }}
-          >
-            <Avatar className="size-12">
-              <AvatarImage
-                src={thread.participant.avatarUrl}
-                alt={thread.participant.name}
-              />
-              <AvatarFallback>
-                {thread.participant.name.slice(0, 2)}
-              </AvatarFallback>
-            </Avatar>
-            <span
-              className={`absolute bottom-0 right-0 size-3.5 rounded-full border-2 border-background ${statusColor[thread.participant.status]}`}
-            />
-          </Link>
-          <Link
-            to={`/chat/${thread.id}`}
+            to={`/chat/${room.id}`}
             className="flex-1 min-w-0"
-            onClick={(e) => {
-              if (isDragging.current) e.preventDefault();
-            }}
+            onClick={(e) => { if (isDragging.current) e.preventDefault(); }}
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5 min-w-0">
-                <span className="text-sm font-bold truncate">
-                  {thread.participant.name}
-                </span>
-                {thread.pinned && (
-                  <Pin className="size-3 text-muted-foreground shrink-0 fill-current" />
-                )}
-                {thread.muted && (
-                  <BellOff className="size-3 text-muted-foreground shrink-0" />
-                )}
+                <span className="text-sm font-bold truncate">{displayName}</span>
+                {room.isPinned && <Pin className="size-3 text-muted-foreground shrink-0 fill-current" />}
+                {room.isMuted && <BellOff className="size-3 text-muted-foreground shrink-0" />}
               </div>
-              <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
-                {formatChatTime(thread.lastMessageAt)}
-              </span>
+              {room.lastMessageAt && (
+                <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
+                  {formatChatTime(room.lastMessageAt)}
+                </span>
+              )}
             </div>
             <div className="flex items-center justify-between mt-0.5">
               <p className="text-sm text-muted-foreground truncate">
-                {thread.isLastMessageMine && (
-                  <span className="text-muted-foreground">自分: </span>
-                )}
-                {thread.lastMessage}
+                {room.isLastMessageMine && <span className="text-muted-foreground">自分: </span>}
+                {room.lastMessageText ?? ""}
               </p>
-              {thread.unreadCount > 0 && (
+              {room.unreadCount > 0 && (
                 <span className="ml-2 shrink-0 size-5 rounded-full bg-blue-500 text-white text-xs flex items-center justify-center">
-                  {thread.unreadCount}
+                  {room.unreadCount}
                 </span>
               )}
             </div>
@@ -336,48 +224,58 @@ function SwipeableChatRow({
 // --- Main ---
 
 export default function Chat() {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
-  const [threads, setThreads] = useState(chatThreads);
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [openSwipeId, setOpenSwipeId] = useState<string | null>(null);
 
-  const filteredThreads = threads.filter(
-    (thread) =>
-      thread.participant.name
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase()) ||
-      thread.participant.customId
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase()),
-  );
+  useEffect(() => {
+    listRooms().then((res) => {
+      setRooms(res.rooms ?? []);
+    }).finally(() => setLoading(false));
+  }, []);
 
-  const sortedThreads = [...filteredThreads].sort((a, b) => {
-    if (a.pinned && !b.pinned) return -1;
-    if (!a.pinned && b.pinned) return 1;
+  const filteredRooms = rooms.filter((room) => {
+    const name = getRoomDisplayName(room).toLowerCase();
+    const q = searchQuery.toLowerCase();
+    return name.includes(q) || (room.otherUser?.customId ?? "").toLowerCase().includes(q);
+  });
+
+  const sortedRooms = [...filteredRooms].sort((a, b) => {
+    if (a.isPinned && !b.isPinned) return -1;
+    if (!a.isPinned && b.isPinned) return 1;
     return 0;
   });
 
-  const handleMarkAsRead = (id: string) => {
-    setThreads((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, unreadCount: 0 } : t)),
-    );
+  const handleMarkAsRead = async (id: string) => {
+    await markRoomAsRead(id).catch(() => {});
+    setRooms((prev) => prev.map((r) => r.id === id ? { ...r, unreadCount: 0 } : r));
   };
 
-  const handleTogglePin = (id: string) => {
-    setThreads((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, pinned: !t.pinned } : t)),
-    );
+  const handleTogglePin = async (id: string) => {
+    const room = rooms.find((r) => r.id === id);
+    if (!room) return;
+    try {
+      const res = room.isPinned ? await unpinRoom(id) : await pinRoom(id);
+      setRooms((prev) => prev.map((r) => r.id === id ? res.room : r));
+    } catch {}
   };
 
-  const handleToggleMute = (id: string) => {
-    setThreads((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, muted: !t.muted } : t)),
-    );
+  const handleToggleMute = async (id: string) => {
+    const room = rooms.find((r) => r.id === id);
+    if (!room) return;
+    try {
+      const res = room.isMuted ? await unmuteRoom(id) : await muteRoom(id);
+      setRooms((prev) => prev.map((r) => r.id === id ? res.room : r));
+    } catch {}
   };
 
-  const handleDelete = (id: string) => {
-    setThreads((prev) => prev.filter((t) => t.id !== id));
+  const handleDelete = async (id: string) => {
+    await leaveRoom(id).catch(() => {});
+    setRooms((prev) => prev.filter((r) => r.id !== id));
   };
 
   const toggleSelect = (id: string) => {
@@ -389,75 +287,51 @@ export default function Chat() {
     });
   };
 
-  const handleBulkAction = (action: "read" | "pin" | "mute" | "delete") => {
-    const ids = selected;
-    if (ids.size === 0) return;
+  const handleBulkAction = async (action: "read" | "pin" | "mute" | "delete") => {
+    const ids = Array.from(selected);
+    if (ids.length === 0) return;
     switch (action) {
       case "read":
-        setThreads((prev) =>
-          prev.map((t) => (ids.has(t.id) ? { ...t, unreadCount: 0 } : t)),
-        );
-        break;
-      case "pin":
-        setThreads((prev) =>
-          prev.map((t) => (ids.has(t.id) ? { ...t, pinned: !t.pinned } : t)),
-        );
-        break;
-      case "mute":
-        setThreads((prev) =>
-          prev.map((t) => (ids.has(t.id) ? { ...t, muted: !t.muted } : t)),
-        );
+        await Promise.all(ids.map((id) => markRoomAsRead(id).catch(() => {})));
+        setRooms((prev) => prev.map((r) => ids.includes(r.id) ? { ...r, unreadCount: 0 } : r));
         break;
       case "delete":
-        setThreads((prev) => prev.filter((t) => !ids.has(t.id)));
+        await Promise.all(ids.map((id) => leaveRoom(id).catch(() => {})));
+        setRooms((prev) => prev.filter((r) => !ids.includes(r.id)));
+        break;
+      default:
         break;
     }
     setSelected(new Set());
   };
 
-  const exitEditing = () => {
-    setEditing(false);
-    setSelected(new Set());
-  };
+  const exitEditing = () => { setEditing(false); setSelected(new Set()); };
 
   return (
     <div className="w-full min-h-full flex flex-col">
-      {/* Header */}
       <div className="sticky top-0 left-0 w-full border-b bg-background/60 backdrop-blur-lg z-10">
         <div className="flex items-center justify-between px-4 h-14">
           {editing ? (
             <>
-              <Button variant="ghost" size="sm" onClick={exitEditing}>
-                キャンセル
-              </Button>
+              <Button variant="ghost" size="sm" onClick={exitEditing}>キャンセル</Button>
               <h1 className="text-base font-bold">
-                {selected.size > 0
-                  ? `${selected.size}件選択中`
-                  : "チャットを選択"}
+                {selected.size > 0 ? `${selected.size}件選択中` : "チャットを選択"}
               </h1>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  if (selected.size === sortedThreads.length) {
-                    setSelected(new Set());
-                  } else {
-                    setSelected(new Set(sortedThreads.map((t) => t.id)));
-                  }
-                }}
-              >
-                {selected.size === sortedThreads.length ? "全解除" : "全選択"}
+              <Button variant="ghost" size="sm" onClick={() => {
+                if (selected.size === sortedRooms.length) setSelected(new Set());
+                else setSelected(new Set(sortedRooms.map((r) => r.id)));
+              }}>
+                {selected.size === sortedRooms.length ? "全解除" : "全選択"}
               </Button>
             </>
           ) : (
             <>
               <h1 className="text-lg font-bold">チャット</h1>
               <div className="flex items-center gap-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setEditing(true)}
-                >
+                <Button variant="ghost" size="icon" onClick={() => navigate("/chat/new")}>
+                  <MessageSquarePlus className="size-5" />
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => setEditing(true)}>
                   <SquarePen className="size-5 mr-1" />
                   編集
                 </Button>
@@ -480,94 +354,70 @@ export default function Chat() {
         )}
       </div>
 
-      {/* Message requests */}
       {!editing && (
         <Link
           to="/chat/requests"
           className="flex items-center justify-between px-4 py-2.5 border-b hover:bg-muted/30 transition-colors"
         >
-          <span className="text-sm text-blue-500">メッセージリクエスト (3)</span>
+          <span className="text-sm text-blue-500">メッセージリクエスト</span>
           <ChevronRight className="size-4 text-blue-500" />
         </Link>
       )}
 
-      {/* Chat list */}
       <div className="flex-1">
-        {sortedThreads.length === 0 ? (
+        {loading ? (
+          <div className="flex items-center justify-center py-12 text-muted-foreground text-sm">読み込み中...</div>
+        ) : sortedRooms.length === 0 ? (
           <div className="flex items-center justify-center py-12 text-muted-foreground text-sm">
-            チャットが見つかりません
+            チャットがありません
           </div>
         ) : editing ? (
-          sortedThreads.map((thread) => (
-            <button
-              key={thread.id}
-              className="flex items-center gap-3 px-4 py-3 border-b w-full text-left hover:bg-muted/30 transition-colors"
-              onClick={() => toggleSelect(thread.id)}
-            >
-              <div
-                className={`shrink-0 size-5 rounded-full border-2 flex items-center justify-center transition-colors ${
-                  selected.has(thread.id)
-                    ? "bg-blue-500 border-blue-500"
-                    : "border-muted-foreground"
-                }`}
+          sortedRooms.map((room) => {
+            const displayName = getRoomDisplayName(room);
+            return (
+              <button
+                key={room.id}
+                className="flex items-center gap-3 px-4 py-3 border-b w-full text-left hover:bg-muted/30 transition-colors"
+                onClick={() => toggleSelect(room.id)}
               >
-                {selected.has(thread.id) && (
-                  <svg
-                    viewBox="0 0 12 12"
-                    className="size-3 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <polyline points="2,6 5,9 10,3" />
-                  </svg>
-                )}
-              </div>
-              <div className="relative shrink-0">
-                <Avatar className="size-12">
-                  <AvatarImage
-                    src={thread.participant.avatarUrl}
-                    alt={thread.participant.name}
-                  />
-                  <AvatarFallback>
-                    {thread.participant.name.slice(0, 2)}
-                  </AvatarFallback>
-                </Avatar>
-                <span
-                  className={`absolute bottom-0 right-0 size-3.5 rounded-full border-2 border-background ${statusColor[thread.participant.status]}`}
-                />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="text-sm font-bold truncate">
-                      {thread.participant.name}
-                    </span>
-                    {thread.pinned && (
-                      <Pin className="size-3 text-muted-foreground shrink-0 fill-current" />
-                    )}
-                    {thread.muted && (
-                      <BellOff className="size-3 text-muted-foreground shrink-0" />
+                <div className={`shrink-0 size-5 rounded-full border-2 flex items-center justify-center transition-colors ${selected.has(room.id) ? "bg-blue-500 border-blue-500" : "border-muted-foreground"}`}>
+                  {selected.has(room.id) && (
+                    <svg viewBox="0 0 12 12" className="size-3 text-white" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="2,6 5,9 10,3" />
+                    </svg>
+                  )}
+                </div>
+                <div className="relative shrink-0">
+                  <Avatar className="size-12">
+                    <AvatarFallback>{displayName.slice(0, 2)}</AvatarFallback>
+                  </Avatar>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="text-sm font-bold truncate">{displayName}</span>
+                      {room.isPinned && <Pin className="size-3 text-muted-foreground shrink-0 fill-current" />}
+                      {room.isMuted && <BellOff className="size-3 text-muted-foreground shrink-0" />}
+                    </div>
+                    {room.lastMessageAt && (
+                      <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
+                        {formatChatTime(room.lastMessageAt)}
+                      </span>
                     )}
                   </div>
-                  <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
-                    {formatChatTime(thread.lastMessageAt)}
-                  </span>
+                  <p className="text-sm text-muted-foreground truncate mt-0.5">
+                    {room.isLastMessageMine && "自分: "}
+                    {room.lastMessageText ?? ""}
+                  </p>
                 </div>
-                <p className="text-sm text-muted-foreground truncate mt-0.5">
-                  {thread.isLastMessageMine && "自分: "}
-                  {thread.lastMessage}
-                </p>
-              </div>
-            </button>
-          ))
+              </button>
+            );
+          })
         ) : (
-          sortedThreads.map((thread) => (
+          sortedRooms.map((room) => (
             <SwipeableChatRow
-              key={thread.id}
-              thread={thread}
+              key={room.id}
+              room={room}
               openSwipeId={openSwipeId}
               onSwipeOpen={setOpenSwipeId}
               onMarkAsRead={handleMarkAsRead}
@@ -579,41 +429,16 @@ export default function Chat() {
         )}
       </div>
 
-      {/* Bulk action bar (editing mode) */}
       {editing ? (
         <div className="sticky bottom-0 left-0 w-full border-t bg-background px-2 py-2">
           <div className="flex items-center justify-around">
-            <button
-              className="flex flex-col items-center gap-0.5 text-xs text-muted-foreground disabled:opacity-30"
-              disabled={selected.size === 0}
-              onClick={() => handleBulkAction("read")}
-            >
+            <button className="flex flex-col items-center gap-0.5 text-xs text-muted-foreground disabled:opacity-30" disabled={selected.size === 0} onClick={() => handleBulkAction("read")}>
               <MailCheck className="size-5" />
               既読
             </button>
-            <button
-              className="flex flex-col items-center gap-0.5 text-xs text-muted-foreground disabled:opacity-30"
-              disabled={selected.size === 0}
-              onClick={() => handleBulkAction("pin")}
-            >
-              <Pin className="size-5" />
-              ピン
-            </button>
-            <button
-              className="flex flex-col items-center gap-0.5 text-xs text-muted-foreground disabled:opacity-30"
-              disabled={selected.size === 0}
-              onClick={() => handleBulkAction("mute")}
-            >
-              <BellOff className="size-5" />
-              ミュート
-            </button>
-            <button
-              className="flex flex-col items-center gap-0.5 text-xs text-destructive disabled:opacity-30"
-              disabled={selected.size === 0}
-              onClick={() => handleBulkAction("delete")}
-            >
+            <button className="flex flex-col items-center gap-0.5 text-xs text-destructive disabled:opacity-30" disabled={selected.size === 0} onClick={() => handleBulkAction("delete")}>
               <Trash2 className="size-5" />
-              削除
+              退出
             </button>
           </div>
         </div>

@@ -3,7 +3,16 @@
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/inter";
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
+@keyframes heart-float {
+  0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -150%) scale(1.6); }
+}
+
+.animate-heart-float {
+  animation: heart-float 0.8s ease-out forwards;
+}
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif,
@@ -50,7 +59,7 @@ body {
   --sidebar-ring: oklch(0.708 0 0);
 }
 
-.dark {
+[data-theme="dark"] {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
@@ -82,6 +91,40 @@ body {
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+}
+
+[data-theme="aqua"] {
+  --background: oklch(0.97 0.02 210);
+  --foreground: oklch(0.15 0.04 210);
+  --card: oklch(0.99 0.01 210);
+  --card-foreground: oklch(0.15 0.04 210);
+  --popover: oklch(0.99 0.01 210);
+  --popover-foreground: oklch(0.15 0.04 210);
+  --primary: oklch(0.52 0.16 210);
+  --primary-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.91 0.04 210);
+  --secondary-foreground: oklch(0.2 0.04 210);
+  --muted: oklch(0.91 0.04 210);
+  --muted-foreground: oklch(0.5 0.06 210);
+  --accent: oklch(0.86 0.07 210);
+  --accent-foreground: oklch(0.2 0.04 210);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.87 0.05 210);
+  --input: oklch(0.87 0.05 210);
+  --ring: oklch(0.52 0.16 210);
+  --chart-1: oklch(0.52 0.16 210);
+  --chart-2: oklch(0.62 0.14 200);
+  --chart-3: oklch(0.72 0.10 190);
+  --chart-4: oklch(0.45 0.18 220);
+  --chart-5: oklch(0.38 0.14 230);
+  --sidebar: oklch(0.93 0.04 210);
+  --sidebar-foreground: oklch(0.15 0.04 210);
+  --sidebar-primary: oklch(0.52 0.16 210);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.87 0.06 210);
+  --sidebar-accent-foreground: oklch(0.2 0.04 210);
+  --sidebar-border: oklch(0.87 0.05 210);
+  --sidebar-ring: oklch(0.52 0.16 210);
 }
 
 @theme inline {

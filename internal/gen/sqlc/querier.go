@@ -11,6 +11,28 @@ import (
 )
 
 type Querier interface {
+	ListRoomsByUser(ctx context.Context, userID ulid.ULID) ([]ListRoomsByUserRow, error)
+	GetRoomByID(ctx context.Context, id ulid.ULID) (Room, error)
+	GetDirectRoom(ctx context.Context, userID1, userID2 ulid.ULID) (ulid.ULID, error)
+	CreateRoom(ctx context.Context, arg CreateRoomParams) (Room, error)
+	CreateRoomMember(ctx context.Context, arg CreateRoomMemberParams) error
+	GetRoomMember(ctx context.Context, arg GetRoomMemberParams) (RoomMember, error)
+	GetRoomOtherMember(ctx context.Context, arg GetRoomOtherMemberParams) (ulid.ULID, error)
+	GetMessageByID(ctx context.Context, id ulid.ULID) (Message, error)
+	ListMessages(ctx context.Context, arg ListMessagesParams) ([]Message, error)
+	CreateMessage(ctx context.Context, arg CreateMessageParams) (Message, error)
+	MarkRoomAsRead(ctx context.Context, arg MarkRoomAsReadParams) error
+	PinRoom(ctx context.Context, arg PinRoomParams) error
+	UnpinRoom(ctx context.Context, arg UnpinRoomParams) error
+	MuteRoom(ctx context.Context, arg MuteRoomParams) error
+	LeaveRoom(ctx context.Context, arg LeaveRoomParams) error
+	GetRoomMembers(ctx context.Context, roomID ulid.ULID) ([]ulid.ULID, error)
+	RemoveRoomMember(ctx context.Context, arg RemoveRoomMemberParams) error
+	UpdateRoomName(ctx context.Context, arg UpdateRoomNameParams) (Room, error)
+	AddMessageReaction(ctx context.Context, arg AddMessageReactionParams) error
+	RemoveMessageReaction(ctx context.Context, arg RemoveMessageReactionParams) error
+	ListReactionsByMessage(ctx context.Context, messageID, userID ulid.ULID) ([]ListReactionsByMessageRow, error)
+	ListReactionsByMessages(ctx context.Context, messageIDs []string, userID ulid.ULID) ([]ListReactionsByMessagesRow, error)
 	CountPostFavorites(ctx context.Context, postID ulid.ULID) (int64, error)
 	CountPostReplies(ctx context.Context, replyToID *ulid.ULID) (int64, error)
 	CountPostReposts(ctx context.Context, repostID *ulid.ULID) (int64, error)
@@ -37,6 +59,8 @@ type Querier interface {
 	ListTimeline(ctx context.Context, arg ListTimelineParams) ([]Post, error)
 	ListUserPosts(ctx context.Context, arg ListUserPostsParams) ([]Post, error)
 	SearchUsers(ctx context.Context, arg SearchUsersParams) ([]User, error)
+	ListFollowers(ctx context.Context, arg ListFollowersParams) ([]User, error)
+	ListFollowing(ctx context.Context, arg ListFollowingParams) ([]User, error)
 	ListUsersByIDs(ctx context.Context, ids []string) ([]User, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
 }

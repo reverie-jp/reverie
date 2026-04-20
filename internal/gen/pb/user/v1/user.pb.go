@@ -1022,6 +1022,118 @@ func (x *SearchUsersResponse) GetNextPageToken() string {
 	return ""
 }
 
+type ListFollowingRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	PageSize      int32                  `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageToken     string                 `protobuf:"bytes,3,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListFollowingRequest) Reset() {
+	*x = ListFollowingRequest{}
+	mi := &file_user_v1_user_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListFollowingRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListFollowingRequest) ProtoMessage() {}
+
+func (x *ListFollowingRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_user_v1_user_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListFollowingRequest.ProtoReflect.Descriptor instead.
+func (*ListFollowingRequest) Descriptor() ([]byte, []int) {
+	return file_user_v1_user_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *ListFollowingRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *ListFollowingRequest) GetPageSize() int32 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+func (x *ListFollowingRequest) GetPageToken() string {
+	if x != nil {
+		return x.PageToken
+	}
+	return ""
+}
+
+type ListFollowingResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Users         []*User                `protobuf:"bytes,1,rep,name=users,proto3" json:"users,omitempty"`
+	NextPageToken string                 `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListFollowingResponse) Reset() {
+	*x = ListFollowingResponse{}
+	mi := &file_user_v1_user_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListFollowingResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListFollowingResponse) ProtoMessage() {}
+
+func (x *ListFollowingResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_user_v1_user_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListFollowingResponse.ProtoReflect.Descriptor instead.
+func (*ListFollowingResponse) Descriptor() ([]byte, []int) {
+	return file_user_v1_user_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *ListFollowingResponse) GetUsers() []*User {
+	if x != nil {
+		return x.Users
+	}
+	return nil
+}
+
+func (x *ListFollowingResponse) GetNextPageToken() string {
+	if x != nil {
+		return x.NextPageToken
+	}
+	return ""
+}
+
 var File_user_v1_user_proto protoreflect.FileDescriptor
 
 const file_user_v1_user_proto_rawDesc = "" +
@@ -1098,6 +1210,14 @@ const file_user_v1_user_proto_rawDesc = "" +
 	"page_token\x18\x03 \x01(\tR\tpageToken\"b\n" +
 	"\x13SearchUsersResponse\x12#\n" +
 	"\x05users\x18\x01 \x03(\v2\r.user.v1.UserR\x05users\x12&\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"k\n" +
+	"\x14ListFollowingRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1b\n" +
+	"\tpage_size\x18\x02 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\n" +
+	"page_token\x18\x03 \x01(\tR\tpageToken\"d\n" +
+	"\x15ListFollowingResponse\x12#\n" +
+	"\x05users\x18\x01 \x03(\v2\r.user.v1.UserR\x05users\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken*z\n" +
 	"\fOnlineStatus\x12\x1d\n" +
 	"\x19ONLINE_STATUS_UNSPECIFIED\x10\x00\x12\x18\n" +
@@ -1107,7 +1227,7 @@ const file_user_v1_user_proto_rawDesc = "" +
 	"\x0ePostVisibility\x12\x1f\n" +
 	"\x1bPOST_VISIBILITY_UNSPECIFIED\x10\x00\x12\x1a\n" +
 	"\x16POST_VISIBILITY_PUBLIC\x10\x01\x12\x1d\n" +
-	"\x19POST_VISIBILITY_FOLLOWERS\x10\x022\xff\x05\n" +
+	"\x19POST_VISIBILITY_FOLLOWERS\x10\x022\xf6\x06\n" +
 	"\vUserService\x12Y\n" +
 	"\aGetUser\x12\x17.user.v1.GetUserRequest\x1a\x18.user.v1.GetUserResponse\"\x1b\x82\xd3\xe4\x93\x02\x15\x12\x13/v1/users/{user_id}\x12^\n" +
 	"\n" +
@@ -1117,7 +1237,8 @@ const file_user_v1_user_proto_rawDesc = "" +
 	"\n" +
 	"FollowUser\x12\x1a.user.v1.FollowUserRequest\x1a\x1b.user.v1.FollowUserResponse\"%\x82\xd3\xe4\x93\x02\x1f:\x01*\"\x1a/v1/users/{user_id}:follow\x12t\n" +
 	"\fUnfollowUser\x12\x1c.user.v1.UnfollowUserRequest\x1a\x1d.user.v1.UnfollowUserResponse\"'\x82\xd3\xe4\x93\x02!:\x01*\"\x1c/v1/users/{user_id}:unfollow\x12[\n" +
-	"\vSearchUsers\x12\x1b.user.v1.SearchUsersRequest\x1a\x1c.user.v1.SearchUsersResponse\"\x11\x82\xd3\xe4\x93\x02\v\x12\t/v1/usersB\x88\x01\n" +
+	"\vSearchUsers\x12\x1b.user.v1.SearchUsersRequest\x1a\x1c.user.v1.SearchUsersResponse\"\x11\x82\xd3\xe4\x93\x02\v\x12\t/v1/users\x12u\n" +
+	"\rListFollowing\x12\x1d.user.v1.ListFollowingRequest\x1a\x1e.user.v1.ListFollowingResponse\"%\x82\xd3\xe4\x93\x02\x1f\x12\x1d/v1/users/{user_id}/followingB\x88\x01\n" +
 	"\vcom.user.v1B\tUserProtoP\x01Z1reverie.jp/reverie/internal/gen/pb/user/v1;userv1\xa2\x02\x03UXX\xaa\x02\aUser.V1\xca\x02\aUser\\V1\xe2\x02\x13User\\V1\\GPBMetadata\xea\x02\bUser::V1b\x06proto3"
 
 var (
@@ -1133,7 +1254,7 @@ func file_user_v1_user_proto_rawDescGZIP() []byte {
 }
 
 var file_user_v1_user_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_user_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
+var file_user_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
 var file_user_v1_user_proto_goTypes = []any{
 	(OnlineStatus)(0),                  // 0: user.v1.OnlineStatus
 	(PostVisibility)(0),                // 1: user.v1.PostVisibility
@@ -1153,43 +1274,48 @@ var file_user_v1_user_proto_goTypes = []any{
 	(*UnfollowUserResponse)(nil),       // 15: user.v1.UnfollowUserResponse
 	(*SearchUsersRequest)(nil),         // 16: user.v1.SearchUsersRequest
 	(*SearchUsersResponse)(nil),        // 17: user.v1.SearchUsersResponse
-	(*timestamppb.Timestamp)(nil),      // 18: google.protobuf.Timestamp
-	(*fieldmaskpb.FieldMask)(nil),      // 19: google.protobuf.FieldMask
+	(*ListFollowingRequest)(nil),       // 18: user.v1.ListFollowingRequest
+	(*ListFollowingResponse)(nil),      // 19: user.v1.ListFollowingResponse
+	(*timestamppb.Timestamp)(nil),      // 20: google.protobuf.Timestamp
+	(*fieldmaskpb.FieldMask)(nil),      // 21: google.protobuf.FieldMask
 }
 var file_user_v1_user_proto_depIdxs = []int32{
 	0,  // 0: user.v1.User.online_status:type_name -> user.v1.OnlineStatus
-	18, // 1: user.v1.User.create_time:type_name -> google.protobuf.Timestamp
+	20, // 1: user.v1.User.create_time:type_name -> google.protobuf.Timestamp
 	1,  // 2: user.v1.UserSettings.default_visibility:type_name -> user.v1.PostVisibility
 	2,  // 3: user.v1.GetUserResponse.user:type_name -> user.v1.User
 	2,  // 4: user.v1.UpdateUserRequest.user:type_name -> user.v1.User
-	19, // 5: user.v1.UpdateUserRequest.update_mask:type_name -> google.protobuf.FieldMask
+	21, // 5: user.v1.UpdateUserRequest.update_mask:type_name -> google.protobuf.FieldMask
 	2,  // 6: user.v1.UpdateUserResponse.user:type_name -> user.v1.User
 	3,  // 7: user.v1.GetUserSettingsResponse.settings:type_name -> user.v1.UserSettings
 	3,  // 8: user.v1.UpdateUserSettingsRequest.settings:type_name -> user.v1.UserSettings
-	19, // 9: user.v1.UpdateUserSettingsRequest.update_mask:type_name -> google.protobuf.FieldMask
+	21, // 9: user.v1.UpdateUserSettingsRequest.update_mask:type_name -> google.protobuf.FieldMask
 	3,  // 10: user.v1.UpdateUserSettingsResponse.settings:type_name -> user.v1.UserSettings
 	2,  // 11: user.v1.FollowUserResponse.user:type_name -> user.v1.User
 	2,  // 12: user.v1.UnfollowUserResponse.user:type_name -> user.v1.User
 	2,  // 13: user.v1.SearchUsersResponse.users:type_name -> user.v1.User
-	4,  // 14: user.v1.UserService.GetUser:input_type -> user.v1.GetUserRequest
-	6,  // 15: user.v1.UserService.UpdateUser:input_type -> user.v1.UpdateUserRequest
-	8,  // 16: user.v1.UserService.GetUserSettings:input_type -> user.v1.GetUserSettingsRequest
-	10, // 17: user.v1.UserService.UpdateUserSettings:input_type -> user.v1.UpdateUserSettingsRequest
-	12, // 18: user.v1.UserService.FollowUser:input_type -> user.v1.FollowUserRequest
-	14, // 19: user.v1.UserService.UnfollowUser:input_type -> user.v1.UnfollowUserRequest
-	16, // 20: user.v1.UserService.SearchUsers:input_type -> user.v1.SearchUsersRequest
-	5,  // 21: user.v1.UserService.GetUser:output_type -> user.v1.GetUserResponse
-	7,  // 22: user.v1.UserService.UpdateUser:output_type -> user.v1.UpdateUserResponse
-	9,  // 23: user.v1.UserService.GetUserSettings:output_type -> user.v1.GetUserSettingsResponse
-	11, // 24: user.v1.UserService.UpdateUserSettings:output_type -> user.v1.UpdateUserSettingsResponse
-	13, // 25: user.v1.UserService.FollowUser:output_type -> user.v1.FollowUserResponse
-	15, // 26: user.v1.UserService.UnfollowUser:output_type -> user.v1.UnfollowUserResponse
-	17, // 27: user.v1.UserService.SearchUsers:output_type -> user.v1.SearchUsersResponse
-	21, // [21:28] is the sub-list for method output_type
-	14, // [14:21] is the sub-list for method input_type
-	14, // [14:14] is the sub-list for extension type_name
-	14, // [14:14] is the sub-list for extension extendee
-	0,  // [0:14] is the sub-list for field type_name
+	2,  // 14: user.v1.ListFollowingResponse.users:type_name -> user.v1.User
+	4,  // 15: user.v1.UserService.GetUser:input_type -> user.v1.GetUserRequest
+	6,  // 16: user.v1.UserService.UpdateUser:input_type -> user.v1.UpdateUserRequest
+	8,  // 17: user.v1.UserService.GetUserSettings:input_type -> user.v1.GetUserSettingsRequest
+	10, // 18: user.v1.UserService.UpdateUserSettings:input_type -> user.v1.UpdateUserSettingsRequest
+	12, // 19: user.v1.UserService.FollowUser:input_type -> user.v1.FollowUserRequest
+	14, // 20: user.v1.UserService.UnfollowUser:input_type -> user.v1.UnfollowUserRequest
+	16, // 21: user.v1.UserService.SearchUsers:input_type -> user.v1.SearchUsersRequest
+	18, // 22: user.v1.UserService.ListFollowing:input_type -> user.v1.ListFollowingRequest
+	5,  // 23: user.v1.UserService.GetUser:output_type -> user.v1.GetUserResponse
+	7,  // 24: user.v1.UserService.UpdateUser:output_type -> user.v1.UpdateUserResponse
+	9,  // 25: user.v1.UserService.GetUserSettings:output_type -> user.v1.GetUserSettingsResponse
+	11, // 26: user.v1.UserService.UpdateUserSettings:output_type -> user.v1.UpdateUserSettingsResponse
+	13, // 27: user.v1.UserService.FollowUser:output_type -> user.v1.FollowUserResponse
+	15, // 28: user.v1.UserService.UnfollowUser:output_type -> user.v1.UnfollowUserResponse
+	17, // 29: user.v1.UserService.SearchUsers:output_type -> user.v1.SearchUsersResponse
+	19, // 30: user.v1.UserService.ListFollowing:output_type -> user.v1.ListFollowingResponse
+	23, // [23:31] is the sub-list for method output_type
+	15, // [15:23] is the sub-list for method input_type
+	15, // [15:15] is the sub-list for extension type_name
+	15, // [15:15] is the sub-list for extension extendee
+	0,  // [0:15] is the sub-list for field type_name
 }
 
 func init() { file_user_v1_user_proto_init() }
@@ -1204,7 +1330,7 @@ func file_user_v1_user_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_user_v1_user_proto_rawDesc), len(file_user_v1_user_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   16,
+			NumMessages:   18,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

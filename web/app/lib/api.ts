@@ -129,6 +129,28 @@ export async function searchUsers(
   return request(`/v1/users?${qs}`);
 }
 
+export async function listFollowing(
+  userId: string,
+  params?: { pageSize?: number; pageToken?: string }
+): Promise<{ users: User[]; nextPageToken?: string }> {
+  const qs = new URLSearchParams();
+  if (params?.pageSize) qs.set("page_size", String(params.pageSize));
+  if (params?.pageToken) qs.set("page_token", params.pageToken);
+  const query = qs.toString() ? `?${qs}` : "";
+  return request(`/v1/users/${userId}/following${query}`);
+}
+
+export async function listFollowers(
+  userId: string,
+  params?: { pageSize?: number; pageToken?: string }
+): Promise<{ users: User[]; nextPageToken?: string }> {
+  const qs = new URLSearchParams();
+  if (params?.pageSize) qs.set("page_size", String(params.pageSize));
+  if (params?.pageToken) qs.set("page_token", params.pageToken);
+  const query = qs.toString() ? `?${qs}` : "";
+  return request(`/v1/users/${userId}/followers${query}`);
+}
+
 export async function getMe(): Promise<{ user: User }> {
   const { account } = await getAccount();
   return getUser(account.id);
@@ -241,4 +263,141 @@ export async function listFollowingTimeline(params?: {
   if (params?.pageToken) qs.set("page_token", params.pageToken);
   const query = qs.toString() ? `?${qs}` : "";
   return request(`/v1/timeline/following${query}`);
+}
+
+// Chat API
+
+export interface Room {
+  id: string;
+  roomType: string;
+  name?: string;
+  otherUser?: User;
+  members?: User[];
+  lastMessageText?: string;
+  lastMessageAt?: string;
+  unreadCount: number;
+  isLastMessageMine: boolean;
+  isPinned: boolean;
+  isMuted: boolean;
+}
+
+export interface MessageReaction {
+  emoji: string;
+  count: number;
+  isMine: boolean;
+}
+
+export interface ChatMessage {
+  id: string;
+  content: string;
+  sender?: User;
+  isMine: boolean;
+  createTime: string;
+  reactions?: MessageReaction[];
+}
+
+export async function listRooms(params?: {
+  pageSize?: number;
+  pageToken?: string;
+}): Promise<{ rooms: Room[]; nextPageToken?: string }> {
+  const qs = new URLSearchParams();
+  if (params?.pageSize) qs.set("page_size", String(params.pageSize));
+  if (params?.pageToken) qs.set("page_token", params.pageToken);
+  const query = qs.toString() ? `?${qs}` : "";
+  return request(`/v1/rooms${query}`);
+}
+
+export async function createDirectRoom(userId: string): Promise<{ room: Room }> {
+  return request("/v1/rooms:createDirect", {
+    method: "POST",
+    body: JSON.stringify({ userId }),
+  });
+}
+
+export async function listMessages(
+  roomId: string,
+  params?: { pageSize?: number; pageToken?: string }
+): Promise<{ messages: ChatMessage[]; nextPageToken?: string }> {
+  const qs = new URLSearchParams();
+  if (params?.pageSize) qs.set("page_size", String(params.pageSize));
+  if (params?.pageToken) qs.set("page_token", params.pageToken);
+  const query = qs.toString() ? `?${qs}` : "";
+  return request(`/v1/rooms/${roomId}/messages${query}`);
+}
+
+export async function sendMessage(roomId: string, content: string): Promise<{ message: ChatMessage }> {
+  return request(`/v1/rooms/${roomId}/messages`, {
+    method: "POST",
+    body: JSON.stringify({ content }),
+  });
+}
+
+export async function markRoomAsRead(roomId: string): Promise<void> {
+  return request(`/v1/rooms/${roomId}:markAsRead`, {
+    method: "POST",
+    body: "{}",
+  });
+}
+
+export async function pinRoom(roomId: string): Promise<{ room: Room }> {
+  return request(`/v1/rooms/${roomId}:pin`, { method: "POST", body: "{}" });
+}
+
+export async function unpinRoom(roomId: string): Promise<{ room: Room }> {
+  return request(`/v1/rooms/${roomId}:unpin`, { method: "POST", body: "{}" });
+}
+
+export async function muteRoom(roomId: string): Promise<{ room: Room }> {
+  return request(`/v1/rooms/${roomId}:mute`, { method: "POST", body: "{}" });
+}
+
+export async function unmuteRoom(roomId: string): Promise<{ room: Room }> {
+  return request(`/v1/rooms/${roomId}:unmute`, { method: "POST", body: "{}" });
+}
+
+export async function leaveRoom(roomId: string): Promise<void> {
+  return request(`/v1/rooms/${roomId}:leave`, { method: "POST", body: "{}" });
+}
+
+export async function addMessageReaction(messageId: string, emoji: string): Promise<{ message: ChatMessage }> {
+  return request(`/v1/messages/${messageId}:react`, {
+    method: "POST",
+    body: JSON.stringify({ emoji }),
+  });
+}
+
+export async function removeMessageReaction(messageId: string, emoji: string): Promise<{ message: ChatMessage }> {
+  return request(`/v1/messages/${messageId}:unreact`, {
+    method: "POST",
+    body: JSON.stringify({ emoji }),
+  });
+}
+
+export async function createGroupRoom(name: string, memberIds: string[]): Promise<{ room: Room }> {
+  return request("/v1/rooms:createGroup", {
+    method: "POST",
+    body: JSON.stringify({ name, memberIds }),
+  });
+}
+
+export async function updateRoom(roomId: string, name: string): Promise<{ room: Room }> {
+  return request(`/v1/rooms/${roomId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ name }),
+  });
+}
+
+export async function listRoomMembers(roomId: string): Promise<{ members: User[] }> {
+  return request(`/v1/rooms/${roomId}/members`);
+}
+
+export async function addRoomMember(roomId: string, userId: string): Promise<{ room: Room }> {
+  return request(`/v1/rooms/${roomId}/members`, {
+    method: "POST",
+    body: JSON.stringify({ userId }),
+  });
+}
+
+export async function removeRoomMember(roomId: string, userId: string): Promise<void> {
+  return request(`/v1/rooms/${roomId}/members/${userId}`, { method: "DELETE" });
 }

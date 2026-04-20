@@ -16,6 +16,8 @@ func InitModule(q *sqlc.Queries, userGateway usergw.Gateway) userv1connect.UserS
 	followUser := usecase.NewFollowUser(userGateway)
 	unfollowUser := usecase.NewUnfollowUser(userGateway)
 	searchUsers := usecase.NewSearchUsers(userGateway)
+	listFollowing := usecase.NewListFollowing(userGateway)
+	listFollowers := usecase.NewListFollowers(userGateway)
 
-	return handler.New(getUser, updateUser, getUserSettings, updateUserSettings, followUser, unfollowUser, searchUsers)
+	return handler.New(getUser, updateUser, getUserSettings, updateUserSettings, followUser, unfollowUser, searchUsers, listFollowing, listFollowers)
 }

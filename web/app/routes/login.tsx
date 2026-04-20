@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
-import { socialLogin, setTokens, isLoggedIn } from "~/lib/api";
+import { socialLogin, setTokens, isLoggedIn, ApiError } from "~/lib/api";
 
 const IS_DEV = import.meta.env.DEV;
 
@@ -51,10 +51,28 @@ function LineIcon({ className }: { className?: string }) {
   );
 }
 
+const DEV_USERS = [
+  { customId: "kaoru",  label: "かおる" },
+  { customId: "keppi",  label: "けっぴ" },
+  { customId: "markun", label: "まぁくん" },
+];
+
+async function devQuickLogin(customId: string): Promise<string> {
+  const res = await fetch("http://localhost:50051/v1/dev/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ customId }),
+  });
+  if (!res.ok) throw new Error("failed");
+  const { accessToken } = await res.json();
+  return accessToken;
+}
+
 export default function Login() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [devToken, setDevToken] = useState("");
+  const [quickLoggingIn, setQuickLoggingIn] = useState<string | null>(null);
 
   useEffect(() => {
     if (isLoggedIn()) {
@@ -117,30 +135,56 @@ export default function Login() {
 
         {/* Dev login (development only) */}
         {IS_DEV && (
-          <div className="border rounded-lg p-4 space-y-2 bg-muted/30">
+          <div className="border rounded-lg p-4 space-y-3 bg-muted/30">
             <p className="text-xs font-medium text-muted-foreground">開発用ログイン</p>
-            <p className="text-xs text-muted-foreground">
-              <code>go run ./cmd/seed</code> で取得したトークンを入力
-            </p>
-            <Input
-              placeholder="ACCESS_TOKEN=..."
-              value={devToken}
-              onChange={(e) => setDevToken(e.target.value)}
-              className="h-8 text-xs font-mono"
-            />
-            <Button
-              size="sm"
-              className="w-full h-8 text-xs"
-              onClick={() => {
-                const token = devToken.replace(/^ACCESS_TOKEN=/, "").trim();
-                if (token) {
-                  setTokens(token, "");
-                  navigate("/");
-                }
-              }}
-            >
-              トークンでログイン
-            </Button>
+
+            {/* クイックログイン */}
+            <div className="flex gap-2">
+              {DEV_USERS.map((u) => (
+                <button
+                  key={u.customId}
+                  disabled={!!quickLoggingIn}
+                  onClick={async () => {
+                    setQuickLoggingIn(u.customId);
+                    try {
+                      const token = await devQuickLogin(u.customId);
+                      setTokens(token, "");
+                      navigate("/");
+                    } catch {
+                      alert("ログイン失敗");
+                    } finally {
+                      setQuickLoggingIn(null);
+                    }
+                  }}
+                  className="flex-1 h-9 rounded-md border text-xs font-medium bg-background hover:bg-muted transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
+                >
+                  {quickLoggingIn === u.customId ? (
+                    <span className="animate-pulse">…</span>
+                  ) : u.label}
+                </button>
+              ))}
+            </div>
+
+            {/* トークン直接入力（従来） */}
+            <div className="space-y-1.5">
+              <p className="text-xs text-muted-foreground">またはトークンを直接入力</p>
+              <Input
+                placeholder="ACCESS_TOKEN=..."
+                value={devToken}
+                onChange={(e) => setDevToken(e.target.value)}
+                className="h-8 text-xs font-mono"
+              />
+              <Button
+                size="sm"
+                className="w-full h-8 text-xs"
+                onClick={() => {
+                  const token = devToken.replace(/^ACCESS_TOKEN=/, "").trim();
+                  if (token) { setTokens(token, ""); navigate("/"); }
+                }}
+              >
+                トークンでログイン
+              </Button>
+            </div>
           </div>
         )}
 

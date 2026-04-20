@@ -14,6 +14,8 @@ import (
 	"reverie.jp/reverie/internal/config"
 	accountv1 "reverie.jp/reverie/internal/gen/pb/account/v1"
 	"reverie.jp/reverie/internal/gen/pb/account/v1/accountv1connect"
+	chatv1 "reverie.jp/reverie/internal/gen/pb/chat/v1"
+	"reverie.jp/reverie/internal/gen/pb/chat/v1/chatv1connect"
 	postv1 "reverie.jp/reverie/internal/gen/pb/post/v1"
 	"reverie.jp/reverie/internal/gen/pb/post/v1/postv1connect"
 	timelinev1 "reverie.jp/reverie/internal/gen/pb/timeline/v1"
@@ -22,6 +24,7 @@ import (
 	"reverie.jp/reverie/internal/gen/pb/user/v1/userv1connect"
 	"reverie.jp/reverie/internal/gen/sqlc"
 	"reverie.jp/reverie/internal/modules/account"
+	"reverie.jp/reverie/internal/modules/chat"
 	"reverie.jp/reverie/internal/modules/post"
 	"reverie.jp/reverie/internal/modules/timeline"
 	"reverie.jp/reverie/internal/modules/user"
@@ -47,6 +50,7 @@ func initServices(cfg *config.Config, db *pgxpool.Pool, jwtManager *jwt.Manager)
 	userService := user.InitModule(q, userGateway)
 	postService := post.InitModule(q, userGateway)
 	timelineService := timeline.InitModule(q, userGateway)
+	chatService := chat.InitModule(q, userGateway)
 
 	return []Service{
 		{
@@ -95,6 +99,18 @@ func initServices(cfg *config.Config, db *pgxpool.Pool, jwtManager *jwt.Manager)
 			},
 			RegisterGatewayHandler: func(ctx context.Context, mux *runtime.ServeMux, addr string, opts []grpc.DialOption) error {
 				return timelinev1.RegisterTimelineServiceHandlerFromEndpoint(ctx, mux, addr, opts)
+			},
+		},
+		{
+			Name: chatv1connect.ChatServiceName,
+			RegisterConnectHandler: func(mux *http.ServeMux) {
+				mux.Handle(chatv1connect.NewChatServiceHandler(
+					chatService,
+					connect.WithInterceptors(errorInterceptor, authInterceptor),
+				))
+			},
+			RegisterGatewayHandler: func(ctx context.Context, mux *runtime.ServeMux, addr string, opts []grpc.DialOption) error {
+				return chatv1.RegisterChatServiceHandlerFromEndpoint(ctx, mux, addr, opts)
 			},
 		},
 	}

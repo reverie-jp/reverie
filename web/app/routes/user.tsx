@@ -9,6 +9,7 @@ import {
   unlikePost,
   deletePost,
   isLoggedIn,
+  createDirectRoom,
   type User as ApiUser,
 } from "~/lib/api";
 import { useCurrentUser } from "~/lib/use-current-user";
@@ -38,6 +39,7 @@ import {
   CalendarDays,
   Link2,
   MapPin,
+  MessageSquare,
   Phone,
   Settings,
   ShieldBan,
@@ -443,6 +445,7 @@ export default function User({ params }: Route.ComponentProps) {
   const [showBlockedProfile, setShowBlockedProfile] = useState(false);
   const [composeMode, setComposeMode] = useState<ComposeMode | null>(null);
   const [selectedCall, setSelectedCall] = useState<ProfileCall | null>(null);
+  const [creatingRoom, setCreatingRoom] = useState(false);
 
   const calls = getUserCalls(params.id);
   const likedPosts = getUserLikedPosts();
@@ -522,6 +525,17 @@ export default function User({ params }: Route.ComponentProps) {
     setComposeMode({ type: "repost", post });
   };
 
+  const handleOpenChat = async () => {
+    if (!apiUserId || creatingRoom) return;
+    setCreatingRoom(true);
+    try {
+      const res = await createDirectRoom(apiUserId);
+      navigate(`/chat/${res.room.id}`);
+    } catch {
+      setCreatingRoom(false);
+    }
+  };
+
   const formatJoinDate = (date: Date) => {
     return `${date.getFullYear()}年${date.getMonth() + 1}月`;
   };
@@ -554,7 +568,7 @@ export default function User({ params }: Route.ComponentProps) {
       {/* Profile info */}
       <div className="px-4 relative">
         {/* Action button (top-right of profile section) */}
-        <div className="absolute top-3 right-4">
+        <div className="absolute top-3 right-4 flex items-center gap-2">
           {isMe ? (
             <Button
               variant="outline"
@@ -564,14 +578,25 @@ export default function User({ params }: Route.ComponentProps) {
               プロフィールを編集
             </Button>
           ) : profile.blockedByThem ? null : (
-            <FollowButton
-              userId={apiUserId ?? ""}
-              customId={profile.customId}
-              initialFollowing={profile.isFollowing}
-              followsYou={profile.followsYou}
-              size="md"
-              onBlockChange={setIsBlocked}
-            />
+            <>
+              <Button
+                variant="outline"
+                size="icon"
+                className="rounded-full size-9"
+                onClick={handleOpenChat}
+                disabled={creatingRoom}
+              >
+                <MessageSquare className="size-4" />
+              </Button>
+              <FollowButton
+                userId={apiUserId ?? ""}
+                customId={profile.customId}
+                initialFollowing={profile.isFollowing}
+                followsYou={profile.followsYou}
+                size="md"
+                onBlockChange={setIsBlocked}
+              />
+            </>
           )}
         </div>
 

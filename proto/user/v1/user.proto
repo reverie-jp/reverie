@@ -60,6 +60,13 @@ service UserService {
     };
   }
 
+  // List users that a user is following.
+  rpc ListFollowing(ListFollowingRequest) returns (ListFollowingResponse) {
+    option (google.api.http) = {
+      get: "/v1/users/{user_id}/following"
+    };
+  }
+
 }
 
 // Enums
@@ -165,6 +172,17 @@ message SearchUsersRequest {
 }
 
 message SearchUsersResponse {
+  repeated User users = 1;
+  string next_page_token = 2;
+}
+
+message ListFollowingRequest {
+  string user_id = 1;
+  int32 page_size = 2;
+  string page_token = 3;
+}
+
+message ListFollowingResponse {
   repeated User users = 1;
   string next_page_token = 2;
 }

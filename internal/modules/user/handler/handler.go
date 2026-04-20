@@ -14,6 +14,8 @@ type Handler struct {
 	followUser         *usecase.FollowUser
 	unfollowUser       *usecase.UnfollowUser
 	searchUsers        *usecase.SearchUsers
+	listFollowing      *usecase.ListFollowing
+	listFollowers      *usecase.ListFollowers
 }
 
 func derefString(s *string) string {
@@ -31,6 +33,8 @@ func New(
 	followUser *usecase.FollowUser,
 	unfollowUser *usecase.UnfollowUser,
 	searchUsers *usecase.SearchUsers,
+	listFollowing *usecase.ListFollowing,
+	listFollowers *usecase.ListFollowers,
 ) *Handler {
 	return &Handler{
 		getUser:            getUser,
@@ -40,5 +44,7 @@ func New(
 		followUser:         followUser,
 		unfollowUser:       unfollowUser,
 		searchUsers:        searchUsers,
+		listFollowing:      listFollowing,
+		listFollowers:      listFollowers,
 	}
 }

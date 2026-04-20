@@ -89,6 +89,9 @@ func Run() error {
 			serviceNames = append(serviceNames, service.Name)
 		}
 		mux.Handle(grpcreflect.NewHandlerV1(grpcreflect.NewStaticReflector(serviceNames...)))
+
+		// dev-only: ワンクリックログイン用トークン発行
+		mux.HandleFunc("POST /v1/dev/token", devTokenHandler(db, jwtManager))
 	}
 
 	mux.Handle("/", gwMux)

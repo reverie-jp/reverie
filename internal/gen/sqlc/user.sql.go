@@ -292,3 +292,99 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, e
 	)
 	return i, err
 }
+
+type ListFollowersParams struct {
+	FollowedID ulid.ULID
+	Cursor     *time.Time
+	Limit      int32
+}
+
+const listFollowers = `-- name: ListFollowers :many
+SELECT u.id, u.custom_id, u.custom_id_changed_at, u.display_name, u.biography,
+       u.avatar_media_id, u.banner_media_id, u.is_private, u.birthdate, u.create_time, u.update_time
+FROM users u
+JOIN user_follows f ON f.follower_id = u.id
+WHERE f.followed_id = $1
+  AND ($2::timestamptz IS NULL OR f.create_time < $2)
+ORDER BY f.create_time DESC
+LIMIT $3`
+
+func (q *Queries) ListFollowers(ctx context.Context, arg ListFollowersParams) ([]User, error) {
+	rows, err := q.db.Query(ctx, listFollowers, arg.FollowedID, arg.Cursor, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.CustomID,
+			&i.CustomIDChangedAt,
+			&i.DisplayName,
+			&i.Biography,
+			&i.AvatarMediaID,
+			&i.BannerMediaID,
+			&i.IsPrivate,
+			&i.Birthdate,
+			&i.CreateTime,
+			&i.UpdateTime,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+type ListFollowingParams struct {
+	FollowerID ulid.ULID
+	Cursor     *time.Time
+	Limit      int32
+}
+
+const listFollowing = `-- name: ListFollowing :many
+SELECT u.id, u.custom_id, u.custom_id_changed_at, u.display_name, u.biography,
+       u.avatar_media_id, u.banner_media_id, u.is_private, u.birthdate, u.create_time, u.update_time
+FROM users u
+JOIN user_follows f ON f.followed_id = u.id
+WHERE f.follower_id = $1
+  AND ($2::timestamptz IS NULL OR f.create_time < $2)
+ORDER BY f.create_time DESC
+LIMIT $3`
+
+func (q *Queries) ListFollowing(ctx context.Context, arg ListFollowingParams) ([]User, error) {
+	rows, err := q.db.Query(ctx, listFollowing, arg.FollowerID, arg.Cursor, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.CustomID,
+			&i.CustomIDChangedAt,
+			&i.DisplayName,
+			&i.Biography,
+			&i.AvatarMediaID,
+			&i.BannerMediaID,
+			&i.IsPrivate,
+			&i.Birthdate,
+			&i.CreateTime,
+			&i.UpdateTime,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

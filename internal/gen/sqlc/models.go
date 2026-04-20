@@ -473,6 +473,14 @@ type PinnedRoom struct {
 	PinnedAt time.Time `json:"pinned_at"`
 }
 
+type MessageReaction struct {
+	ID         ulid.ULID `json:"id"`
+	MessageID  ulid.ULID `json:"message_id"`
+	UserID     ulid.ULID `json:"user_id"`
+	Emoji      string    `json:"emoji"`
+	CreateTime time.Time `json:"create_time"`
+}
+
 type Post struct {
 	ID         ulid.ULID  `json:"id"`
 	AuthorID   ulid.ULID  `json:"author_id"`

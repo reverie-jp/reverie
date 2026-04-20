@@ -1,0 +1,295 @@
+syntax = "proto3";
+
+package chat.v1;
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+import "user/v1/user.proto";
+
+service ChatService {
+  rpc ListRooms(ListRoomsRequest) returns (ListRoomsResponse) {
+    option (google.api.http) = {
+      get: "/v1/rooms"
+    };
+  }
+
+  rpc CreateDirectRoom(CreateDirectRoomRequest) returns (CreateDirectRoomResponse) {
+    option (google.api.http) = {
+      post: "/v1/rooms:createDirect"
+      body: "*"
+    };
+  }
+
+  rpc ListMessages(ListMessagesRequest) returns (ListMessagesResponse) {
+    option (google.api.http) = {
+      get: "/v1/rooms/{room_id}/messages"
+    };
+  }
+
+  rpc SendMessage(SendMessageRequest) returns (SendMessageResponse) {
+    option (google.api.http) = {
+      post: "/v1/rooms/{room_id}/messages"
+      body: "*"
+    };
+  }
+
+  rpc MarkRoomAsRead(MarkRoomAsReadRequest) returns (MarkRoomAsReadResponse) {
+    option (google.api.http) = {
+      post: "/v1/rooms/{room_id}:markAsRead"
+      body: "*"
+    };
+  }
+
+  rpc PinRoom(PinRoomRequest) returns (PinRoomResponse) {
+    option (google.api.http) = {
+      post: "/v1/rooms/{room_id}:pin"
+      body: "*"
+    };
+  }
+
+  rpc UnpinRoom(UnpinRoomRequest) returns (UnpinRoomResponse) {
+    option (google.api.http) = {
+      post: "/v1/rooms/{room_id}:unpin"
+      body: "*"
+    };
+  }
+
+  rpc MuteRoom(MuteRoomRequest) returns (MuteRoomResponse) {
+    option (google.api.http) = {
+      post: "/v1/rooms/{room_id}:mute"
+      body: "*"
+    };
+  }
+
+  rpc UnmuteRoom(UnmuteRoomRequest) returns (UnmuteRoomResponse) {
+    option (google.api.http) = {
+      post: "/v1/rooms/{room_id}:unmute"
+      body: "*"
+    };
+  }
+
+  rpc LeaveRoom(LeaveRoomRequest) returns (LeaveRoomResponse) {
+    option (google.api.http) = {
+      post: "/v1/rooms/{room_id}:leave"
+      body: "*"
+    };
+  }
+
+  rpc AddMessageReaction(AddMessageReactionRequest) returns (AddMessageReactionResponse) {
+    option (google.api.http) = {
+      post: "/v1/messages/{message_id}:react"
+      body: "*"
+    };
+  }
+
+  rpc RemoveMessageReaction(RemoveMessageReactionRequest) returns (RemoveMessageReactionResponse) {
+    option (google.api.http) = {
+      post: "/v1/messages/{message_id}:unreact"
+      body: "*"
+    };
+  }
+
+  rpc CreateGroupRoom(CreateGroupRoomRequest) returns (CreateGroupRoomResponse) {
+    option (google.api.http) = {
+      post: "/v1/rooms:createGroup"
+      body: "*"
+    };
+  }
+
+  rpc UpdateRoom(UpdateRoomRequest) returns (UpdateRoomResponse) {
+    option (google.api.http) = {
+      patch: "/v1/rooms/{room_id}"
+      body: "*"
+    };
+  }
+
+  rpc ListRoomMembers(ListRoomMembersRequest) returns (ListRoomMembersResponse) {
+    option (google.api.http) = {
+      get: "/v1/rooms/{room_id}/members"
+    };
+  }
+
+  rpc AddRoomMember(AddRoomMemberRequest) returns (AddRoomMemberResponse) {
+    option (google.api.http) = {
+      post: "/v1/rooms/{room_id}/members"
+      body: "*"
+    };
+  }
+
+  rpc RemoveRoomMember(RemoveRoomMemberRequest) returns (RemoveRoomMemberResponse) {
+    option (google.api.http) = {
+      delete: "/v1/rooms/{room_id}/members/{user_id}"
+    };
+  }
+}
+
+message Room {
+  string id = 1;
+  string room_type = 2;
+  string name = 3;
+  user.v1.User other_user = 4;
+  string last_message_text = 5;
+  google.protobuf.Timestamp last_message_at = 6;
+  int32 unread_count = 7;
+  bool is_last_message_mine = 8;
+  bool is_pinned = 9;
+  bool is_muted = 10;
+  repeated user.v1.User members = 11;
+}
+
+message MessageReaction {
+  string emoji = 1;
+  int32 count = 2;
+  bool is_mine = 3;
+}
+
+message ChatMessage {
+  string id = 1;
+  string content = 2;
+  user.v1.User sender = 3;
+  bool is_mine = 4;
+  google.protobuf.Timestamp create_time = 5;
+  repeated MessageReaction reactions = 6;
+}
+
+message ListRoomsRequest {
+  int32 page_size = 1;
+  string page_token = 2;
+}
+
+message ListRoomsResponse {
+  repeated Room rooms = 1;
+  string next_page_token = 2;
+}
+
+message CreateDirectRoomRequest {
+  string user_id = 1;
+}
+
+message CreateDirectRoomResponse {
+  Room room = 1;
+}
+
+message ListMessagesRequest {
+  string room_id = 1;
+  int32 page_size = 2;
+  string page_token = 3;
+}
+
+message ListMessagesResponse {
+  repeated ChatMessage messages = 1;
+  string next_page_token = 2;
+}
+
+message SendMessageRequest {
+  string room_id = 1;
+  string content = 2;
+}
+
+message SendMessageResponse {
+  ChatMessage message = 1;
+}
+
+message MarkRoomAsReadRequest {
+  string room_id = 1;
+}
+
+message MarkRoomAsReadResponse {}
+
+message PinRoomRequest {
+  string room_id = 1;
+}
+
+message PinRoomResponse {
+  Room room = 1;
+}
+
+message UnpinRoomRequest {
+  string room_id = 1;
+}
+
+message UnpinRoomResponse {
+  Room room = 1;
+}
+
+message MuteRoomRequest {
+  string room_id = 1;
+}
+
+message MuteRoomResponse {
+  Room room = 1;
+}
+
+message UnmuteRoomRequest {
+  string room_id = 1;
+}
+
+message UnmuteRoomResponse {
+  Room room = 1;
+}
+
+message LeaveRoomRequest {
+  string room_id = 1;
+}
+
+message LeaveRoomResponse {}
+
+message AddMessageReactionRequest {
+  string message_id = 1;
+  string emoji = 2;
+}
+
+message AddMessageReactionResponse {
+  ChatMessage message = 1;
+}
+
+message RemoveMessageReactionRequest {
+  string message_id = 1;
+  string emoji = 2;
+}
+
+message RemoveMessageReactionResponse {
+  ChatMessage message = 1;
+}
+
+message CreateGroupRoomRequest {
+  string name = 1;
+  repeated string member_ids = 2;
+}
+
+message CreateGroupRoomResponse {
+  Room room = 1;
+}
+
+message UpdateRoomRequest {
+  string room_id = 1;
+  string name = 2;
+}
+
+message UpdateRoomResponse {
+  Room room = 1;
+}
+
+message ListRoomMembersRequest {
+  string room_id = 1;
+}
+
+message ListRoomMembersResponse {
+  repeated user.v1.User members = 1;
+}
+
+message AddRoomMemberRequest {
+  string room_id = 1;
+  string user_id = 2;
+}
+
+message AddRoomMemberResponse {
+  Room room = 1;
+}
+
+message RemoveRoomMemberRequest {
+  string room_id = 1;
+  string user_id = 2;
+}
+
+message RemoveRoomMemberResponse {}

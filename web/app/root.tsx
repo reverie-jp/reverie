@@ -15,6 +15,7 @@ import { PrivateCallBar } from "~/components/private-call-bar";
 import { PrivateCallScreen } from "~/components/private-call-screen";
 import { GroupCallBar } from "~/components/group-call-bar";
 import { PushNotificationProvider, CallNotificationBridge } from "~/components/push-notification";
+import { ThemeProvider } from "~/lib/theme-context";
 import "./app.css";
 
 export const links: Route.LinksFunction = () => [
@@ -32,12 +33,20 @@ export const links: Route.LinksFunction = () => [
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
         <Links />
+        {/* フラッシュ防止: JS が動く前にテーマを適用 */}
+        <script dangerouslySetInnerHTML={{ __html: `
+          (function(){
+            var t = localStorage.getItem('theme');
+            var resolved = t && t !== 'system' ? t : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-theme', resolved);
+          })();
+        ` }} />
       </head>
       <body>
         <div className="w-screen h-screen flex flex-col overflow-hidden">
@@ -52,6 +61,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
+    <ThemeProvider>
     <PushNotificationProvider>
       <CallProvider>
         <CallNotificationBridge />
@@ -66,6 +76,7 @@ export default function App() {
         </PrivateCallProvider>
       </CallProvider>
     </PushNotificationProvider>
+    </ThemeProvider>
   );
 }
 

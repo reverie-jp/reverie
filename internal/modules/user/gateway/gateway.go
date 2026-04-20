@@ -38,6 +38,8 @@ type Gateway interface {
 	BuildView(ctx context.Context, id ulid.ULID) (*UserView, error)
 	BuildListViews(ctx context.Context, ids []ulid.ULID) ([]*UserView, error)
 	SearchUsers(ctx context.Context, query string, cursor *time.Time, limit int32) ([]*entity.User, error)
+	ListFollowers(ctx context.Context, followedID ulid.ULID, cursor *time.Time, limit int32) ([]*entity.User, error)
+	ListFollowing(ctx context.Context, followerID ulid.ULID, cursor *time.Time, limit int32) ([]*entity.User, error)
 	FollowUser(ctx context.Context, followerID, followedID ulid.ULID) error
 	UnfollowUser(ctx context.Context, followerID, followedID ulid.ULID) error
 	IsFollowing(ctx context.Context, followerID, followedID ulid.ULID) (bool, error)

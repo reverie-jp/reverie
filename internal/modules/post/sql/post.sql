@@ -23,7 +23,10 @@ LIMIT $2;
 SELECT id, author_id, reply_to_id, repost_id, text, create_time, update_time
 FROM posts
 WHERE reply_to_id IS NULL
-  AND author_id IN (SELECT followed_id FROM user_follows WHERE follower_id = $1)
+  AND (
+    author_id IN (SELECT followed_id FROM user_follows WHERE follower_id = $1)
+    OR author_id = $1
+  )
   AND ($2::timestamptz IS NULL OR create_time < $2)
 ORDER BY create_time DESC
 LIMIT $3;

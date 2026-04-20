@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useInfiniteScroll } from "~/lib/use-infinite-scroll";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { BottomNav } from "~/components/bottom-nav";
 import { PostCard, type Post } from "~/components/post-card";
@@ -89,20 +90,25 @@ function TimelineTab({
     } finally {
       setLoading(false);
     }
-  }, []); // deps なし → 関数が安定し無限ループしない
+  }, []);
 
   useEffect(() => {
     setPosts([]);
     setNextPageToken(undefined);
     load();
-  }, [load, refreshKey]); // refreshKey が変わった時だけ再 fetch
+  }, [load, refreshKey]);
+
+  const handleLoadMore = useCallback(() => {
+    if (nextPageToken && !loading) load(nextPageToken);
+  }, [nextPageToken, loading, load]);
+
+  const sentinelRef = useInfiniteScroll(handleLoadMore, !!nextPageToken && !loading);
 
   const handleDelete = useCallback((postId: string) => {
     setPosts((prev) => prev.filter((p) => p.id !== postId));
     onDelete?.(postId);
   }, [onDelete]);
 
-  // SSR 中は何も出さない（hydration mismatch 回避）
   if (typeof window === "undefined") return null;
 
   if (!isLoggedIn()) {
@@ -135,14 +141,8 @@ function TimelineTab({
           まだ投稿がありません
         </p>
       )}
-      {nextPageToken && !loading && (
-        <button
-          className="w-full py-4 text-sm text-primary"
-          onClick={() => load(nextPageToken)}
-        >
-          もっと見る
-        </button>
-      )}
+      {/* 無限スクロール sentinel */}
+      <div ref={sentinelRef} className="h-1" />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { clearTokens } from "~/lib/api";
+import { useTheme, THEME_OPTIONS } from "~/lib/theme-context";
 import { Input } from "~/components/ui/input";
 import { Switch } from "~/components/ui/switch";
 import {
@@ -112,11 +113,10 @@ const sections: SettingsSection[] = [
         icon: Palette,
         label: "テーマ",
         key: "theme",
-        options: [
-          { value: "dark", label: "ダーク" },
-          { value: "light", label: "ライト" },
-          { value: "system", label: "システム設定に従う" },
-        ],
+        options: THEME_OPTIONS.map((o) => ({
+          value: o.value,
+          label: o.premium ? `${o.label} ★` : o.label,
+        })),
       },
     ],
   },
@@ -153,11 +153,11 @@ const defaultToggles: Record<string, boolean> = {
 
 const defaultSelects: Record<string, string> = {
   defaultVisibility: "public",
-  theme: "dark",
 };
 
 export default function Settings() {
   const navigate = useNavigate();
+  const { theme, setTheme } = useTheme();
   const [toggles, setToggles] = useState(defaultToggles);
   const [selects, setSelects] = useState(defaultSelects);
   const [confirmDialog, setConfirmDialog] = useState<"logout" | "deleteAccount" | null>(null);
@@ -168,7 +168,12 @@ export default function Settings() {
   };
 
   const handleSelect = (key: string, value: string | null) => {
-    if (value) setSelects((prev) => ({ ...prev, [key]: value }));
+    if (!value) return;
+    if (key === "theme") {
+      setTheme(value as "light" | "dark" | "system");
+    } else {
+      setSelects((prev) => ({ ...prev, [key]: value }));
+    }
   };
 
   return (
@@ -237,7 +242,7 @@ export default function Settings() {
                         )}
                       </div>
                       <Select
-                        value={selects[item.key]}
+                        value={item.key === "theme" ? theme : selects[item.key]}
                         onValueChange={(v) => handleSelect(item.key, v)}
                       >
                         <SelectTrigger className="w-auto min-w-28 h-8 text-xs">
