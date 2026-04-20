@@ -33,9 +33,6 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
-	// AccountServiceGetAccountProcedure is the fully-qualified name of the AccountService's GetAccount
-	// RPC.
-	AccountServiceGetAccountProcedure = "/account.v1.AccountService/GetAccount"
 	// AccountServiceDeleteAccountProcedure is the fully-qualified name of the AccountService's
 	// DeleteAccount RPC.
 	AccountServiceDeleteAccountProcedure = "/account.v1.AccountService/DeleteAccount"
@@ -57,8 +54,6 @@ const (
 
 // AccountServiceClient is a client for the account.v1.AccountService service.
 type AccountServiceClient interface {
-	// Get the authenticated user's account.
-	GetAccount(context.Context, *connect.Request[v1.GetAccountRequest]) (*connect.Response[v1.GetAccountResponse], error)
 	// Delete account permanently.
 	DeleteAccount(context.Context, *connect.Request[v1.DeleteAccountRequest]) (*connect.Response[v1.DeleteAccountResponse], error)
 	// Social login (Google).
@@ -84,12 +79,6 @@ func NewAccountServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 	baseURL = strings.TrimRight(baseURL, "/")
 	accountServiceMethods := v1.File_account_v1_account_proto.Services().ByName("AccountService").Methods()
 	return &accountServiceClient{
-		getAccount: connect.NewClient[v1.GetAccountRequest, v1.GetAccountResponse](
-			httpClient,
-			baseURL+AccountServiceGetAccountProcedure,
-			connect.WithSchema(accountServiceMethods.ByName("GetAccount")),
-			connect.WithClientOptions(opts...),
-		),
 		deleteAccount: connect.NewClient[v1.DeleteAccountRequest, v1.DeleteAccountResponse](
 			httpClient,
 			baseURL+AccountServiceDeleteAccountProcedure,
@@ -131,18 +120,12 @@ func NewAccountServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 
 // accountServiceClient implements AccountServiceClient.
 type accountServiceClient struct {
-	getAccount    *connect.Client[v1.GetAccountRequest, v1.GetAccountResponse]
 	deleteAccount *connect.Client[v1.DeleteAccountRequest, v1.DeleteAccountResponse]
 	socialLogin   *connect.Client[v1.SocialLoginRequest, v1.SocialLoginResponse]
 	refreshToken  *connect.Client[v1.RefreshTokenRequest, v1.RefreshTokenResponse]
 	logout        *connect.Client[v1.LogoutRequest, v1.LogoutResponse]
 	listDevices   *connect.Client[v1.ListDevicesRequest, v1.ListDevicesResponse]
 	revokeDevice  *connect.Client[v1.RevokeDeviceRequest, v1.RevokeDeviceResponse]
-}
-
-// GetAccount calls account.v1.AccountService.GetAccount.
-func (c *accountServiceClient) GetAccount(ctx context.Context, req *connect.Request[v1.GetAccountRequest]) (*connect.Response[v1.GetAccountResponse], error) {
-	return c.getAccount.CallUnary(ctx, req)
 }
 
 // DeleteAccount calls account.v1.AccountService.DeleteAccount.
@@ -177,8 +160,6 @@ func (c *accountServiceClient) RevokeDevice(ctx context.Context, req *connect.Re
 
 // AccountServiceHandler is an implementation of the account.v1.AccountService service.
 type AccountServiceHandler interface {
-	// Get the authenticated user's account.
-	GetAccount(context.Context, *connect.Request[v1.GetAccountRequest]) (*connect.Response[v1.GetAccountResponse], error)
 	// Delete account permanently.
 	DeleteAccount(context.Context, *connect.Request[v1.DeleteAccountRequest]) (*connect.Response[v1.DeleteAccountResponse], error)
 	// Social login (Google).
@@ -200,12 +181,6 @@ type AccountServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewAccountServiceHandler(svc AccountServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	accountServiceMethods := v1.File_account_v1_account_proto.Services().ByName("AccountService").Methods()
-	accountServiceGetAccountHandler := connect.NewUnaryHandler(
-		AccountServiceGetAccountProcedure,
-		svc.GetAccount,
-		connect.WithSchema(accountServiceMethods.ByName("GetAccount")),
-		connect.WithHandlerOptions(opts...),
-	)
 	accountServiceDeleteAccountHandler := connect.NewUnaryHandler(
 		AccountServiceDeleteAccountProcedure,
 		svc.DeleteAccount,
@@ -244,8 +219,6 @@ func NewAccountServiceHandler(svc AccountServiceHandler, opts ...connect.Handler
 	)
 	return "/account.v1.AccountService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
-		case AccountServiceGetAccountProcedure:
-			accountServiceGetAccountHandler.ServeHTTP(w, r)
 		case AccountServiceDeleteAccountProcedure:
 			accountServiceDeleteAccountHandler.ServeHTTP(w, r)
 		case AccountServiceSocialLoginProcedure:
@@ -266,10 +239,6 @@ func NewAccountServiceHandler(svc AccountServiceHandler, opts ...connect.Handler
 
 // UnimplementedAccountServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedAccountServiceHandler struct{}
-
-func (UnimplementedAccountServiceHandler) GetAccount(context.Context, *connect.Request[v1.GetAccountRequest]) (*connect.Response[v1.GetAccountResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("account.v1.AccountService.GetAccount is not implemented"))
-}
 
 func (UnimplementedAccountServiceHandler) DeleteAccount(context.Context, *connect.Request[v1.DeleteAccountRequest]) (*connect.Response[v1.DeleteAccountResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("account.v1.AccountService.DeleteAccount is not implemented"))

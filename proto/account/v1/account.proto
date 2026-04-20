@@ -6,13 +6,6 @@ import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 
 service AccountService {
-  // Get the authenticated user's account.
-  rpc GetAccount(GetAccountRequest) returns (GetAccountResponse) {
-    option (google.api.http) = {
-      get: "/v1/account"
-    };
-  }
-
   // Delete account permanently.
   rpc DeleteAccount(DeleteAccountRequest) returns (DeleteAccountResponse) {
     option (google.api.http) = {
@@ -68,15 +61,6 @@ enum AuthProvider {
 
 // Resources
 
-message Account {
-  string id = 1;
-  string custom_id = 2;
-  string display_name = 3;
-  optional string avatar_url = 4;
-  AuthProvider provider = 5;
-  google.protobuf.Timestamp create_time = 6;
-}
-
 message Device {
   string id = 1;
   string device_name = 2;
@@ -90,12 +74,6 @@ message TokenPair {
 }
 
 // Request / Response
-
-message GetAccountRequest {}
-
-message GetAccountResponse {
-  Account account = 1;
-}
 
 message DeleteAccountRequest {
   // User must confirm by typing their own custom_id.

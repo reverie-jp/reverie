@@ -7,6 +7,13 @@ import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
 
 service UserService {
+  // Get the authenticated user's profile.
+  rpc GetMyUser(GetMyUserRequest) returns (GetMyUserResponse) {
+    option (google.api.http) = {
+      get: "/v1/users/me"
+    };
+  }
+
   // Get user profile (includes online status).
   rpc GetUser(GetUserRequest) returns (GetUserResponse) {
     option (google.api.http) = {
@@ -85,6 +92,12 @@ message UserSettings {
 }
 
 // Request / Response
+
+message GetMyUserRequest {}
+
+message GetMyUserResponse {
+  User user = 1;
+}
 
 message GetUserRequest {
   string user_id = 1;

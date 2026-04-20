@@ -17,8 +17,7 @@ func InitModule(q *sqlc.Queries, userGateway usergw.Gateway, tx transaction.Runn
 
 	socialLogin := usecase.NewSocialLogin(accountRepo, userGateway, tx, googleAuth, jwtManager)
 	refreshToken := usecase.NewRefreshToken(jwtManager)
-	getAccount := usecase.NewGetAccount(userGateway)
 	deleteAccount := usecase.NewDeleteAccount(userGateway)
 
-	return handler.New(socialLogin, refreshToken, getAccount, deleteAccount)
+	return handler.New(socialLogin, refreshToken, deleteAccount)
 }

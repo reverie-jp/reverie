@@ -33,6 +33,8 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
+	// UserServiceGetMyUserProcedure is the fully-qualified name of the UserService's GetMyUser RPC.
+	UserServiceGetMyUserProcedure = "/user.v1.UserService/GetMyUser"
 	// UserServiceGetUserProcedure is the fully-qualified name of the UserService's GetUser RPC.
 	UserServiceGetUserProcedure = "/user.v1.UserService/GetUser"
 	// UserServiceUpdateUserProcedure is the fully-qualified name of the UserService's UpdateUser RPC.
@@ -47,6 +49,8 @@ const (
 
 // UserServiceClient is a client for the user.v1.UserService service.
 type UserServiceClient interface {
+	// Get the authenticated user's profile.
+	GetMyUser(context.Context, *connect.Request[v1.GetMyUserRequest]) (*connect.Response[v1.GetMyUserResponse], error)
 	// Get user profile (includes online status).
 	GetUser(context.Context, *connect.Request[v1.GetUserRequest]) (*connect.Response[v1.GetUserResponse], error)
 	// Update profile (partial update via update_mask).
@@ -68,6 +72,12 @@ func NewUserServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 	baseURL = strings.TrimRight(baseURL, "/")
 	userServiceMethods := v1.File_user_v1_user_proto.Services().ByName("UserService").Methods()
 	return &userServiceClient{
+		getMyUser: connect.NewClient[v1.GetMyUserRequest, v1.GetMyUserResponse](
+			httpClient,
+			baseURL+UserServiceGetMyUserProcedure,
+			connect.WithSchema(userServiceMethods.ByName("GetMyUser")),
+			connect.WithClientOptions(opts...),
+		),
 		getUser: connect.NewClient[v1.GetUserRequest, v1.GetUserResponse](
 			httpClient,
 			baseURL+UserServiceGetUserProcedure,
@@ -97,10 +107,16 @@ func NewUserServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 
 // userServiceClient implements UserServiceClient.
 type userServiceClient struct {
+	getMyUser          *connect.Client[v1.GetMyUserRequest, v1.GetMyUserResponse]
 	getUser            *connect.Client[v1.GetUserRequest, v1.GetUserResponse]
 	updateUser         *connect.Client[v1.UpdateUserRequest, v1.UpdateUserResponse]
 	getUserSettings    *connect.Client[v1.GetUserSettingsRequest, v1.GetUserSettingsResponse]
 	updateUserSettings *connect.Client[v1.UpdateUserSettingsRequest, v1.UpdateUserSettingsResponse]
+}
+
+// GetMyUser calls user.v1.UserService.GetMyUser.
+func (c *userServiceClient) GetMyUser(ctx context.Context, req *connect.Request[v1.GetMyUserRequest]) (*connect.Response[v1.GetMyUserResponse], error) {
+	return c.getMyUser.CallUnary(ctx, req)
 }
 
 // GetUser calls user.v1.UserService.GetUser.
@@ -125,6 +141,8 @@ func (c *userServiceClient) UpdateUserSettings(ctx context.Context, req *connect
 
 // UserServiceHandler is an implementation of the user.v1.UserService service.
 type UserServiceHandler interface {
+	// Get the authenticated user's profile.
+	GetMyUser(context.Context, *connect.Request[v1.GetMyUserRequest]) (*connect.Response[v1.GetMyUserResponse], error)
 	// Get user profile (includes online status).
 	GetUser(context.Context, *connect.Request[v1.GetUserRequest]) (*connect.Response[v1.GetUserResponse], error)
 	// Update profile (partial update via update_mask).
@@ -142,6 +160,12 @@ type UserServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewUserServiceHandler(svc UserServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	userServiceMethods := v1.File_user_v1_user_proto.Services().ByName("UserService").Methods()
+	userServiceGetMyUserHandler := connect.NewUnaryHandler(
+		UserServiceGetMyUserProcedure,
+		svc.GetMyUser,
+		connect.WithSchema(userServiceMethods.ByName("GetMyUser")),
+		connect.WithHandlerOptions(opts...),
+	)
 	userServiceGetUserHandler := connect.NewUnaryHandler(
 		UserServiceGetUserProcedure,
 		svc.GetUser,
@@ -168,6 +192,8 @@ func NewUserServiceHandler(svc UserServiceHandler, opts ...connect.HandlerOption
 	)
 	return "/user.v1.UserService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
+		case UserServiceGetMyUserProcedure:
+			userServiceGetMyUserHandler.ServeHTTP(w, r)
 		case UserServiceGetUserProcedure:
 			userServiceGetUserHandler.ServeHTTP(w, r)
 		case UserServiceUpdateUserProcedure:
@@ -184,6 +210,10 @@ func NewUserServiceHandler(svc UserServiceHandler, opts ...connect.HandlerOption
 
 // UnimplementedUserServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedUserServiceHandler struct{}
+
+func (UnimplementedUserServiceHandler) GetMyUser(context.Context, *connect.Request[v1.GetMyUserRequest]) (*connect.Response[v1.GetMyUserResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("user.v1.UserService.GetMyUser is not implemented"))
+}
 
 func (UnimplementedUserServiceHandler) GetUser(context.Context, *connect.Request[v1.GetUserRequest]) (*connect.Response[v1.GetUserResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("user.v1.UserService.GetUser is not implemented"))

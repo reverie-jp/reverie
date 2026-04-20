@@ -6,8 +6,8 @@ import (
 	"reverie.jp/reverie/internal/platform/ulid"
 )
 
-func (g *gatewayImpl) BuildView(ctx context.Context, id ulid.ULID) (*UserView, error) {
-	views, err := g.BuildListViews(ctx, []ulid.ULID{id})
+func (g *gatewayImpl) BuildView(ctx context.Context, requesterID, id ulid.ULID) (*UserView, error) {
+	views, err := g.BuildListViews(ctx, requesterID, []ulid.ULID{id})
 	if err != nil {
 		return nil, err
 	}
@@ -17,7 +17,7 @@ func (g *gatewayImpl) BuildView(ctx context.Context, id ulid.ULID) (*UserView, e
 	return views[0], nil
 }
 
-func (g *gatewayImpl) BuildListViews(ctx context.Context, ids []ulid.ULID) ([]*UserView, error) {
+func (g *gatewayImpl) BuildListViews(ctx context.Context, requesterID ulid.ULID, ids []ulid.ULID) ([]*UserView, error) {
 	if len(ids) == 0 {
 		return []*UserView{}, nil
 	}
@@ -29,7 +29,10 @@ func (g *gatewayImpl) BuildListViews(ctx context.Context, ids []ulid.ULID) ([]*U
 
 	views := make([]*UserView, len(users))
 	for i, u := range users {
-		views[i] = &UserView{User: u}
+		views[i] = &UserView{
+			User: u,
+			IsMe: u.ID == requesterID,
+		}
 	}
 
 	return views, nil

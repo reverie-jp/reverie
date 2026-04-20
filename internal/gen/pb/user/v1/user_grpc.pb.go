@@ -19,6 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
+	UserService_GetMyUser_FullMethodName          = "/user.v1.UserService/GetMyUser"
 	UserService_GetUser_FullMethodName            = "/user.v1.UserService/GetUser"
 	UserService_UpdateUser_FullMethodName         = "/user.v1.UserService/UpdateUser"
 	UserService_GetUserSettings_FullMethodName    = "/user.v1.UserService/GetUserSettings"
@@ -29,6 +30,8 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UserServiceClient interface {
+	// Get the authenticated user's profile.
+	GetMyUser(ctx context.Context, in *GetMyUserRequest, opts ...grpc.CallOption) (*GetMyUserResponse, error)
 	// Get user profile (includes online status).
 	GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserResponse, error)
 	// Update profile (partial update via update_mask).
@@ -45,6 +48,16 @@ type userServiceClient struct {
 
 func NewUserServiceClient(cc grpc.ClientConnInterface) UserServiceClient {
 	return &userServiceClient{cc}
+}
+
+func (c *userServiceClient) GetMyUser(ctx context.Context, in *GetMyUserRequest, opts ...grpc.CallOption) (*GetMyUserResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetMyUserResponse)
+	err := c.cc.Invoke(ctx, UserService_GetMyUser_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *userServiceClient) GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserResponse, error) {
@@ -91,6 +104,8 @@ func (c *userServiceClient) UpdateUserSettings(ctx context.Context, in *UpdateUs
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility.
 type UserServiceServer interface {
+	// Get the authenticated user's profile.
+	GetMyUser(context.Context, *GetMyUserRequest) (*GetMyUserResponse, error)
 	// Get user profile (includes online status).
 	GetUser(context.Context, *GetUserRequest) (*GetUserResponse, error)
 	// Update profile (partial update via update_mask).
@@ -109,6 +124,9 @@ type UserServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedUserServiceServer struct{}
 
+func (UnimplementedUserServiceServer) GetMyUser(context.Context, *GetMyUserRequest) (*GetMyUserResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetMyUser not implemented")
+}
 func (UnimplementedUserServiceServer) GetUser(context.Context, *GetUserRequest) (*GetUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUser not implemented")
 }
@@ -140,6 +158,24 @@ func RegisterUserServiceServer(s grpc.ServiceRegistrar, srv UserServiceServer) {
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&UserService_ServiceDesc, srv)
+}
+
+func _UserService_GetMyUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetMyUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetMyUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_GetMyUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetMyUser(ctx, req.(*GetMyUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _UserService_GetUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -221,6 +257,10 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "user.v1.UserService",
 	HandlerType: (*UserServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetMyUser",
+			Handler:    _UserService_GetMyUser_Handler,
+		},
 		{
 			MethodName: "GetUser",
 			Handler:    _UserService_GetUser_Handler,

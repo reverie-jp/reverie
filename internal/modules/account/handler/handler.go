@@ -11,20 +11,17 @@ type Handler struct {
 	accountv1connect.UnimplementedAccountServiceHandler
 	socialLogin   *usecase.SocialLogin
 	refreshToken  *usecase.RefreshToken
-	getAccount    *usecase.GetAccount
 	deleteAccount *usecase.DeleteAccount
 }
 
 func New(
 	socialLogin *usecase.SocialLogin,
 	refreshToken *usecase.RefreshToken,
-	getAccount *usecase.GetAccount,
 	deleteAccount *usecase.DeleteAccount,
 ) *Handler {
 	return &Handler{
 		socialLogin:   socialLogin,
 		refreshToken:  refreshToken,
-		getAccount:    getAccount,
 		deleteAccount: deleteAccount,
 	}
 }

@@ -11,6 +11,7 @@ import (
 
 type UserView struct {
 	User *entity.User
+	IsMe bool
 }
 
 type CreateUserParams struct {
@@ -25,8 +26,8 @@ type Gateway interface {
 	GetUserByCustomID(ctx context.Context, customID string) (*entity.User, error)
 	CreateUser(ctx context.Context, params CreateUserParams) error
 	DeleteUser(ctx context.Context, id ulid.ULID) error
-	BuildView(ctx context.Context, id ulid.ULID) (*UserView, error)
-	BuildListViews(ctx context.Context, ids []ulid.ULID) ([]*UserView, error)
+	BuildView(ctx context.Context, requesterID, id ulid.ULID) (*UserView, error)
+	BuildListViews(ctx context.Context, requesterID ulid.ULID, ids []ulid.ULID) ([]*UserView, error)
 }
 
 type gatewayImpl struct {

@@ -18,6 +18,7 @@ import (
 	"reverie.jp/reverie/internal/gen/pb/user/v1/userv1connect"
 	"reverie.jp/reverie/internal/gen/sqlc"
 	"reverie.jp/reverie/internal/modules/account"
+	"reverie.jp/reverie/internal/modules/user"
 	usergw "reverie.jp/reverie/internal/modules/user/gateway"
 	"reverie.jp/reverie/internal/platform/google"
 	"reverie.jp/reverie/internal/platform/jwt"
@@ -37,6 +38,7 @@ func initServices(cfg *config.Config, db *pgxpool.Pool, jwtManager *jwt.Manager)
 	authInterceptor := interceptor.AuthInterceptor(jwtManager)
 	userGateway := usergw.New(q)
 	accountService := account.InitModule(q, userGateway, tx, googleAuth, jwtManager)
+	userService := user.InitModule(userGateway)
 
 	return []Service{
 		{
@@ -55,7 +57,7 @@ func initServices(cfg *config.Config, db *pgxpool.Pool, jwtManager *jwt.Manager)
 			Name: userv1connect.UserServiceName,
 			RegisterConnectHandler: func(mux *http.ServeMux) {
 				mux.Handle(userv1connect.NewUserServiceHandler(
-					nil, // TODO: implement UserService
+					userService,
 					connect.WithInterceptors(errorInterceptor, authInterceptor),
 				))
 			},
