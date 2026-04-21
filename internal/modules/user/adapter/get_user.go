@@ -8,19 +8,21 @@ import (
 	"reverie.jp/reverie/internal/application/server/interceptor"
 	userv1 "reverie.jp/reverie/internal/gen/pb/user/v1"
 	"reverie.jp/reverie/internal/modules/user/usecase"
-	"reverie.jp/reverie/internal/platform/xerrors"
+	"reverie.jp/reverie/internal/platform/resourcename"
 )
 
 func FromGetUserRequest(ctx context.Context, req *connect.Request[userv1.GetUserRequest]) (usecase.GetUserInput, error) {
-	requesterID, ok := interceptor.UserIDFromContext(ctx)
-	if !ok {
-		return usecase.GetUserInput{}, xerrors.ErrUnauthenticated
+	customID, err := resourcename.ParseUser(req.Msg.Name)
+	if err != nil {
+		return usecase.GetUserInput{}, err
 	}
-
-	return usecase.GetUserInput{
-		RequesterID:    requesterID,
-		TargetCustomID: req.Msg.CustomId,
-	}, nil
+	input := usecase.GetUserInput{
+		TargetCustomID: customID,
+	}
+	if requesterID, ok := interceptor.UserIDFromContext(ctx); ok {
+		input.RequesterID = requesterID
+	}
+	return input, nil
 }
 
 func ToGetUserResponse(output *usecase.GetUserOutput) *connect.Response[userv1.GetUserResponse] {

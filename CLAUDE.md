@@ -29,6 +29,16 @@ docker compose -p reverie_devcontainer -f /path/to/reverie/.devcontainer/compose
 
 ## 命名規約: Google AIP に寄せる
 
+将来公開 API として外部配布するので、新規 proto は AIP 準拠を前提に書く。既存の既知準拠項目:
+
+- **AIP-142 タイムスタンプ**: フィールドは `_time` で終える（`create_time` / `update_time` / `expire_time` / `first_join_time` など）。`_at` は使わない
+- **AIP-122 / 131 リソース名**: リソースは `name` フィールド (`collection/id` 階層文字列) を第一識別子にする。例: `users/{custom_id}`, `calls/{ulid}`, `calls/{ulid}/participants/{identity}`
+  - 全ての Get / Update / Delete / サブリソース系 RPC は `name` をパラメータに取り、HTTP パスは `/v1/{name=collection/*}` 形式
+  - name の format/parse は `internal/platform/resourcename`（Go）と `web/app/lib/resource-name.ts`（TS）に集約。adapter 層で変換し、usecase / entity は内部 ID のみ扱う
+  - リソース参照は ID 文字列ではなく相手の resource message を埋め込む（例: `Call.host: User`、`host_user_id` のような生 ULID は持たない）
+- **AIP-158 ページネーション**: 全ての `List*` は `page_size` / `page_token` リクエスト + `next_page_token` レスポンスを備える。カーソルは ULID を opaque として使用、LIMIT は `pageSize + 1` ではなく「DB 返却数 == pageSize なら次がある」判定
+- **AIP-136 カスタムメソッド**: `:verb` 形式（`/v1/calls/{...}:join` など）
+
 ## マイグレーション戦略
 
 **本番運用前なので `migrations/000001_init.{up,down}.sql` を直接編集**する。追加ファイル（`000002_*` など）は作らない。
@@ -94,8 +104,37 @@ func (h *Handler) GetUser(ctx, req) (resp, err) {
 - メソッドに HTTP annotation を必ず付ける（REST 対応のため）
 - 再生成: `make proto`（= `cd proto && buf generate`）
 
+## 認証ルーティング
+
+`interceptor.AuthInterceptor` が 3 カテゴリで RPC を振り分ける:
+
+- **`publicProcedures`**: 認証処理自体をスキップ。Authorization ヘッダは無視される。`SocialLogin` / `RefreshToken` のみ
+- **`optionalAuthProcedures`**: ヘッダが無ければゲスト扱いで通過、あれば検証必須。ゲストも使える全ての RPC（`GetUser` / `GetCall` / `JoinCall` / `HeartbeatCall` / `LeaveCall` / `ListPublicCalls` / `GetUserParticipatingCall` 等）
+- **どちらにも無い procedure**: 常に認証必須（デフォルト）
+
+新しい RPC を追加したらまず「ゲストも叩けるか？」を判断し、適切な map に追加する。デフォルト「認証必須」に落とさない。
+
+## ゲストユーザーモデル
+
+- **ゲストは DB に一切保存しない**（`users` / `user_auth_providers` 等には入れない）
+- LiveKit identity はサーバーが生成する `guest:<ULID>`（クライアント採番しない → なりすまし防止）
+- ゲストの表示名などはクライアントの `localStorage` のみに置く
+- 単一通話制約は **認証ユーザーだけ**（ゲストは毎回別 identity なので被らない）
+
+## 通話アクティブ状態の真実源
+
+LiveKit の管理 API（ListRooms / ListParticipants）は使わず、`call_participants` の `last_seen_time` / `disconnected_time` を真実源にする:
+
+- クライアントは接続中 **30 秒ごとに `HeartbeatCall`** を叩く
+- 意図的退出時は `LeaveCall`、ページ unload 時は `navigator.sendBeacon` 相当（fetch keepalive）で `LeaveCall`
+- サーバー判定: `last_seen_time > NOW() - 60s AND disconnected_time IS NULL`（missing 1 heartbeat 許容）
+- LiveKit API の唯一の呼び出しは `CreateJoinToken`（トークン発行）のみ。admin API を usecase から呼ばない
+
+新しい通話関連機能を足す際、「LiveKit 管理 API で取れる」と思っても DB 側で表現する方針を維持する。
+
 ## その他
 
 - コメントは原則書かない（コードで意図が伝わる名前にする）。非自明な why が必要なときだけ短く
 - タイムゾーン: DB は `TIMESTAMPTZ`、Go は `time.Time`
 - ULID は `internal/platform/ulid` の自前型。sqlc の生成型とやり取りする際は `.String()` で文字列化が必要なケースがある（既存コード参照）
+- sqlc でドメイン型（`ulid` など）を扱う WHERE 句は `sqlc.arg(x)::ulid` のようにキャストを明示する。`$1` だけだと Go 側の型が `string` に落ちてしまう

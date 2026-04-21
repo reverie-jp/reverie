@@ -1,0 +1,355 @@
+syntax = "proto3";
+
+package call.v1;
+
+import "google/api/annotations.proto";
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+import "user/v1/user.proto";
+
+service CallService {
+  // Create a new call. The caller becomes the host.
+  rpc CreateCall(CreateCallRequest) returns (CreateCallResponse) {
+    option (google.api.http) = {
+      post: "/v1/calls"
+      body: "*"
+    };
+  }
+
+  // Get a call by resource name. Returns the call plus ordered participants
+  // (with is_currently_connected derived from heartbeat state).
+  rpc GetCall(GetCallRequest) returns (GetCallResponse) {
+    option (google.api.http) = {
+      get: "/v1/{name=calls/*}"
+    };
+  }
+
+  // Update call attributes (currently only visibility). Host only.
+  rpc UpdateCall(UpdateCallRequest) returns (UpdateCallResponse) {
+    option (google.api.http) = {
+      patch: "/v1/{call.name=calls/*}"
+      body: "*"
+    };
+  }
+
+  // List active, publicly-discoverable calls. Returns OPEN calls for guests
+  // and OPEN + USERS_ONLY for authenticated callers. Used by the home screen.
+  rpc ListPublicCalls(ListPublicCallsRequest) returns (ListPublicCallsResponse) {
+    option (google.api.http) = {
+      get: "/v1/calls:listPublic"
+    };
+  }
+
+  // Get the call the given user is currently participating in (if any and
+  // if visible to the caller). Null means the user is not in any visible
+  // call.
+  rpc GetUserParticipatingCall(GetUserParticipatingCallRequest) returns (GetUserParticipatingCallResponse) {
+    option (google.api.http) = {
+      get: "/v1/{name=users/*}:participatingCall"
+    };
+  }
+
+  // Join a call room. Returns a LiveKit access token and server URL.
+  // Authentication is optional. If the caller is authenticated the server
+  // derives the identity and display name from their user profile.
+  // Otherwise the server treats them as a guest and expects
+  // guest_display_name.
+  rpc JoinCall(JoinCallRequest) returns (JoinCallResponse) {
+    option (google.api.http) = {
+      post: "/v1/{name=calls/*}:join"
+      body: "*"
+    };
+  }
+
+  // Heartbeat to keep the participant marked as active. Clients should
+  // call this every 30 seconds while connected.
+  rpc HeartbeatCall(HeartbeatCallRequest) returns (HeartbeatCallResponse) {
+    option (google.api.http) = {
+      post: "/v1/{name=calls/*}:heartbeat"
+      body: "*"
+    };
+  }
+
+  // Mark the participant as disconnected. Should be called on intentional
+  // leave and (via navigator.sendBeacon) on page unload.
+  rpc LeaveCall(LeaveCallRequest) returns (LeaveCallResponse) {
+    option (google.api.http) = {
+      post: "/v1/{name=calls/*}:leave"
+      body: "*"
+    };
+  }
+
+  // Server-side mute a participant's microphone. Host only.
+  rpc MuteCallParticipant(MuteCallParticipantRequest) returns (MuteCallParticipantResponse) {
+    option (google.api.http) = {
+      post: "/v1/{name=calls/*/participants/*}:mute"
+      body: "*"
+    };
+  }
+
+  // Server-side unmute a participant that the host previously muted. Fails
+  // if the participant muted themselves. Host only.
+  rpc UnmuteCallParticipant(UnmuteCallParticipantRequest) returns (UnmuteCallParticipantResponse) {
+    option (google.api.http) = {
+      post: "/v1/{name=calls/*/participants/*}:unmute"
+      body: "*"
+    };
+  }
+
+  // Temporarily remove a participant from the call. They can rejoin. Host
+  // only.
+  rpc KickCallParticipant(KickCallParticipantRequest) returns (KickCallParticipantResponse) {
+    option (google.api.http) = {
+      post: "/v1/{name=calls/*/participants/*}:kick"
+      body: "*"
+    };
+  }
+
+  // Permanently ban a participant from the call. Authenticated targets only
+  // (guest identities are ephemeral and cannot be banned). Host only.
+  rpc BanCallParticipant(BanCallParticipantRequest) returns (BanCallParticipantResponse) {
+    option (google.api.http) = {
+      post: "/v1/{name=calls/*/participants/*}:ban"
+      body: "*"
+    };
+  }
+
+  // Transfer host role to another authenticated participant currently in
+  // the call. Host only.
+  rpc TransferCallHost(TransferCallHostRequest) returns (TransferCallHostResponse) {
+    option (google.api.http) = {
+      post: "/v1/{name=calls/*}:transferHost"
+      body: "*"
+    };
+  }
+
+  // End the call. All participants are disconnected from the LiveKit room
+  // and marked disconnected in DB. Host only.
+  rpc EndCall(EndCallRequest) returns (EndCallResponse) {
+    option (google.api.http) = {
+      post: "/v1/{name=calls/*}:end"
+      body: "*"
+    };
+  }
+
+  // List users banned from the call. Host only.
+  rpc ListCallBans(ListCallBansRequest) returns (ListCallBansResponse) {
+    option (google.api.http) = {
+      get: "/v1/{parent=calls/*}/bans"
+    };
+  }
+
+  // Remove a ban. Host only.
+  rpc UnbanCallParticipant(UnbanCallParticipantRequest) returns (UnbanCallParticipantResponse) {
+    option (google.api.http) = {
+      post: "/v1/{name=calls/*/bans/*}:unban"
+      body: "*"
+    };
+  }
+}
+
+enum CallVisibility {
+  CALL_VISIBILITY_UNSPECIFIED = 0;
+  // Anyone with the URL can join, including guests.
+  CALL_VISIBILITY_OPEN = 1;
+  // Any authenticated user. Guests are rejected.
+  CALL_VISIBILITY_USERS_ONLY = 2;
+  // No new participants can join. Call is hidden from listings.
+  CALL_VISIBILITY_LOCKED = 3;
+}
+
+message Call {
+  // Resource name: "calls/{ulid}".
+  string name = 1;
+  // The call's host.
+  user.v1.User host = 2;
+  CallVisibility visibility = 3;
+  google.protobuf.Timestamp create_time = 4;
+  // Non-null once the call has been ended by the host. No new joins allowed
+  // and all participants have been disconnected.
+  google.protobuf.Timestamp end_time = 5;
+}
+
+message CallParticipant {
+  // Resource name: "calls/{call}/participants/{identity}".
+  string name = 1;
+  // Populated for authenticated participants only.
+  user.v1.User user = 2;
+  // Display name at the time of first join.
+  string display_name = 3;
+  google.protobuf.Timestamp first_join_time = 4;
+  // True if the heartbeat is recent.
+  bool is_currently_connected = 5;
+}
+
+message CreateCallRequest {
+  CallVisibility visibility = 1;
+}
+
+message CreateCallResponse {
+  Call call = 1;
+}
+
+message GetCallRequest {
+  // "calls/{ulid}"
+  string name = 1;
+  // Optional. Guests that are currently participating should echo the
+  // identity received from JoinCallResponse so the server can recognize
+  // them as an in-call viewer (relevant for LOCKED calls). Ignored for
+  // authenticated callers.
+  string guest_identity = 2;
+}
+
+message GetCallResponse {
+  Call call = 1;
+  repeated CallParticipant participants = 2;
+}
+
+message UpdateCallRequest {
+  // Must include call.name. Other fields listed in update_mask are applied.
+  Call call = 1;
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+message UpdateCallResponse {
+  Call call = 1;
+}
+
+message ListPublicCallsRequest {
+  // Maximum number of calls to return. Server may return fewer. Defaults to
+  // 50. Values above 100 are clamped to 100.
+  int32 page_size = 1;
+  // Opaque cursor obtained from a prior response's next_page_token.
+  string page_token = 2;
+}
+
+message ListPublicCallsResponse {
+  repeated Call calls = 1;
+  // Opaque cursor to pass as page_token to fetch the next page. Empty means
+  // there are no further pages.
+  string next_page_token = 2;
+}
+
+message GetUserParticipatingCallRequest {
+  // "users/{custom_id}"
+  string name = 1;
+}
+
+message GetUserParticipatingCallResponse {
+  // Null if the user is not in any visible call.
+  Call call = 1;
+}
+
+message JoinCallRequest {
+  // "calls/{ulid}"
+  string name = 1;
+  // Required for guests. Ignored for authenticated callers.
+  string guest_display_name = 2;
+}
+
+message JoinCallResponse {
+  // JWT used to connect to the LiveKit server.
+  string access_token = 1;
+  // WebSocket URL of the LiveKit server.
+  string url = 2;
+  // The LiveKit identity granted by the server. Format is "user:<ulid>" for
+  // authenticated callers and "guest:<ulid>" for guests. Clients echo this
+  // back in HeartbeatCall / LeaveCall requests as guest_identity.
+  string identity = 3;
+  // Expiry of access_token. Clients should refresh before this time.
+  google.protobuf.Timestamp expire_time = 4;
+}
+
+message HeartbeatCallRequest {
+  // "calls/{ulid}"
+  string name = 1;
+  // Required for guests (echo of the identity from JoinCallResponse).
+  // Ignored for authenticated callers.
+  string guest_identity = 2;
+}
+
+message HeartbeatCallResponse {}
+
+message LeaveCallRequest {
+  // "calls/{ulid}"
+  string name = 1;
+  // Required for guests (echo of the identity from JoinCallResponse).
+  // Ignored for authenticated callers.
+  string guest_identity = 2;
+}
+
+message LeaveCallResponse {}
+
+message MuteCallParticipantRequest {
+  // "calls/{ulid}/participants/{identity}"
+  string name = 1;
+}
+
+message MuteCallParticipantResponse {}
+
+message UnmuteCallParticipantRequest {
+  // "calls/{ulid}/participants/{identity}"
+  string name = 1;
+}
+
+message UnmuteCallParticipantResponse {}
+
+message KickCallParticipantRequest {
+  // "calls/{ulid}/participants/{identity}"
+  string name = 1;
+}
+
+message KickCallParticipantResponse {}
+
+message BanCallParticipantRequest {
+  // "calls/{ulid}/participants/{identity}"
+  string name = 1;
+}
+
+message BanCallParticipantResponse {}
+
+message TransferCallHostRequest {
+  // "calls/{ulid}"
+  string name = 1;
+  // New host as "users/{custom_id}". Must be a currently active authenticated
+  // participant in this call.
+  string new_host = 2;
+}
+
+message TransferCallHostResponse {
+  Call call = 1;
+}
+
+message EndCallRequest {
+  // "calls/{ulid}"
+  string name = 1;
+}
+
+message EndCallResponse {}
+
+message CallBan {
+  // Resource name: "calls/{call_ulid}/bans/{user_ulid}".
+  string name = 1;
+  // The banned user.
+  user.v1.User user = 2;
+  google.protobuf.Timestamp create_time = 3;
+}
+
+message ListCallBansRequest {
+  // "calls/{ulid}"
+  string parent = 1;
+  int32 page_size = 2;
+  string page_token = 3;
+}
+
+message ListCallBansResponse {
+  repeated CallBan bans = 1;
+  string next_page_token = 2;
+}
+
+message UnbanCallParticipantRequest {
+  // "calls/{call_ulid}/bans/{user_ulid}"
+  string name = 1;
+}
+
+message UnbanCallParticipantResponse {}

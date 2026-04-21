@@ -9,6 +9,8 @@ import {
 
 import type { Route } from "./+types/root";
 import "./app.css";
+import { CallProvider } from "~/lib/call-context";
+import { CallHeader } from "~/components/call-header";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -45,9 +47,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <div className="flex-1 overflow-x-hidden overflow-y-auto">
-      <Outlet />
-    </div>
+    <CallProvider>
+      <CallHeader />
+      <div className="flex-1 overflow-x-hidden overflow-y-auto">
+        <Outlet />
+      </div>
+    </CallProvider>
   );
 }
 

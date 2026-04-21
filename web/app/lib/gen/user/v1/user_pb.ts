@@ -69,11 +69,15 @@ proto3.util.setEnumType(PostVisibility, "user.v1.PostVisibility", [
  */
 export class User extends Message<User> {
   /**
-   * @generated from field: string id = 1;
+   * Resource name: "users/{custom_id}".
+   *
+   * @generated from field: string name = 1;
    */
-  id = "";
+  name = "";
 
   /**
+   * Handle portion of name, exposed for display convenience.
+   *
    * @generated from field: string custom_id = 2;
    */
   customId = "";
@@ -163,7 +167,7 @@ export class User extends Message<User> {
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "user.v1.User";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 1, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "custom_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 3, name: "display_name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 4, name: "biography", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
@@ -333,9 +337,11 @@ export class GetMyUserResponse extends Message<GetMyUserResponse> {
  */
 export class GetUserRequest extends Message<GetUserRequest> {
   /**
-   * @generated from field: string custom_id = 1;
+   * "users/{custom_id}"
+   *
+   * @generated from field: string name = 1;
    */
-  customId = "";
+  name = "";
 
   constructor(data?: PartialMessage<GetUserRequest>) {
     super();
@@ -345,7 +351,7 @@ export class GetUserRequest extends Message<GetUserRequest> {
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "user.v1.GetUserRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "custom_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 1, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetUserRequest {

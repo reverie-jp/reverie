@@ -6,6 +6,7 @@ import {
 } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-web";
 import { AccountService } from "./gen/account/v1/account_connect";
+import { CallService } from "./gen/call/v1/call_connect";
 import { UserService } from "./gen/user/v1/user_connect";
 
 const ACCESS_TOKEN_KEY = "reverie.access_token";
@@ -30,7 +31,7 @@ export const tokenStore = {
   },
 };
 
-const API_BASE_URL =
+export const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://localhost:50051";
 
 // Procedures that don't need Authorization and must not trigger the 401-retry
@@ -73,9 +74,11 @@ async function refreshTokens(): Promise<boolean> {
 
 function redirectToLogin() {
   tokenStore.clear();
-  if (typeof window !== "undefined" && window.location.pathname !== "/login") {
-    window.location.href = "/login";
-  }
+  if (typeof window === "undefined") return;
+  const { pathname, search } = window.location;
+  if (pathname === "/login" || pathname === "/auth/callback") return;
+  const returnTo = `${pathname}${search}`;
+  window.location.href = `/login?returnTo=${encodeURIComponent(returnTo)}`;
 }
 
 const authInterceptor: Interceptor = (next) => async (req) => {
@@ -115,3 +118,4 @@ const transport = createConnectTransport({
 
 export const accountClient = createPromiseClient(AccountService, transport);
 export const userClient = createPromiseClient(UserService, transport);
+export const callClient = createPromiseClient(CallService, transport);
