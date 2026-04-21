@@ -18,6 +18,7 @@ type Call struct {
 	ID         ulid.ULID
 	HostUserID ulid.ULID
 	Visibility CallVisibility
+	EndTime    *time.Time
 	CreateTime time.Time
 	UpdateTime time.Time
 }
@@ -30,4 +31,10 @@ type CallParticipant struct {
 	FirstJoinTime       time.Time
 	LastSeenTime        time.Time
 	DisconnectedTime    *time.Time
+}
+
+type CallBan struct {
+	CallID     ulid.ULID
+	UserID     ulid.ULID
+	CreateTime time.Time
 }

@@ -100,6 +100,7 @@ type Call struct {
 	ID         ulid.ULID      `json:"id"`
 	HostUserID ulid.ULID      `json:"host_user_id"`
 	Visibility CallVisibility `json:"visibility"`
+	EndTime    *time.Time     `json:"end_time"`
 	CreateTime time.Time      `json:"create_time"`
 	UpdateTime time.Time      `json:"update_time"`
 }

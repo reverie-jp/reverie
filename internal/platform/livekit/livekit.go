@@ -96,6 +96,15 @@ func (c *Client) RemoveParticipant(ctx context.Context, roomID, identity string)
 	return err
 }
 
+// DeleteRoom tears down the LiveKit room, disconnecting all participants.
+// Missing rooms are not an error — the SDK no-ops.
+func (c *Client) DeleteRoom(ctx context.Context, roomID string) error {
+	_, err := c.roomSvc.DeleteRoom(ctx, &livekitproto.DeleteRoomRequest{
+		Room: roomID,
+	})
+	return err
+}
+
 // toHTTPURL converts a LiveKit ws:// / wss:// URL to http:// / https:// for
 // the admin REST API.
 func toHTTPURL(u string) string {

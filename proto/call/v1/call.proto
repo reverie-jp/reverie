@@ -104,6 +104,39 @@ service CallService {
       body: "*"
     };
   }
+
+  // Transfer host role to another authenticated participant currently in
+  // the call. Host only.
+  rpc TransferCallHost(TransferCallHostRequest) returns (TransferCallHostResponse) {
+    option (google.api.http) = {
+      post: "/v1/{name=calls/*}:transferHost"
+      body: "*"
+    };
+  }
+
+  // End the call. All participants are disconnected from the LiveKit room
+  // and marked disconnected in DB. Host only.
+  rpc EndCall(EndCallRequest) returns (EndCallResponse) {
+    option (google.api.http) = {
+      post: "/v1/{name=calls/*}:end"
+      body: "*"
+    };
+  }
+
+  // List users banned from the call. Host only.
+  rpc ListCallBans(ListCallBansRequest) returns (ListCallBansResponse) {
+    option (google.api.http) = {
+      get: "/v1/{parent=calls/*}/bans"
+    };
+  }
+
+  // Remove a ban. Host only.
+  rpc UnbanCallParticipant(UnbanCallParticipantRequest) returns (UnbanCallParticipantResponse) {
+    option (google.api.http) = {
+      post: "/v1/{name=calls/*/bans/*}:unban"
+      body: "*"
+    };
+  }
 }
 
 enum CallVisibility {
@@ -123,6 +156,9 @@ message Call {
   user.v1.User host = 2;
   CallVisibility visibility = 3;
   google.protobuf.Timestamp create_time = 4;
+  // Non-null once the call has been ended by the host. No new joins allowed
+  // and all participants have been disconnected.
+  google.protobuf.Timestamp end_time = 5;
 }
 
 message CallParticipant {
@@ -257,3 +293,49 @@ message BanCallParticipantRequest {
 }
 
 message BanCallParticipantResponse {}
+
+message TransferCallHostRequest {
+  // "calls/{ulid}"
+  string name = 1;
+  // New host as "users/{custom_id}". Must be a currently active authenticated
+  // participant in this call.
+  string new_host = 2;
+}
+
+message TransferCallHostResponse {
+  Call call = 1;
+}
+
+message EndCallRequest {
+  // "calls/{ulid}"
+  string name = 1;
+}
+
+message EndCallResponse {}
+
+message CallBan {
+  // Resource name: "calls/{call_ulid}/bans/{user_ulid}".
+  string name = 1;
+  // The banned user.
+  user.v1.User user = 2;
+  google.protobuf.Timestamp create_time = 3;
+}
+
+message ListCallBansRequest {
+  // "calls/{ulid}"
+  string parent = 1;
+  int32 page_size = 2;
+  string page_token = 3;
+}
+
+message ListCallBansResponse {
+  repeated CallBan bans = 1;
+  string next_page_token = 2;
+}
+
+message UnbanCallParticipantRequest {
+  // "calls/{call_ulid}/bans/{user_ulid}"
+  string name = 1;
+}
+
+message UnbanCallParticipantResponse {}

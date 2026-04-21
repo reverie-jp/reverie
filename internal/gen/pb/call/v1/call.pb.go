@@ -85,9 +85,12 @@ type Call struct {
 	// Resource name: "calls/{ulid}".
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// The call's host.
-	Host          *v1.User               `protobuf:"bytes,2,opt,name=host,proto3" json:"host,omitempty"`
-	Visibility    CallVisibility         `protobuf:"varint,3,opt,name=visibility,proto3,enum=call.v1.CallVisibility" json:"visibility,omitempty"`
-	CreateTime    *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
+	Host       *v1.User               `protobuf:"bytes,2,opt,name=host,proto3" json:"host,omitempty"`
+	Visibility CallVisibility         `protobuf:"varint,3,opt,name=visibility,proto3,enum=call.v1.CallVisibility" json:"visibility,omitempty"`
+	CreateTime *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
+	// Non-null once the call has been ended by the host. No new joins allowed
+	// and all participants have been disconnected.
+	EndTime       *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=end_time,json=endTime,proto3" json:"end_time,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -146,6 +149,13 @@ func (x *Call) GetVisibility() CallVisibility {
 func (x *Call) GetCreateTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.CreateTime
+	}
+	return nil
+}
+
+func (x *Call) GetEndTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.EndTime
 	}
 	return nil
 }
@@ -1285,11 +1295,447 @@ func (*BanCallParticipantResponse) Descriptor() ([]byte, []int) {
 	return file_call_v1_call_proto_rawDescGZIP(), []int{23}
 }
 
+type TransferCallHostRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// "calls/{ulid}"
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// New host as "users/{custom_id}". Must be a currently active authenticated
+	// participant in this call.
+	NewHost       string `protobuf:"bytes,2,opt,name=new_host,json=newHost,proto3" json:"new_host,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TransferCallHostRequest) Reset() {
+	*x = TransferCallHostRequest{}
+	mi := &file_call_v1_call_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TransferCallHostRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TransferCallHostRequest) ProtoMessage() {}
+
+func (x *TransferCallHostRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_call_v1_call_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TransferCallHostRequest.ProtoReflect.Descriptor instead.
+func (*TransferCallHostRequest) Descriptor() ([]byte, []int) {
+	return file_call_v1_call_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *TransferCallHostRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *TransferCallHostRequest) GetNewHost() string {
+	if x != nil {
+		return x.NewHost
+	}
+	return ""
+}
+
+type TransferCallHostResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Call          *Call                  `protobuf:"bytes,1,opt,name=call,proto3" json:"call,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TransferCallHostResponse) Reset() {
+	*x = TransferCallHostResponse{}
+	mi := &file_call_v1_call_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TransferCallHostResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TransferCallHostResponse) ProtoMessage() {}
+
+func (x *TransferCallHostResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_call_v1_call_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TransferCallHostResponse.ProtoReflect.Descriptor instead.
+func (*TransferCallHostResponse) Descriptor() ([]byte, []int) {
+	return file_call_v1_call_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *TransferCallHostResponse) GetCall() *Call {
+	if x != nil {
+		return x.Call
+	}
+	return nil
+}
+
+type EndCallRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// "calls/{ulid}"
+	Name          string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *EndCallRequest) Reset() {
+	*x = EndCallRequest{}
+	mi := &file_call_v1_call_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EndCallRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EndCallRequest) ProtoMessage() {}
+
+func (x *EndCallRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_call_v1_call_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EndCallRequest.ProtoReflect.Descriptor instead.
+func (*EndCallRequest) Descriptor() ([]byte, []int) {
+	return file_call_v1_call_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *EndCallRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+type EndCallResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *EndCallResponse) Reset() {
+	*x = EndCallResponse{}
+	mi := &file_call_v1_call_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EndCallResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EndCallResponse) ProtoMessage() {}
+
+func (x *EndCallResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_call_v1_call_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EndCallResponse.ProtoReflect.Descriptor instead.
+func (*EndCallResponse) Descriptor() ([]byte, []int) {
+	return file_call_v1_call_proto_rawDescGZIP(), []int{27}
+}
+
+type CallBan struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Resource name: "calls/{call_ulid}/bans/{user_ulid}".
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// The banned user.
+	User          *v1.User               `protobuf:"bytes,2,opt,name=user,proto3" json:"user,omitempty"`
+	CreateTime    *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CallBan) Reset() {
+	*x = CallBan{}
+	mi := &file_call_v1_call_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CallBan) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CallBan) ProtoMessage() {}
+
+func (x *CallBan) ProtoReflect() protoreflect.Message {
+	mi := &file_call_v1_call_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CallBan.ProtoReflect.Descriptor instead.
+func (*CallBan) Descriptor() ([]byte, []int) {
+	return file_call_v1_call_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *CallBan) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *CallBan) GetUser() *v1.User {
+	if x != nil {
+		return x.User
+	}
+	return nil
+}
+
+func (x *CallBan) GetCreateTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreateTime
+	}
+	return nil
+}
+
+type ListCallBansRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// "calls/{ulid}"
+	Parent        string `protobuf:"bytes,1,opt,name=parent,proto3" json:"parent,omitempty"`
+	PageSize      int32  `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageToken     string `protobuf:"bytes,3,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListCallBansRequest) Reset() {
+	*x = ListCallBansRequest{}
+	mi := &file_call_v1_call_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListCallBansRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListCallBansRequest) ProtoMessage() {}
+
+func (x *ListCallBansRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_call_v1_call_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListCallBansRequest.ProtoReflect.Descriptor instead.
+func (*ListCallBansRequest) Descriptor() ([]byte, []int) {
+	return file_call_v1_call_proto_rawDescGZIP(), []int{29}
+}
+
+func (x *ListCallBansRequest) GetParent() string {
+	if x != nil {
+		return x.Parent
+	}
+	return ""
+}
+
+func (x *ListCallBansRequest) GetPageSize() int32 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+func (x *ListCallBansRequest) GetPageToken() string {
+	if x != nil {
+		return x.PageToken
+	}
+	return ""
+}
+
+type ListCallBansResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Bans          []*CallBan             `protobuf:"bytes,1,rep,name=bans,proto3" json:"bans,omitempty"`
+	NextPageToken string                 `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListCallBansResponse) Reset() {
+	*x = ListCallBansResponse{}
+	mi := &file_call_v1_call_proto_msgTypes[30]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListCallBansResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListCallBansResponse) ProtoMessage() {}
+
+func (x *ListCallBansResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_call_v1_call_proto_msgTypes[30]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListCallBansResponse.ProtoReflect.Descriptor instead.
+func (*ListCallBansResponse) Descriptor() ([]byte, []int) {
+	return file_call_v1_call_proto_rawDescGZIP(), []int{30}
+}
+
+func (x *ListCallBansResponse) GetBans() []*CallBan {
+	if x != nil {
+		return x.Bans
+	}
+	return nil
+}
+
+func (x *ListCallBansResponse) GetNextPageToken() string {
+	if x != nil {
+		return x.NextPageToken
+	}
+	return ""
+}
+
+type UnbanCallParticipantRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// "calls/{call_ulid}/bans/{user_ulid}"
+	Name          string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UnbanCallParticipantRequest) Reset() {
+	*x = UnbanCallParticipantRequest{}
+	mi := &file_call_v1_call_proto_msgTypes[31]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UnbanCallParticipantRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UnbanCallParticipantRequest) ProtoMessage() {}
+
+func (x *UnbanCallParticipantRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_call_v1_call_proto_msgTypes[31]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UnbanCallParticipantRequest.ProtoReflect.Descriptor instead.
+func (*UnbanCallParticipantRequest) Descriptor() ([]byte, []int) {
+	return file_call_v1_call_proto_rawDescGZIP(), []int{31}
+}
+
+func (x *UnbanCallParticipantRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+type UnbanCallParticipantResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UnbanCallParticipantResponse) Reset() {
+	*x = UnbanCallParticipantResponse{}
+	mi := &file_call_v1_call_proto_msgTypes[32]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UnbanCallParticipantResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UnbanCallParticipantResponse) ProtoMessage() {}
+
+func (x *UnbanCallParticipantResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_call_v1_call_proto_msgTypes[32]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UnbanCallParticipantResponse.ProtoReflect.Descriptor instead.
+func (*UnbanCallParticipantResponse) Descriptor() ([]byte, []int) {
+	return file_call_v1_call_proto_rawDescGZIP(), []int{32}
+}
+
 var File_call_v1_call_proto protoreflect.FileDescriptor
 
 const file_call_v1_call_proto_rawDesc = "" +
 	"\n" +
-	"\x12call/v1/call.proto\x12\acall.v1\x1a\x1cgoogle/api/annotations.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x12user/v1/user.proto\"\xb3\x01\n" +
+	"\x12call/v1/call.proto\x12\acall.v1\x1a\x1cgoogle/api/annotations.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x12user/v1/user.proto\"\xea\x01\n" +
 	"\x04Call\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12!\n" +
 	"\x04host\x18\x02 \x01(\v2\r.user.v1.UserR\x04host\x127\n" +
@@ -1297,7 +1743,8 @@ const file_call_v1_call_proto_rawDesc = "" +
 	"visibility\x18\x03 \x01(\x0e2\x17.call.v1.CallVisibilityR\n" +
 	"visibility\x12;\n" +
 	"\vcreate_time\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"createTime\"\xe5\x01\n" +
+	"createTime\x125\n" +
+	"\bend_time\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\aendTime\"\xe5\x01\n" +
 	"\x0fCallParticipant\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12!\n" +
 	"\x04user\x18\x02 \x01(\v2\r.user.v1.UserR\x04user\x12!\n" +
@@ -1359,13 +1806,36 @@ const file_call_v1_call_proto_rawDesc = "" +
 	"\x1bKickCallParticipantResponse\"/\n" +
 	"\x19BanCallParticipantRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\"\x1c\n" +
-	"\x1aBanCallParticipantResponse*\x87\x01\n" +
+	"\x1aBanCallParticipantResponse\"H\n" +
+	"\x17TransferCallHostRequest\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x19\n" +
+	"\bnew_host\x18\x02 \x01(\tR\anewHost\"=\n" +
+	"\x18TransferCallHostResponse\x12!\n" +
+	"\x04call\x18\x01 \x01(\v2\r.call.v1.CallR\x04call\"$\n" +
+	"\x0eEndCallRequest\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\"\x11\n" +
+	"\x0fEndCallResponse\"}\n" +
+	"\aCallBan\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12!\n" +
+	"\x04user\x18\x02 \x01(\v2\r.user.v1.UserR\x04user\x12;\n" +
+	"\vcreate_time\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"createTime\"i\n" +
+	"\x13ListCallBansRequest\x12\x16\n" +
+	"\x06parent\x18\x01 \x01(\tR\x06parent\x12\x1b\n" +
+	"\tpage_size\x18\x02 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\n" +
+	"page_token\x18\x03 \x01(\tR\tpageToken\"d\n" +
+	"\x14ListCallBansResponse\x12$\n" +
+	"\x04bans\x18\x01 \x03(\v2\x10.call.v1.CallBanR\x04bans\x12&\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"1\n" +
+	"\x1bUnbanCallParticipantRequest\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\"\x1e\n" +
+	"\x1cUnbanCallParticipantResponse*\x87\x01\n" +
 	"\x0eCallVisibility\x12\x1f\n" +
 	"\x1bCALL_VISIBILITY_UNSPECIFIED\x10\x00\x12\x18\n" +
 	"\x14CALL_VISIBILITY_OPEN\x10\x01\x12\x1e\n" +
 	"\x1aCALL_VISIBILITY_USERS_ONLY\x10\x02\x12\x1a\n" +
-	"\x16CALL_VISIBILITY_LOCKED\x10\x032\xc8\n" +
-	"\n" +
+	"\x16CALL_VISIBILITY_LOCKED\x10\x032\xb1\x0e\n" +
 	"\vCallService\x12[\n" +
 	"\n" +
 	"CreateCall\x12\x1a.call.v1.CreateCallRequest\x1a\x1b.call.v1.CreateCallResponse\"\x14\x82\xd3\xe4\x93\x02\x0e:\x01*\"\t/v1/calls\x12X\n" +
@@ -1379,7 +1849,11 @@ const file_call_v1_call_proto_rawDesc = "" +
 	"\tLeaveCall\x12\x19.call.v1.LeaveCallRequest\x1a\x1a.call.v1.LeaveCallResponse\"#\x82\xd3\xe4\x93\x02\x1d:\x01*\"\x18/v1/{name=calls/*}:leave\x12\x93\x01\n" +
 	"\x13MuteCallParticipant\x12#.call.v1.MuteCallParticipantRequest\x1a$.call.v1.MuteCallParticipantResponse\"1\x82\xd3\xe4\x93\x02+:\x01*\"&/v1/{name=calls/*/participants/*}:mute\x12\x93\x01\n" +
 	"\x13KickCallParticipant\x12#.call.v1.KickCallParticipantRequest\x1a$.call.v1.KickCallParticipantResponse\"1\x82\xd3\xe4\x93\x02+:\x01*\"&/v1/{name=calls/*/participants/*}:kick\x12\x8f\x01\n" +
-	"\x12BanCallParticipant\x12\".call.v1.BanCallParticipantRequest\x1a#.call.v1.BanCallParticipantResponse\"0\x82\xd3\xe4\x93\x02*:\x01*\"%/v1/{name=calls/*/participants/*}:banB\x88\x01\n" +
+	"\x12BanCallParticipant\x12\".call.v1.BanCallParticipantRequest\x1a#.call.v1.BanCallParticipantResponse\"0\x82\xd3\xe4\x93\x02*:\x01*\"%/v1/{name=calls/*/participants/*}:ban\x12\x83\x01\n" +
+	"\x10TransferCallHost\x12 .call.v1.TransferCallHostRequest\x1a!.call.v1.TransferCallHostResponse\"*\x82\xd3\xe4\x93\x02$:\x01*\"\x1f/v1/{name=calls/*}:transferHost\x12_\n" +
+	"\aEndCall\x12\x17.call.v1.EndCallRequest\x1a\x18.call.v1.EndCallResponse\"!\x82\xd3\xe4\x93\x02\x1b:\x01*\"\x16/v1/{name=calls/*}:end\x12n\n" +
+	"\fListCallBans\x12\x1c.call.v1.ListCallBansRequest\x1a\x1d.call.v1.ListCallBansResponse\"!\x82\xd3\xe4\x93\x02\x1b\x12\x19/v1/{parent=calls/*}/bans\x12\x8f\x01\n" +
+	"\x14UnbanCallParticipant\x12$.call.v1.UnbanCallParticipantRequest\x1a%.call.v1.UnbanCallParticipantResponse\"*\x82\xd3\xe4\x93\x02$:\x01*\"\x1f/v1/{name=calls/*/bans/*}:unbanB\x88\x01\n" +
 	"\vcom.call.v1B\tCallProtoP\x01Z1reverie.jp/reverie/internal/gen/pb/call/v1;callv1\xa2\x02\x03CXX\xaa\x02\aCall.V1\xca\x02\aCall\\V1\xe2\x02\x13Call\\V1\\GPBMetadata\xea\x02\bCall::V1b\x06proto3"
 
 var (
@@ -1395,7 +1869,7 @@ func file_call_v1_call_proto_rawDescGZIP() []byte {
 }
 
 var file_call_v1_call_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_call_v1_call_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
+var file_call_v1_call_proto_msgTypes = make([]protoimpl.MessageInfo, 33)
 var file_call_v1_call_proto_goTypes = []any{
 	(CallVisibility)(0),                      // 0: call.v1.CallVisibility
 	(*Call)(nil),                             // 1: call.v1.Call
@@ -1422,53 +1896,75 @@ var file_call_v1_call_proto_goTypes = []any{
 	(*KickCallParticipantResponse)(nil),      // 22: call.v1.KickCallParticipantResponse
 	(*BanCallParticipantRequest)(nil),        // 23: call.v1.BanCallParticipantRequest
 	(*BanCallParticipantResponse)(nil),       // 24: call.v1.BanCallParticipantResponse
-	(*v1.User)(nil),                          // 25: user.v1.User
-	(*timestamppb.Timestamp)(nil),            // 26: google.protobuf.Timestamp
-	(*fieldmaskpb.FieldMask)(nil),            // 27: google.protobuf.FieldMask
+	(*TransferCallHostRequest)(nil),          // 25: call.v1.TransferCallHostRequest
+	(*TransferCallHostResponse)(nil),         // 26: call.v1.TransferCallHostResponse
+	(*EndCallRequest)(nil),                   // 27: call.v1.EndCallRequest
+	(*EndCallResponse)(nil),                  // 28: call.v1.EndCallResponse
+	(*CallBan)(nil),                          // 29: call.v1.CallBan
+	(*ListCallBansRequest)(nil),              // 30: call.v1.ListCallBansRequest
+	(*ListCallBansResponse)(nil),             // 31: call.v1.ListCallBansResponse
+	(*UnbanCallParticipantRequest)(nil),      // 32: call.v1.UnbanCallParticipantRequest
+	(*UnbanCallParticipantResponse)(nil),     // 33: call.v1.UnbanCallParticipantResponse
+	(*v1.User)(nil),                          // 34: user.v1.User
+	(*timestamppb.Timestamp)(nil),            // 35: google.protobuf.Timestamp
+	(*fieldmaskpb.FieldMask)(nil),            // 36: google.protobuf.FieldMask
 }
 var file_call_v1_call_proto_depIdxs = []int32{
-	25, // 0: call.v1.Call.host:type_name -> user.v1.User
+	34, // 0: call.v1.Call.host:type_name -> user.v1.User
 	0,  // 1: call.v1.Call.visibility:type_name -> call.v1.CallVisibility
-	26, // 2: call.v1.Call.create_time:type_name -> google.protobuf.Timestamp
-	25, // 3: call.v1.CallParticipant.user:type_name -> user.v1.User
-	26, // 4: call.v1.CallParticipant.first_join_time:type_name -> google.protobuf.Timestamp
-	0,  // 5: call.v1.CreateCallRequest.visibility:type_name -> call.v1.CallVisibility
-	1,  // 6: call.v1.CreateCallResponse.call:type_name -> call.v1.Call
-	1,  // 7: call.v1.GetCallResponse.call:type_name -> call.v1.Call
-	2,  // 8: call.v1.GetCallResponse.participants:type_name -> call.v1.CallParticipant
-	1,  // 9: call.v1.UpdateCallRequest.call:type_name -> call.v1.Call
-	27, // 10: call.v1.UpdateCallRequest.update_mask:type_name -> google.protobuf.FieldMask
-	1,  // 11: call.v1.UpdateCallResponse.call:type_name -> call.v1.Call
-	1,  // 12: call.v1.ListPublicCallsResponse.calls:type_name -> call.v1.Call
-	1,  // 13: call.v1.GetUserParticipatingCallResponse.call:type_name -> call.v1.Call
-	26, // 14: call.v1.JoinCallResponse.expire_time:type_name -> google.protobuf.Timestamp
-	3,  // 15: call.v1.CallService.CreateCall:input_type -> call.v1.CreateCallRequest
-	5,  // 16: call.v1.CallService.GetCall:input_type -> call.v1.GetCallRequest
-	7,  // 17: call.v1.CallService.UpdateCall:input_type -> call.v1.UpdateCallRequest
-	9,  // 18: call.v1.CallService.ListPublicCalls:input_type -> call.v1.ListPublicCallsRequest
-	11, // 19: call.v1.CallService.GetUserParticipatingCall:input_type -> call.v1.GetUserParticipatingCallRequest
-	13, // 20: call.v1.CallService.JoinCall:input_type -> call.v1.JoinCallRequest
-	15, // 21: call.v1.CallService.HeartbeatCall:input_type -> call.v1.HeartbeatCallRequest
-	17, // 22: call.v1.CallService.LeaveCall:input_type -> call.v1.LeaveCallRequest
-	19, // 23: call.v1.CallService.MuteCallParticipant:input_type -> call.v1.MuteCallParticipantRequest
-	21, // 24: call.v1.CallService.KickCallParticipant:input_type -> call.v1.KickCallParticipantRequest
-	23, // 25: call.v1.CallService.BanCallParticipant:input_type -> call.v1.BanCallParticipantRequest
-	4,  // 26: call.v1.CallService.CreateCall:output_type -> call.v1.CreateCallResponse
-	6,  // 27: call.v1.CallService.GetCall:output_type -> call.v1.GetCallResponse
-	8,  // 28: call.v1.CallService.UpdateCall:output_type -> call.v1.UpdateCallResponse
-	10, // 29: call.v1.CallService.ListPublicCalls:output_type -> call.v1.ListPublicCallsResponse
-	12, // 30: call.v1.CallService.GetUserParticipatingCall:output_type -> call.v1.GetUserParticipatingCallResponse
-	14, // 31: call.v1.CallService.JoinCall:output_type -> call.v1.JoinCallResponse
-	16, // 32: call.v1.CallService.HeartbeatCall:output_type -> call.v1.HeartbeatCallResponse
-	18, // 33: call.v1.CallService.LeaveCall:output_type -> call.v1.LeaveCallResponse
-	20, // 34: call.v1.CallService.MuteCallParticipant:output_type -> call.v1.MuteCallParticipantResponse
-	22, // 35: call.v1.CallService.KickCallParticipant:output_type -> call.v1.KickCallParticipantResponse
-	24, // 36: call.v1.CallService.BanCallParticipant:output_type -> call.v1.BanCallParticipantResponse
-	26, // [26:37] is the sub-list for method output_type
-	15, // [15:26] is the sub-list for method input_type
-	15, // [15:15] is the sub-list for extension type_name
-	15, // [15:15] is the sub-list for extension extendee
-	0,  // [0:15] is the sub-list for field type_name
+	35, // 2: call.v1.Call.create_time:type_name -> google.protobuf.Timestamp
+	35, // 3: call.v1.Call.end_time:type_name -> google.protobuf.Timestamp
+	34, // 4: call.v1.CallParticipant.user:type_name -> user.v1.User
+	35, // 5: call.v1.CallParticipant.first_join_time:type_name -> google.protobuf.Timestamp
+	0,  // 6: call.v1.CreateCallRequest.visibility:type_name -> call.v1.CallVisibility
+	1,  // 7: call.v1.CreateCallResponse.call:type_name -> call.v1.Call
+	1,  // 8: call.v1.GetCallResponse.call:type_name -> call.v1.Call
+	2,  // 9: call.v1.GetCallResponse.participants:type_name -> call.v1.CallParticipant
+	1,  // 10: call.v1.UpdateCallRequest.call:type_name -> call.v1.Call
+	36, // 11: call.v1.UpdateCallRequest.update_mask:type_name -> google.protobuf.FieldMask
+	1,  // 12: call.v1.UpdateCallResponse.call:type_name -> call.v1.Call
+	1,  // 13: call.v1.ListPublicCallsResponse.calls:type_name -> call.v1.Call
+	1,  // 14: call.v1.GetUserParticipatingCallResponse.call:type_name -> call.v1.Call
+	35, // 15: call.v1.JoinCallResponse.expire_time:type_name -> google.protobuf.Timestamp
+	1,  // 16: call.v1.TransferCallHostResponse.call:type_name -> call.v1.Call
+	34, // 17: call.v1.CallBan.user:type_name -> user.v1.User
+	35, // 18: call.v1.CallBan.create_time:type_name -> google.protobuf.Timestamp
+	29, // 19: call.v1.ListCallBansResponse.bans:type_name -> call.v1.CallBan
+	3,  // 20: call.v1.CallService.CreateCall:input_type -> call.v1.CreateCallRequest
+	5,  // 21: call.v1.CallService.GetCall:input_type -> call.v1.GetCallRequest
+	7,  // 22: call.v1.CallService.UpdateCall:input_type -> call.v1.UpdateCallRequest
+	9,  // 23: call.v1.CallService.ListPublicCalls:input_type -> call.v1.ListPublicCallsRequest
+	11, // 24: call.v1.CallService.GetUserParticipatingCall:input_type -> call.v1.GetUserParticipatingCallRequest
+	13, // 25: call.v1.CallService.JoinCall:input_type -> call.v1.JoinCallRequest
+	15, // 26: call.v1.CallService.HeartbeatCall:input_type -> call.v1.HeartbeatCallRequest
+	17, // 27: call.v1.CallService.LeaveCall:input_type -> call.v1.LeaveCallRequest
+	19, // 28: call.v1.CallService.MuteCallParticipant:input_type -> call.v1.MuteCallParticipantRequest
+	21, // 29: call.v1.CallService.KickCallParticipant:input_type -> call.v1.KickCallParticipantRequest
+	23, // 30: call.v1.CallService.BanCallParticipant:input_type -> call.v1.BanCallParticipantRequest
+	25, // 31: call.v1.CallService.TransferCallHost:input_type -> call.v1.TransferCallHostRequest
+	27, // 32: call.v1.CallService.EndCall:input_type -> call.v1.EndCallRequest
+	30, // 33: call.v1.CallService.ListCallBans:input_type -> call.v1.ListCallBansRequest
+	32, // 34: call.v1.CallService.UnbanCallParticipant:input_type -> call.v1.UnbanCallParticipantRequest
+	4,  // 35: call.v1.CallService.CreateCall:output_type -> call.v1.CreateCallResponse
+	6,  // 36: call.v1.CallService.GetCall:output_type -> call.v1.GetCallResponse
+	8,  // 37: call.v1.CallService.UpdateCall:output_type -> call.v1.UpdateCallResponse
+	10, // 38: call.v1.CallService.ListPublicCalls:output_type -> call.v1.ListPublicCallsResponse
+	12, // 39: call.v1.CallService.GetUserParticipatingCall:output_type -> call.v1.GetUserParticipatingCallResponse
+	14, // 40: call.v1.CallService.JoinCall:output_type -> call.v1.JoinCallResponse
+	16, // 41: call.v1.CallService.HeartbeatCall:output_type -> call.v1.HeartbeatCallResponse
+	18, // 42: call.v1.CallService.LeaveCall:output_type -> call.v1.LeaveCallResponse
+	20, // 43: call.v1.CallService.MuteCallParticipant:output_type -> call.v1.MuteCallParticipantResponse
+	22, // 44: call.v1.CallService.KickCallParticipant:output_type -> call.v1.KickCallParticipantResponse
+	24, // 45: call.v1.CallService.BanCallParticipant:output_type -> call.v1.BanCallParticipantResponse
+	26, // 46: call.v1.CallService.TransferCallHost:output_type -> call.v1.TransferCallHostResponse
+	28, // 47: call.v1.CallService.EndCall:output_type -> call.v1.EndCallResponse
+	31, // 48: call.v1.CallService.ListCallBans:output_type -> call.v1.ListCallBansResponse
+	33, // 49: call.v1.CallService.UnbanCallParticipant:output_type -> call.v1.UnbanCallParticipantResponse
+	35, // [35:50] is the sub-list for method output_type
+	20, // [20:35] is the sub-list for method input_type
+	20, // [20:20] is the sub-list for extension type_name
+	20, // [20:20] is the sub-list for extension extendee
+	0,  // [0:20] is the sub-list for field type_name
 }
 
 func init() { file_call_v1_call_proto_init() }
@@ -1482,7 +1978,7 @@ func file_call_v1_call_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_call_v1_call_proto_rawDesc), len(file_call_v1_call_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   24,
+			NumMessages:   33,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

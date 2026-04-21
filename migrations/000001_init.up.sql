@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS calls (
     id ulid PRIMARY KEY,
     host_user_id ulid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     visibility call_visibility NOT NULL,
+    end_time TIMESTAMPTZ,
     create_time TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     update_time TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

@@ -30,6 +30,10 @@ const (
 	CallService_MuteCallParticipant_FullMethodName      = "/call.v1.CallService/MuteCallParticipant"
 	CallService_KickCallParticipant_FullMethodName      = "/call.v1.CallService/KickCallParticipant"
 	CallService_BanCallParticipant_FullMethodName       = "/call.v1.CallService/BanCallParticipant"
+	CallService_TransferCallHost_FullMethodName         = "/call.v1.CallService/TransferCallHost"
+	CallService_EndCall_FullMethodName                  = "/call.v1.CallService/EndCall"
+	CallService_ListCallBans_FullMethodName             = "/call.v1.CallService/ListCallBans"
+	CallService_UnbanCallParticipant_FullMethodName     = "/call.v1.CallService/UnbanCallParticipant"
 )
 
 // CallServiceClient is the client API for CallService service.
@@ -70,6 +74,16 @@ type CallServiceClient interface {
 	// Permanently ban a participant from the call. Authenticated targets only
 	// (guest identities are ephemeral and cannot be banned). Host only.
 	BanCallParticipant(ctx context.Context, in *BanCallParticipantRequest, opts ...grpc.CallOption) (*BanCallParticipantResponse, error)
+	// Transfer host role to another authenticated participant currently in
+	// the call. Host only.
+	TransferCallHost(ctx context.Context, in *TransferCallHostRequest, opts ...grpc.CallOption) (*TransferCallHostResponse, error)
+	// End the call. All participants are disconnected from the LiveKit room
+	// and marked disconnected in DB. Host only.
+	EndCall(ctx context.Context, in *EndCallRequest, opts ...grpc.CallOption) (*EndCallResponse, error)
+	// List users banned from the call. Host only.
+	ListCallBans(ctx context.Context, in *ListCallBansRequest, opts ...grpc.CallOption) (*ListCallBansResponse, error)
+	// Remove a ban. Host only.
+	UnbanCallParticipant(ctx context.Context, in *UnbanCallParticipantRequest, opts ...grpc.CallOption) (*UnbanCallParticipantResponse, error)
 }
 
 type callServiceClient struct {
@@ -190,6 +204,46 @@ func (c *callServiceClient) BanCallParticipant(ctx context.Context, in *BanCallP
 	return out, nil
 }
 
+func (c *callServiceClient) TransferCallHost(ctx context.Context, in *TransferCallHostRequest, opts ...grpc.CallOption) (*TransferCallHostResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(TransferCallHostResponse)
+	err := c.cc.Invoke(ctx, CallService_TransferCallHost_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *callServiceClient) EndCall(ctx context.Context, in *EndCallRequest, opts ...grpc.CallOption) (*EndCallResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(EndCallResponse)
+	err := c.cc.Invoke(ctx, CallService_EndCall_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *callServiceClient) ListCallBans(ctx context.Context, in *ListCallBansRequest, opts ...grpc.CallOption) (*ListCallBansResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListCallBansResponse)
+	err := c.cc.Invoke(ctx, CallService_ListCallBans_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *callServiceClient) UnbanCallParticipant(ctx context.Context, in *UnbanCallParticipantRequest, opts ...grpc.CallOption) (*UnbanCallParticipantResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UnbanCallParticipantResponse)
+	err := c.cc.Invoke(ctx, CallService_UnbanCallParticipant_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CallServiceServer is the server API for CallService service.
 // All implementations must embed UnimplementedCallServiceServer
 // for forward compatibility.
@@ -228,6 +282,16 @@ type CallServiceServer interface {
 	// Permanently ban a participant from the call. Authenticated targets only
 	// (guest identities are ephemeral and cannot be banned). Host only.
 	BanCallParticipant(context.Context, *BanCallParticipantRequest) (*BanCallParticipantResponse, error)
+	// Transfer host role to another authenticated participant currently in
+	// the call. Host only.
+	TransferCallHost(context.Context, *TransferCallHostRequest) (*TransferCallHostResponse, error)
+	// End the call. All participants are disconnected from the LiveKit room
+	// and marked disconnected in DB. Host only.
+	EndCall(context.Context, *EndCallRequest) (*EndCallResponse, error)
+	// List users banned from the call. Host only.
+	ListCallBans(context.Context, *ListCallBansRequest) (*ListCallBansResponse, error)
+	// Remove a ban. Host only.
+	UnbanCallParticipant(context.Context, *UnbanCallParticipantRequest) (*UnbanCallParticipantResponse, error)
 	mustEmbedUnimplementedCallServiceServer()
 }
 
@@ -270,6 +334,18 @@ func (UnimplementedCallServiceServer) KickCallParticipant(context.Context, *Kick
 }
 func (UnimplementedCallServiceServer) BanCallParticipant(context.Context, *BanCallParticipantRequest) (*BanCallParticipantResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method BanCallParticipant not implemented")
+}
+func (UnimplementedCallServiceServer) TransferCallHost(context.Context, *TransferCallHostRequest) (*TransferCallHostResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method TransferCallHost not implemented")
+}
+func (UnimplementedCallServiceServer) EndCall(context.Context, *EndCallRequest) (*EndCallResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method EndCall not implemented")
+}
+func (UnimplementedCallServiceServer) ListCallBans(context.Context, *ListCallBansRequest) (*ListCallBansResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListCallBans not implemented")
+}
+func (UnimplementedCallServiceServer) UnbanCallParticipant(context.Context, *UnbanCallParticipantRequest) (*UnbanCallParticipantResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UnbanCallParticipant not implemented")
 }
 func (UnimplementedCallServiceServer) mustEmbedUnimplementedCallServiceServer() {}
 func (UnimplementedCallServiceServer) testEmbeddedByValue()                     {}
@@ -490,6 +566,78 @@ func _CallService_BanCallParticipant_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CallService_TransferCallHost_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TransferCallHostRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CallServiceServer).TransferCallHost(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CallService_TransferCallHost_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CallServiceServer).TransferCallHost(ctx, req.(*TransferCallHostRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CallService_EndCall_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EndCallRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CallServiceServer).EndCall(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CallService_EndCall_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CallServiceServer).EndCall(ctx, req.(*EndCallRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CallService_ListCallBans_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListCallBansRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CallServiceServer).ListCallBans(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CallService_ListCallBans_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CallServiceServer).ListCallBans(ctx, req.(*ListCallBansRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CallService_UnbanCallParticipant_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UnbanCallParticipantRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CallServiceServer).UnbanCallParticipant(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CallService_UnbanCallParticipant_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CallServiceServer).UnbanCallParticipant(ctx, req.(*UnbanCallParticipantRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CallService_ServiceDesc is the grpc.ServiceDesc for CallService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -540,6 +688,22 @@ var CallService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "BanCallParticipant",
 			Handler:    _CallService_BanCallParticipant_Handler,
+		},
+		{
+			MethodName: "TransferCallHost",
+			Handler:    _CallService_TransferCallHost_Handler,
+		},
+		{
+			MethodName: "EndCall",
+			Handler:    _CallService_EndCall_Handler,
+		},
+		{
+			MethodName: "ListCallBans",
+			Handler:    _CallService_ListCallBans_Handler,
+		},
+		{
+			MethodName: "UnbanCallParticipant",
+			Handler:    _CallService_UnbanCallParticipant_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -61,6 +61,17 @@ const (
 	// CallServiceBanCallParticipantProcedure is the fully-qualified name of the CallService's
 	// BanCallParticipant RPC.
 	CallServiceBanCallParticipantProcedure = "/call.v1.CallService/BanCallParticipant"
+	// CallServiceTransferCallHostProcedure is the fully-qualified name of the CallService's
+	// TransferCallHost RPC.
+	CallServiceTransferCallHostProcedure = "/call.v1.CallService/TransferCallHost"
+	// CallServiceEndCallProcedure is the fully-qualified name of the CallService's EndCall RPC.
+	CallServiceEndCallProcedure = "/call.v1.CallService/EndCall"
+	// CallServiceListCallBansProcedure is the fully-qualified name of the CallService's ListCallBans
+	// RPC.
+	CallServiceListCallBansProcedure = "/call.v1.CallService/ListCallBans"
+	// CallServiceUnbanCallParticipantProcedure is the fully-qualified name of the CallService's
+	// UnbanCallParticipant RPC.
+	CallServiceUnbanCallParticipantProcedure = "/call.v1.CallService/UnbanCallParticipant"
 )
 
 // CallServiceClient is a client for the call.v1.CallService service.
@@ -99,6 +110,16 @@ type CallServiceClient interface {
 	// Permanently ban a participant from the call. Authenticated targets only
 	// (guest identities are ephemeral and cannot be banned). Host only.
 	BanCallParticipant(context.Context, *connect.Request[v1.BanCallParticipantRequest]) (*connect.Response[v1.BanCallParticipantResponse], error)
+	// Transfer host role to another authenticated participant currently in
+	// the call. Host only.
+	TransferCallHost(context.Context, *connect.Request[v1.TransferCallHostRequest]) (*connect.Response[v1.TransferCallHostResponse], error)
+	// End the call. All participants are disconnected from the LiveKit room
+	// and marked disconnected in DB. Host only.
+	EndCall(context.Context, *connect.Request[v1.EndCallRequest]) (*connect.Response[v1.EndCallResponse], error)
+	// List users banned from the call. Host only.
+	ListCallBans(context.Context, *connect.Request[v1.ListCallBansRequest]) (*connect.Response[v1.ListCallBansResponse], error)
+	// Remove a ban. Host only.
+	UnbanCallParticipant(context.Context, *connect.Request[v1.UnbanCallParticipantRequest]) (*connect.Response[v1.UnbanCallParticipantResponse], error)
 }
 
 // NewCallServiceClient constructs a client for the call.v1.CallService service. By default, it uses
@@ -178,6 +199,30 @@ func NewCallServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(callServiceMethods.ByName("BanCallParticipant")),
 			connect.WithClientOptions(opts...),
 		),
+		transferCallHost: connect.NewClient[v1.TransferCallHostRequest, v1.TransferCallHostResponse](
+			httpClient,
+			baseURL+CallServiceTransferCallHostProcedure,
+			connect.WithSchema(callServiceMethods.ByName("TransferCallHost")),
+			connect.WithClientOptions(opts...),
+		),
+		endCall: connect.NewClient[v1.EndCallRequest, v1.EndCallResponse](
+			httpClient,
+			baseURL+CallServiceEndCallProcedure,
+			connect.WithSchema(callServiceMethods.ByName("EndCall")),
+			connect.WithClientOptions(opts...),
+		),
+		listCallBans: connect.NewClient[v1.ListCallBansRequest, v1.ListCallBansResponse](
+			httpClient,
+			baseURL+CallServiceListCallBansProcedure,
+			connect.WithSchema(callServiceMethods.ByName("ListCallBans")),
+			connect.WithClientOptions(opts...),
+		),
+		unbanCallParticipant: connect.NewClient[v1.UnbanCallParticipantRequest, v1.UnbanCallParticipantResponse](
+			httpClient,
+			baseURL+CallServiceUnbanCallParticipantProcedure,
+			connect.WithSchema(callServiceMethods.ByName("UnbanCallParticipant")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -194,6 +239,10 @@ type callServiceClient struct {
 	muteCallParticipant      *connect.Client[v1.MuteCallParticipantRequest, v1.MuteCallParticipantResponse]
 	kickCallParticipant      *connect.Client[v1.KickCallParticipantRequest, v1.KickCallParticipantResponse]
 	banCallParticipant       *connect.Client[v1.BanCallParticipantRequest, v1.BanCallParticipantResponse]
+	transferCallHost         *connect.Client[v1.TransferCallHostRequest, v1.TransferCallHostResponse]
+	endCall                  *connect.Client[v1.EndCallRequest, v1.EndCallResponse]
+	listCallBans             *connect.Client[v1.ListCallBansRequest, v1.ListCallBansResponse]
+	unbanCallParticipant     *connect.Client[v1.UnbanCallParticipantRequest, v1.UnbanCallParticipantResponse]
 }
 
 // CreateCall calls call.v1.CallService.CreateCall.
@@ -251,6 +300,26 @@ func (c *callServiceClient) BanCallParticipant(ctx context.Context, req *connect
 	return c.banCallParticipant.CallUnary(ctx, req)
 }
 
+// TransferCallHost calls call.v1.CallService.TransferCallHost.
+func (c *callServiceClient) TransferCallHost(ctx context.Context, req *connect.Request[v1.TransferCallHostRequest]) (*connect.Response[v1.TransferCallHostResponse], error) {
+	return c.transferCallHost.CallUnary(ctx, req)
+}
+
+// EndCall calls call.v1.CallService.EndCall.
+func (c *callServiceClient) EndCall(ctx context.Context, req *connect.Request[v1.EndCallRequest]) (*connect.Response[v1.EndCallResponse], error) {
+	return c.endCall.CallUnary(ctx, req)
+}
+
+// ListCallBans calls call.v1.CallService.ListCallBans.
+func (c *callServiceClient) ListCallBans(ctx context.Context, req *connect.Request[v1.ListCallBansRequest]) (*connect.Response[v1.ListCallBansResponse], error) {
+	return c.listCallBans.CallUnary(ctx, req)
+}
+
+// UnbanCallParticipant calls call.v1.CallService.UnbanCallParticipant.
+func (c *callServiceClient) UnbanCallParticipant(ctx context.Context, req *connect.Request[v1.UnbanCallParticipantRequest]) (*connect.Response[v1.UnbanCallParticipantResponse], error) {
+	return c.unbanCallParticipant.CallUnary(ctx, req)
+}
+
 // CallServiceHandler is an implementation of the call.v1.CallService service.
 type CallServiceHandler interface {
 	// Create a new call. The caller becomes the host.
@@ -287,6 +356,16 @@ type CallServiceHandler interface {
 	// Permanently ban a participant from the call. Authenticated targets only
 	// (guest identities are ephemeral and cannot be banned). Host only.
 	BanCallParticipant(context.Context, *connect.Request[v1.BanCallParticipantRequest]) (*connect.Response[v1.BanCallParticipantResponse], error)
+	// Transfer host role to another authenticated participant currently in
+	// the call. Host only.
+	TransferCallHost(context.Context, *connect.Request[v1.TransferCallHostRequest]) (*connect.Response[v1.TransferCallHostResponse], error)
+	// End the call. All participants are disconnected from the LiveKit room
+	// and marked disconnected in DB. Host only.
+	EndCall(context.Context, *connect.Request[v1.EndCallRequest]) (*connect.Response[v1.EndCallResponse], error)
+	// List users banned from the call. Host only.
+	ListCallBans(context.Context, *connect.Request[v1.ListCallBansRequest]) (*connect.Response[v1.ListCallBansResponse], error)
+	// Remove a ban. Host only.
+	UnbanCallParticipant(context.Context, *connect.Request[v1.UnbanCallParticipantRequest]) (*connect.Response[v1.UnbanCallParticipantResponse], error)
 }
 
 // NewCallServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -362,6 +441,30 @@ func NewCallServiceHandler(svc CallServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(callServiceMethods.ByName("BanCallParticipant")),
 		connect.WithHandlerOptions(opts...),
 	)
+	callServiceTransferCallHostHandler := connect.NewUnaryHandler(
+		CallServiceTransferCallHostProcedure,
+		svc.TransferCallHost,
+		connect.WithSchema(callServiceMethods.ByName("TransferCallHost")),
+		connect.WithHandlerOptions(opts...),
+	)
+	callServiceEndCallHandler := connect.NewUnaryHandler(
+		CallServiceEndCallProcedure,
+		svc.EndCall,
+		connect.WithSchema(callServiceMethods.ByName("EndCall")),
+		connect.WithHandlerOptions(opts...),
+	)
+	callServiceListCallBansHandler := connect.NewUnaryHandler(
+		CallServiceListCallBansProcedure,
+		svc.ListCallBans,
+		connect.WithSchema(callServiceMethods.ByName("ListCallBans")),
+		connect.WithHandlerOptions(opts...),
+	)
+	callServiceUnbanCallParticipantHandler := connect.NewUnaryHandler(
+		CallServiceUnbanCallParticipantProcedure,
+		svc.UnbanCallParticipant,
+		connect.WithSchema(callServiceMethods.ByName("UnbanCallParticipant")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/call.v1.CallService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case CallServiceCreateCallProcedure:
@@ -386,6 +489,14 @@ func NewCallServiceHandler(svc CallServiceHandler, opts ...connect.HandlerOption
 			callServiceKickCallParticipantHandler.ServeHTTP(w, r)
 		case CallServiceBanCallParticipantProcedure:
 			callServiceBanCallParticipantHandler.ServeHTTP(w, r)
+		case CallServiceTransferCallHostProcedure:
+			callServiceTransferCallHostHandler.ServeHTTP(w, r)
+		case CallServiceEndCallProcedure:
+			callServiceEndCallHandler.ServeHTTP(w, r)
+		case CallServiceListCallBansProcedure:
+			callServiceListCallBansHandler.ServeHTTP(w, r)
+		case CallServiceUnbanCallParticipantProcedure:
+			callServiceUnbanCallParticipantHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -437,4 +548,20 @@ func (UnimplementedCallServiceHandler) KickCallParticipant(context.Context, *con
 
 func (UnimplementedCallServiceHandler) BanCallParticipant(context.Context, *connect.Request[v1.BanCallParticipantRequest]) (*connect.Response[v1.BanCallParticipantResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("call.v1.CallService.BanCallParticipant is not implemented"))
+}
+
+func (UnimplementedCallServiceHandler) TransferCallHost(context.Context, *connect.Request[v1.TransferCallHostRequest]) (*connect.Response[v1.TransferCallHostResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("call.v1.CallService.TransferCallHost is not implemented"))
+}
+
+func (UnimplementedCallServiceHandler) EndCall(context.Context, *connect.Request[v1.EndCallRequest]) (*connect.Response[v1.EndCallResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("call.v1.CallService.EndCall is not implemented"))
+}
+
+func (UnimplementedCallServiceHandler) ListCallBans(context.Context, *connect.Request[v1.ListCallBansRequest]) (*connect.Response[v1.ListCallBansResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("call.v1.CallService.ListCallBans is not implemented"))
+}
+
+func (UnimplementedCallServiceHandler) UnbanCallParticipant(context.Context, *connect.Request[v1.UnbanCallParticipantRequest]) (*connect.Response[v1.UnbanCallParticipantResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("call.v1.CallService.UnbanCallParticipant is not implemented"))
 }

@@ -18,6 +18,10 @@ type Handler struct {
 	muteCallParticipant      *usecase.MuteCallParticipant
 	kickCallParticipant      *usecase.KickCallParticipant
 	banCallParticipant       *usecase.BanCallParticipant
+	transferCallHost         *usecase.TransferCallHost
+	endCall                  *usecase.EndCall
+	listCallBans             *usecase.ListCallBans
+	unbanCallParticipant     *usecase.UnbanCallParticipant
 }
 
 func New(
@@ -32,6 +36,10 @@ func New(
 	muteCallParticipant *usecase.MuteCallParticipant,
 	kickCallParticipant *usecase.KickCallParticipant,
 	banCallParticipant *usecase.BanCallParticipant,
+	transferCallHost *usecase.TransferCallHost,
+	endCall *usecase.EndCall,
+	listCallBans *usecase.ListCallBans,
+	unbanCallParticipant *usecase.UnbanCallParticipant,
 ) *Handler {
 	return &Handler{
 		createCall:               createCall,
@@ -45,5 +53,9 @@ func New(
 		muteCallParticipant:      muteCallParticipant,
 		kickCallParticipant:      kickCallParticipant,
 		banCallParticipant:       banCallParticipant,
+		transferCallHost:         transferCallHost,
+		endCall:                  endCall,
+		listCallBans:             listCallBans,
+		unbanCallParticipant:     unbanCallParticipant,
 	}
 }

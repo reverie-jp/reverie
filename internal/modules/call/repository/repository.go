@@ -34,6 +34,11 @@ type Repository interface {
 	ListCallParticipants(ctx context.Context, callID ulid.ULID) ([]*entity.CallParticipant, error)
 	CreateCallBan(ctx context.Context, callID, userID ulid.ULID) error
 	IsUserBannedFromCall(ctx context.Context, callID, userID ulid.ULID) (bool, error)
+	ListCallBans(ctx context.Context, callID ulid.ULID, cursorUserID string, pageSize int32) ([]*entity.CallBan, error)
+	DeleteCallBan(ctx context.Context, callID, userID ulid.ULID) error
+	UpdateCallHost(ctx context.Context, callID, hostUserID ulid.ULID) error
+	MarkAllCallParticipantsDisconnected(ctx context.Context, callID ulid.ULID) error
+	MarkCallEnded(ctx context.Context, callID ulid.ULID) error
 }
 
 type RepositoryImpl struct {

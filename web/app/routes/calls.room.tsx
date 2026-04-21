@@ -25,6 +25,14 @@ import {
 } from "~/components/ui/drawer";
 import { Slider } from "~/components/ui/slider";
 import { GoogleLoginButton } from "~/components/google-login-button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "~/components/ui/dialog";
+import type { CallBan } from "~/lib/gen/call/v1/call_pb";
 
 const GUEST_DISPLAY_NAME_KEY = "reverie.guest_display_name";
 
@@ -49,6 +57,13 @@ function formatDuration(ms: number): string {
   const mm = String(m).padStart(2, "0");
   const ss = String(s).padStart(2, "0");
   return h > 0 ? `${h}:${mm}:${ss}` : `${m}:${ss}`;
+}
+
+function formatClockTime(ms: number): string {
+  const d = new Date(ms);
+  const h = String(d.getHours()).padStart(2, "0");
+  const m = String(d.getMinutes()).padStart(2, "0");
+  return `${h}:${m}`;
 }
 
 function SpeakerAvatar({
@@ -368,6 +383,14 @@ export default function CallRoomRoute() {
   const [chatInput, setChatInput] = useState("");
   const [drawerIdentity, setDrawerIdentity] = useState<string | null>(null);
   const [now, setNow] = useState<number>(() => Date.now());
+  const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
+  const [transferMode, setTransferMode] = useState(false);
+  const [leavingAction, setLeavingAction] = useState(false);
+  const [banListOpen, setBanListOpen] = useState(false);
+  const [bans, setBans] = useState<CallBan[]>([]);
+  const [bansLoading, setBansLoading] = useState(false);
+  const [bansError, setBansError] = useState<string | null>(null);
+  const [unbanningName, setUnbanningName] = useState<string | null>(null);
   const chatScrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -445,6 +468,132 @@ export default function CallRoomRoute() {
     await fetchCallInfo({ silent: true });
   };
 
+  const handleLeaveClick = () => {
+    if (!isHost) {
+      void handleLeave();
+      return;
+    }
+    const activeOthers = participants.filter((p) => {
+      if (!p.isCurrentlyConnected) return false;
+      const isSelf =
+        (call.myUserName && p.user?.name === call.myUserName) ||
+        (!call.isAuthenticated &&
+          call.identity ===
+            parseCallParticipant(p.name).identity);
+      return !isSelf;
+    });
+    if (activeOthers.length === 0) {
+      void handleLeave();
+      return;
+    }
+    setTransferMode(false);
+    setLeaveDialogOpen(true);
+  };
+
+  const handleEndAndLeave = async () => {
+    if (!callName) return;
+    setLeavingAction(true);
+    try {
+      await callClient.endCall({ name: callName });
+      // Host's own LiveKit connection receives ROOM_DELETED; the call
+      // context's Disconnected handler performs cleanup (no explicit
+      // call.leave() needed — that would race with the disconnect event).
+      await fetchCallInfo({ silent: true });
+      setLeaveDialogOpen(false);
+    } catch (err) {
+      console.error("EndCall failed:", err);
+    } finally {
+      setLeavingAction(false);
+    }
+  };
+
+  const handleTransferAndLeave = async (
+    newHostCustomID: string,
+    newHostDisplayName: string,
+  ) => {
+    if (!callName) return;
+    setLeavingAction(true);
+    try {
+      await callClient.transferCallHost({
+        name: callName,
+        newHost: `users/${newHostCustomID}`,
+      });
+      // Broadcast before leaving; leave disconnects the LiveKit room so
+      // publishing afterwards wouldn't reach anyone.
+      await call.publishData({
+        type: "host_transferred",
+        newHostName: `users/${newHostCustomID}`,
+        newHostDisplayName,
+      });
+      await call.leave();
+      await fetchCallInfo({ silent: true });
+      setLeaveDialogOpen(false);
+    } catch (err) {
+      console.error("TransferCallHost failed:", err);
+    } finally {
+      setLeavingAction(false);
+    }
+  };
+
+  const fetchBans = async () => {
+    if (!callName) return;
+    setBansLoading(true);
+    setBansError(null);
+    try {
+      const res = await callClient.listCallBans({
+        parent: callName,
+        pageSize: 100,
+      });
+      setBans(res.bans);
+    } catch (err) {
+      console.error("ListCallBans failed:", err);
+      setBansError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setBansLoading(false);
+    }
+  };
+
+  const handleOpenBanList = () => {
+    setBanListOpen(true);
+    void fetchBans();
+  };
+
+  const handleTransferHost = async (
+    newHostCustomID: string,
+    newHostDisplayName: string,
+  ) => {
+    if (!callName) return;
+    try {
+      await callClient.transferCallHost({
+        name: callName,
+        newHost: `users/${newHostCustomID}`,
+      });
+      await fetchCallInfo({ silent: true });
+      call.addSystemMessage(
+        `${newHostDisplayName} が新しいホストになりました`,
+      );
+      await call.publishData({
+        type: "host_transferred",
+        newHostName: `users/${newHostCustomID}`,
+        newHostDisplayName,
+      });
+    } catch (err) {
+      console.error("TransferCallHost failed:", err);
+    }
+  };
+
+  const handleUnban = async (banName: string) => {
+    setUnbanningName(banName);
+    try {
+      await callClient.unbanCallParticipant({ name: banName });
+      setBans((prev) => prev.filter((b) => b.name !== banName));
+    } catch (err) {
+      console.error("UnbanCallParticipant failed:", err);
+    } finally {
+      setUnbanningName(null);
+    }
+  };
+
   const sendChat = async () => {
     const t = chatInput.trim();
     if (!t) return;
@@ -494,6 +643,7 @@ export default function CallRoomRoute() {
         muted,
       });
       const kind = muted ? "host_muted" : "host_unmuted";
+      call.markHostMuted(identity, muted);
       await call.publishData({
         type: kind,
         targetIdentity: identity,
@@ -511,13 +661,18 @@ export default function CallRoomRoute() {
     }
   };
 
-  const handleKick = async (identity: string) => {
+  const handleKick = async (identity: string, displayName: string) => {
     if (!callName) return;
     if (!window.confirm("この参加者を一時的にキックしますか？")) return;
     setModeratingIdentity(identity);
     try {
       await callClient.kickCallParticipant({
         name: `${callName}/participants/${identity}`,
+      });
+      call.addSystemMessage(`ホストが ${displayName} をキックしました`);
+      await call.publishData({
+        type: "host_kicked",
+        targetDisplayName: displayName,
       });
       await fetchCallInfo({ silent: true });
     } catch (err) {
@@ -527,7 +682,7 @@ export default function CallRoomRoute() {
     }
   };
 
-  const handleBan = async (identity: string) => {
+  const handleBan = async (identity: string, displayName: string) => {
     if (!callName) return;
     if (!window.confirm("この参加者を永久に追放します。よろしいですか？"))
       return;
@@ -535,6 +690,11 @@ export default function CallRoomRoute() {
     try {
       await callClient.banCallParticipant({
         name: `${callName}/participants/${identity}`,
+      });
+      call.addSystemMessage(`ホストが ${displayName} を追放しました`);
+      await call.publishData({
+        type: "host_banned",
+        targetDisplayName: displayName,
       });
       await fetchCallInfo({ silent: true });
     } catch (err) {
@@ -572,6 +732,10 @@ export default function CallRoomRoute() {
     callData.host !== undefined &&
     call.myUserName === callData.host.name;
   const isSelfMuted = call.isSelfMuted();
+  const callEnded = callData.endTime !== undefined;
+  const durationClockMs = callEnded
+    ? callData.endTime!.toDate().getTime()
+    : now;
 
   return (
     <div className="w-full min-h-full flex flex-col items-center justify-center px-6 py-8">
@@ -588,7 +752,10 @@ export default function CallRoomRoute() {
           {callData.createTime && (
             <p className="text-xs text-muted-foreground font-mono mt-1">
               ⏱{" "}
-              {formatDuration(now - callData.createTime.toDate().getTime())}
+              {formatDuration(
+                durationClockMs - callData.createTime.toDate().getTime(),
+              )}
+              {callEnded && " (終了)"}
             </p>
           )}
         </div>
@@ -626,6 +793,13 @@ export default function CallRoomRoute() {
                 {inviteCopied ? "コピーしました" : "招待リンクをコピー"}
               </Button>
             )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleOpenBanList}
+            >
+              追放リストを管理
+            </Button>
           </div>
         )}
 
@@ -714,10 +888,16 @@ export default function CallRoomRoute() {
                       key={m.id}
                       className="text-xs text-muted-foreground italic leading-snug"
                     >
+                      <span className="font-mono mr-1">
+                        {formatClockTime(m.time)}
+                      </span>
                       {m.text}
                     </div>
                   ) : (
                     <div key={m.id} className="leading-snug">
+                      <span className="text-[10px] text-muted-foreground font-mono mr-1">
+                        {formatClockTime(m.time)}
+                      </span>
                       <span className="text-xs font-medium">
                         {m.displayName}
                       </span>
@@ -753,7 +933,11 @@ export default function CallRoomRoute() {
           </div>
         )}
 
-        {!connected ? (
+        {callEnded ? (
+          <div className="rounded-md border border-muted-foreground/30 bg-muted/40 px-3 py-3 text-sm text-muted-foreground text-center">
+            この通話は終了しました
+          </div>
+        ) : !connected ? (
           callData.visibility === CallVisibility.USERS_ONLY &&
           !call.isAuthenticated ? (
             <div className="flex flex-col gap-3">
@@ -813,7 +997,7 @@ export default function CallRoomRoute() {
             </Button>
             <Button
               variant="destructive"
-              onClick={handleLeave}
+              onClick={handleLeaveClick}
               className="w-full h-11"
             >
               退出
@@ -967,25 +1151,66 @@ export default function CallRoomRoute() {
                   )}
                   {canModerateTarget && (
                     <>
+                      {targetMuted ? (
+                        call.hostMutedIdentities.has(drawerIdentity) ? (
+                          <Button
+                            variant="outline"
+                            disabled={targetBusy}
+                            onClick={async () => {
+                              await handleMute(
+                                drawerIdentity,
+                                displayName,
+                                false,
+                              );
+                              close();
+                            }}
+                          >
+                            ミュートを解除
+                          </Button>
+                        ) : (
+                          <p className="text-xs text-muted-foreground text-center">
+                            このユーザーは自分でミュート中なので、ホストから解除できません
+                          </p>
+                        )
+                      ) : (
+                        <Button
+                          variant="outline"
+                          disabled={targetBusy}
+                          onClick={async () => {
+                            await handleMute(
+                              drawerIdentity,
+                              displayName,
+                              true,
+                            );
+                            close();
+                          }}
+                        >
+                          ミュート
+                        </Button>
+                      )}
+                      {u && (
+                        <Button
+                          variant="outline"
+                          disabled={targetBusy}
+                          onClick={async () => {
+                            if (
+                              !window.confirm(
+                                `${displayName} にホストを委譲しますか？`,
+                              )
+                            )
+                              return;
+                            await handleTransferHost(u.customId, displayName);
+                            close();
+                          }}
+                        >
+                          ホストを委譲
+                        </Button>
+                      )}
                       <Button
                         variant="outline"
                         disabled={targetBusy}
                         onClick={async () => {
-                          await handleMute(
-                            drawerIdentity,
-                            displayName,
-                            !targetMuted,
-                          );
-                          close();
-                        }}
-                      >
-                        {targetMuted ? "ミュートを解除" : "ミュート"}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        disabled={targetBusy}
-                        onClick={async () => {
-                          await handleKick(drawerIdentity);
+                          await handleKick(drawerIdentity, displayName);
                           close();
                         }}
                       >
@@ -996,7 +1221,7 @@ export default function CallRoomRoute() {
                           variant="destructive"
                           disabled={targetBusy}
                           onClick={async () => {
-                            await handleBan(drawerIdentity);
+                            await handleBan(drawerIdentity, displayName);
                             close();
                           }}
                         >
@@ -1014,6 +1239,175 @@ export default function CallRoomRoute() {
           })()}
         </DrawerContent>
       </Drawer>
+
+      <Dialog
+        open={leaveDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setLeaveDialogOpen(false);
+            setTransferMode(false);
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>ホストの退出</DialogTitle>
+            <DialogDescription>
+              ホストが退出すると通話は終了します。他のユーザーに委譲することもできます。
+            </DialogDescription>
+          </DialogHeader>
+          {!transferMode ? (
+            <div className="flex flex-col gap-2">
+              <Button
+                variant="outline"
+                disabled={leavingAction}
+                onClick={() => setTransferMode(true)}
+              >
+                ホストを委譲して退出
+              </Button>
+              <Button
+                variant="destructive"
+                disabled={leavingAction}
+                onClick={() => void handleEndAndLeave()}
+              >
+                通話を終了する
+              </Button>
+              <Button
+                variant="ghost"
+                disabled={leavingAction}
+                onClick={() => setLeaveDialogOpen(false)}
+              >
+                キャンセル
+              </Button>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <p className="text-xs text-muted-foreground">
+                新しいホストを選択してください
+              </p>
+              {(() => {
+                const eligible = participants.filter((p) => {
+                  if (!p.isCurrentlyConnected) return false;
+                  if (!p.user) return false; // guests can't be host
+                  if (p.user.name === callData.host?.name) return false; // current host
+                  return true;
+                });
+                if (eligible.length === 0) {
+                  return (
+                    <p className="text-sm text-muted-foreground">
+                      委譲可能な認証済み参加者がいません
+                    </p>
+                  );
+                }
+                return eligible.map((p) => (
+                  <Button
+                    key={p.user!.name}
+                    variant="outline"
+                    disabled={leavingAction}
+                    onClick={() =>
+                      void handleTransferAndLeave(
+                        p.user!.customId,
+                        p.user!.displayName,
+                      )
+                    }
+                    className="justify-between"
+                  >
+                    <span>{p.user!.displayName}</span>
+                    <span className="text-xs text-muted-foreground">
+                      @{p.user!.customId}
+                    </span>
+                  </Button>
+                ));
+              })()}
+              <Button
+                variant="ghost"
+                disabled={leavingAction}
+                onClick={() => setTransferMode(false)}
+              >
+                戻る
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={call.becameHost}
+        onOpenChange={(open) => {
+          if (!open) call.dismissBecameHost();
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>ホストになりました</DialogTitle>
+            <DialogDescription>
+              あなたがこの通話の新しいホストになりました。
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-2">
+            <Button onClick={() => call.dismissBecameHost()}>OK</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={banListOpen} onOpenChange={setBanListOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>追放リスト</DialogTitle>
+            <DialogDescription>
+              通話から追放されているユーザーです。解除すると再参加できるようになります。
+            </DialogDescription>
+          </DialogHeader>
+          {bansLoading ? (
+            <p className="text-sm text-muted-foreground">読み込み中...</p>
+          ) : bansError ? (
+            <p className="text-sm text-destructive">{bansError}</p>
+          ) : bans.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              追放されているユーザーはいません
+            </p>
+          ) : (
+            <ul className="flex flex-col gap-2 max-h-80 overflow-y-auto">
+              {bans.map((b) => (
+                <li
+                  key={b.name}
+                  className="flex items-center gap-3 rounded-md border p-2"
+                >
+                  <Avatar className="size-8">
+                    {b.user?.avatarUrl && (
+                      <AvatarImage
+                        src={b.user.avatarUrl}
+                        alt={b.user.displayName}
+                      />
+                    )}
+                    <AvatarFallback className="text-xs">
+                      {(b.user?.displayName ?? "??").slice(0, 2)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium truncate">
+                      {b.user?.displayName ?? "unknown"}
+                    </p>
+                    {b.user?.customId && (
+                      <p className="text-xs text-muted-foreground truncate">
+                        @{b.user.customId}
+                      </p>
+                    )}
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={unbanningName === b.name}
+                    onClick={() => void handleUnban(b.name)}
+                  >
+                    解除
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

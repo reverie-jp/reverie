@@ -73,6 +73,14 @@ export class Call extends Message<Call> {
    */
   createTime?: Timestamp;
 
+  /**
+   * Non-null once the call has been ended by the host. No new joins allowed
+   * and all participants have been disconnected.
+   *
+   * @generated from field: google.protobuf.Timestamp end_time = 5;
+   */
+  endTime?: Timestamp;
+
   constructor(data?: PartialMessage<Call>) {
     super();
     proto3.util.initPartial(data, this);
@@ -85,6 +93,7 @@ export class Call extends Message<Call> {
     { no: 2, name: "host", kind: "message", T: User },
     { no: 3, name: "visibility", kind: "enum", T: proto3.getEnumType(CallVisibility) },
     { no: 4, name: "create_time", kind: "message", T: Timestamp },
+    { no: 5, name: "end_time", kind: "message", T: Timestamp },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Call {
@@ -1079,6 +1088,378 @@ export class BanCallParticipantResponse extends Message<BanCallParticipantRespon
 
   static equals(a: BanCallParticipantResponse | PlainMessage<BanCallParticipantResponse> | undefined, b: BanCallParticipantResponse | PlainMessage<BanCallParticipantResponse> | undefined): boolean {
     return proto3.util.equals(BanCallParticipantResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message call.v1.TransferCallHostRequest
+ */
+export class TransferCallHostRequest extends Message<TransferCallHostRequest> {
+  /**
+   * "calls/{ulid}"
+   *
+   * @generated from field: string name = 1;
+   */
+  name = "";
+
+  /**
+   * New host as "users/{custom_id}". Must be a currently active authenticated
+   * participant in this call.
+   *
+   * @generated from field: string new_host = 2;
+   */
+  newHost = "";
+
+  constructor(data?: PartialMessage<TransferCallHostRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "call.v1.TransferCallHostRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "new_host", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): TransferCallHostRequest {
+    return new TransferCallHostRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): TransferCallHostRequest {
+    return new TransferCallHostRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): TransferCallHostRequest {
+    return new TransferCallHostRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: TransferCallHostRequest | PlainMessage<TransferCallHostRequest> | undefined, b: TransferCallHostRequest | PlainMessage<TransferCallHostRequest> | undefined): boolean {
+    return proto3.util.equals(TransferCallHostRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message call.v1.TransferCallHostResponse
+ */
+export class TransferCallHostResponse extends Message<TransferCallHostResponse> {
+  /**
+   * @generated from field: call.v1.Call call = 1;
+   */
+  call?: Call;
+
+  constructor(data?: PartialMessage<TransferCallHostResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "call.v1.TransferCallHostResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "call", kind: "message", T: Call },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): TransferCallHostResponse {
+    return new TransferCallHostResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): TransferCallHostResponse {
+    return new TransferCallHostResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): TransferCallHostResponse {
+    return new TransferCallHostResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: TransferCallHostResponse | PlainMessage<TransferCallHostResponse> | undefined, b: TransferCallHostResponse | PlainMessage<TransferCallHostResponse> | undefined): boolean {
+    return proto3.util.equals(TransferCallHostResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message call.v1.EndCallRequest
+ */
+export class EndCallRequest extends Message<EndCallRequest> {
+  /**
+   * "calls/{ulid}"
+   *
+   * @generated from field: string name = 1;
+   */
+  name = "";
+
+  constructor(data?: PartialMessage<EndCallRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "call.v1.EndCallRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): EndCallRequest {
+    return new EndCallRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): EndCallRequest {
+    return new EndCallRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): EndCallRequest {
+    return new EndCallRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: EndCallRequest | PlainMessage<EndCallRequest> | undefined, b: EndCallRequest | PlainMessage<EndCallRequest> | undefined): boolean {
+    return proto3.util.equals(EndCallRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message call.v1.EndCallResponse
+ */
+export class EndCallResponse extends Message<EndCallResponse> {
+  constructor(data?: PartialMessage<EndCallResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "call.v1.EndCallResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): EndCallResponse {
+    return new EndCallResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): EndCallResponse {
+    return new EndCallResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): EndCallResponse {
+    return new EndCallResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: EndCallResponse | PlainMessage<EndCallResponse> | undefined, b: EndCallResponse | PlainMessage<EndCallResponse> | undefined): boolean {
+    return proto3.util.equals(EndCallResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message call.v1.CallBan
+ */
+export class CallBan extends Message<CallBan> {
+  /**
+   * Resource name: "calls/{call_ulid}/bans/{user_ulid}".
+   *
+   * @generated from field: string name = 1;
+   */
+  name = "";
+
+  /**
+   * The banned user.
+   *
+   * @generated from field: user.v1.User user = 2;
+   */
+  user?: User;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp create_time = 3;
+   */
+  createTime?: Timestamp;
+
+  constructor(data?: PartialMessage<CallBan>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "call.v1.CallBan";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "user", kind: "message", T: User },
+    { no: 3, name: "create_time", kind: "message", T: Timestamp },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CallBan {
+    return new CallBan().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CallBan {
+    return new CallBan().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CallBan {
+    return new CallBan().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: CallBan | PlainMessage<CallBan> | undefined, b: CallBan | PlainMessage<CallBan> | undefined): boolean {
+    return proto3.util.equals(CallBan, a, b);
+  }
+}
+
+/**
+ * @generated from message call.v1.ListCallBansRequest
+ */
+export class ListCallBansRequest extends Message<ListCallBansRequest> {
+  /**
+   * "calls/{ulid}"
+   *
+   * @generated from field: string parent = 1;
+   */
+  parent = "";
+
+  /**
+   * @generated from field: int32 page_size = 2;
+   */
+  pageSize = 0;
+
+  /**
+   * @generated from field: string page_token = 3;
+   */
+  pageToken = "";
+
+  constructor(data?: PartialMessage<ListCallBansRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "call.v1.ListCallBansRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "parent", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "page_size", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 3, name: "page_token", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListCallBansRequest {
+    return new ListCallBansRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ListCallBansRequest {
+    return new ListCallBansRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ListCallBansRequest {
+    return new ListCallBansRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ListCallBansRequest | PlainMessage<ListCallBansRequest> | undefined, b: ListCallBansRequest | PlainMessage<ListCallBansRequest> | undefined): boolean {
+    return proto3.util.equals(ListCallBansRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message call.v1.ListCallBansResponse
+ */
+export class ListCallBansResponse extends Message<ListCallBansResponse> {
+  /**
+   * @generated from field: repeated call.v1.CallBan bans = 1;
+   */
+  bans: CallBan[] = [];
+
+  /**
+   * @generated from field: string next_page_token = 2;
+   */
+  nextPageToken = "";
+
+  constructor(data?: PartialMessage<ListCallBansResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "call.v1.ListCallBansResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "bans", kind: "message", T: CallBan, repeated: true },
+    { no: 2, name: "next_page_token", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListCallBansResponse {
+    return new ListCallBansResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ListCallBansResponse {
+    return new ListCallBansResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ListCallBansResponse {
+    return new ListCallBansResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ListCallBansResponse | PlainMessage<ListCallBansResponse> | undefined, b: ListCallBansResponse | PlainMessage<ListCallBansResponse> | undefined): boolean {
+    return proto3.util.equals(ListCallBansResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message call.v1.UnbanCallParticipantRequest
+ */
+export class UnbanCallParticipantRequest extends Message<UnbanCallParticipantRequest> {
+  /**
+   * "calls/{call_ulid}/bans/{user_ulid}"
+   *
+   * @generated from field: string name = 1;
+   */
+  name = "";
+
+  constructor(data?: PartialMessage<UnbanCallParticipantRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "call.v1.UnbanCallParticipantRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UnbanCallParticipantRequest {
+    return new UnbanCallParticipantRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UnbanCallParticipantRequest {
+    return new UnbanCallParticipantRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UnbanCallParticipantRequest {
+    return new UnbanCallParticipantRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: UnbanCallParticipantRequest | PlainMessage<UnbanCallParticipantRequest> | undefined, b: UnbanCallParticipantRequest | PlainMessage<UnbanCallParticipantRequest> | undefined): boolean {
+    return proto3.util.equals(UnbanCallParticipantRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message call.v1.UnbanCallParticipantResponse
+ */
+export class UnbanCallParticipantResponse extends Message<UnbanCallParticipantResponse> {
+  constructor(data?: PartialMessage<UnbanCallParticipantResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "call.v1.UnbanCallParticipantResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UnbanCallParticipantResponse {
+    return new UnbanCallParticipantResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UnbanCallParticipantResponse {
+    return new UnbanCallParticipantResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UnbanCallParticipantResponse {
+    return new UnbanCallParticipantResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: UnbanCallParticipantResponse | PlainMessage<UnbanCallParticipantResponse> | undefined, b: UnbanCallParticipantResponse | PlainMessage<UnbanCallParticipantResponse> | undefined): boolean {
+    return proto3.util.equals(UnbanCallParticipantResponse, a, b);
   }
 }
 

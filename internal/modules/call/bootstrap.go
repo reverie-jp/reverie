@@ -26,6 +26,10 @@ func InitModule(q *sqlc.Queries, userGateway usergw.Gateway, lk *livekit.Client,
 	muteCallParticipant := usecase.NewMuteCallParticipant(callRepo, lk)
 	kickCallParticipant := usecase.NewKickCallParticipant(callRepo, lk)
 	banCallParticipant := usecase.NewBanCallParticipant(callRepo, lk)
+	transferCallHost := usecase.NewTransferCallHost(callRepo, userGateway)
+	endCall := usecase.NewEndCall(callRepo, lk)
+	listCallBans := usecase.NewListCallBans(callRepo, userGateway)
+	unbanCallParticipant := usecase.NewUnbanCallParticipant(callRepo)
 
 	return handler.New(
 		createCall,
@@ -39,5 +43,9 @@ func InitModule(q *sqlc.Queries, userGateway usergw.Gateway, lk *livekit.Client,
 		muteCallParticipant,
 		kickCallParticipant,
 		banCallParticipant,
+		transferCallHost,
+		endCall,
+		listCallBans,
+		unbanCallParticipant,
 	)
 }

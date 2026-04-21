@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { BanCallParticipantRequest, BanCallParticipantResponse, CreateCallRequest, CreateCallResponse, GetCallRequest, GetCallResponse, GetUserParticipatingCallRequest, GetUserParticipatingCallResponse, HeartbeatCallRequest, HeartbeatCallResponse, JoinCallRequest, JoinCallResponse, KickCallParticipantRequest, KickCallParticipantResponse, LeaveCallRequest, LeaveCallResponse, ListPublicCallsRequest, ListPublicCallsResponse, MuteCallParticipantRequest, MuteCallParticipantResponse, UpdateCallRequest, UpdateCallResponse } from "./call_pb.js";
+import { BanCallParticipantRequest, BanCallParticipantResponse, CreateCallRequest, CreateCallResponse, EndCallRequest, EndCallResponse, GetCallRequest, GetCallResponse, GetUserParticipatingCallRequest, GetUserParticipatingCallResponse, HeartbeatCallRequest, HeartbeatCallResponse, JoinCallRequest, JoinCallResponse, KickCallParticipantRequest, KickCallParticipantResponse, LeaveCallRequest, LeaveCallResponse, ListCallBansRequest, ListCallBansResponse, ListPublicCallsRequest, ListPublicCallsResponse, MuteCallParticipantRequest, MuteCallParticipantResponse, TransferCallHostRequest, TransferCallHostResponse, UnbanCallParticipantRequest, UnbanCallParticipantResponse, UpdateCallRequest, UpdateCallResponse } from "./call_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -143,6 +143,52 @@ export const CallService = {
       name: "BanCallParticipant",
       I: BanCallParticipantRequest,
       O: BanCallParticipantResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * Transfer host role to another authenticated participant currently in
+     * the call. Host only.
+     *
+     * @generated from rpc call.v1.CallService.TransferCallHost
+     */
+    transferCallHost: {
+      name: "TransferCallHost",
+      I: TransferCallHostRequest,
+      O: TransferCallHostResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * End the call. All participants are disconnected from the LiveKit room
+     * and marked disconnected in DB. Host only.
+     *
+     * @generated from rpc call.v1.CallService.EndCall
+     */
+    endCall: {
+      name: "EndCall",
+      I: EndCallRequest,
+      O: EndCallResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * List users banned from the call. Host only.
+     *
+     * @generated from rpc call.v1.CallService.ListCallBans
+     */
+    listCallBans: {
+      name: "ListCallBans",
+      I: ListCallBansRequest,
+      O: ListCallBansResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * Remove a ban. Host only.
+     *
+     * @generated from rpc call.v1.CallService.UnbanCallParticipant
+     */
+    unbanCallParticipant: {
+      name: "UnbanCallParticipant",
+      I: UnbanCallParticipantRequest,
+      O: UnbanCallParticipantResponse,
       kind: MethodKind.Unary,
     },
   }

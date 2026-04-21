@@ -13,6 +13,7 @@ const (
 	usersCollection        = "users"
 	callsCollection        = "calls"
 	participantsCollection = "participants"
+	bansCollection         = "bans"
 )
 
 // User
@@ -71,6 +72,34 @@ func ParseCallParticipant(name string) (callID ulid.ULID, identity string, err e
 		return ulid.ULID{}, "", err
 	}
 	return callID, segments[3], nil
+}
+
+// CallBan
+
+func FormatCallBan(callID, userID ulid.ULID) string {
+	return FormatCall(callID) + "/" + bansCollection + "/" + userID.String()
+}
+
+func ParseCallBan(name string) (callID, userID ulid.ULID, err error) {
+	segments, err := split(name)
+	if err != nil {
+		return ulid.ULID{}, ulid.ULID{}, err
+	}
+	if len(segments) != 4 ||
+		segments[0] != callsCollection ||
+		segments[2] != bansCollection ||
+		segments[1] == "" || segments[3] == "" {
+		return ulid.ULID{}, ulid.ULID{}, errors.New("invalid call ban resource name: " + name)
+	}
+	callID, err = ulid.Parse(segments[1])
+	if err != nil {
+		return ulid.ULID{}, ulid.ULID{}, err
+	}
+	userID, err = ulid.Parse(segments[3])
+	if err != nil {
+		return ulid.ULID{}, ulid.ULID{}, err
+	}
+	return callID, userID, nil
 }
 
 func split(name string) ([]string, error) {

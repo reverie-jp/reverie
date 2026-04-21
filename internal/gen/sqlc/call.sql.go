@@ -43,8 +43,24 @@ func (q *Queries) CreateCallBan(ctx context.Context, arg CreateCallBanParams) er
 	return err
 }
 
+const deleteCallBan = `-- name: DeleteCallBan :exec
+DELETE FROM call_bans
+WHERE call_id = $1::ulid
+  AND user_id = $2::ulid
+`
+
+type DeleteCallBanParams struct {
+	CallID ulid.ULID `json:"call_id"`
+	UserID ulid.ULID `json:"user_id"`
+}
+
+func (q *Queries) DeleteCallBan(ctx context.Context, arg DeleteCallBanParams) error {
+	_, err := q.db.Exec(ctx, deleteCallBan, arg.CallID, arg.UserID)
+	return err
+}
+
 const getActiveCallByUser = `-- name: GetActiveCallByUser :one
-SELECT c.id, c.host_user_id, c.visibility, c.create_time, c.update_time FROM calls c
+SELECT c.id, c.host_user_id, c.visibility, c.end_time, c.create_time, c.update_time FROM calls c
 JOIN call_participants p ON p.call_id = c.id
 WHERE p.user_id = $1::ulid
   AND p.last_seen_time > NOW() - ($2::int || ' seconds')::interval
@@ -65,6 +81,7 @@ func (q *Queries) GetActiveCallByUser(ctx context.Context, arg GetActiveCallByUs
 		&i.ID,
 		&i.HostUserID,
 		&i.Visibility,
+		&i.EndTime,
 		&i.CreateTime,
 		&i.UpdateTime,
 	)
@@ -113,8 +130,9 @@ func (q *Queries) IsUserBannedFromCall(ctx context.Context, arg IsUserBannedFrom
 }
 
 const listActivePublicCalls = `-- name: ListActivePublicCalls :many
-SELECT DISTINCT c.id, c.host_user_id, c.visibility, c.create_time, c.update_time FROM calls c
+SELECT DISTINCT c.id, c.host_user_id, c.visibility, c.end_time, c.create_time, c.update_time FROM calls c
 WHERE c.visibility IN ('open', 'users_only')
+  AND c.end_time IS NULL
   AND EXISTS (
     SELECT 1 FROM call_participants p
     WHERE p.call_id = c.id
@@ -148,9 +166,44 @@ func (q *Queries) ListActivePublicCalls(ctx context.Context, arg ListActivePubli
 			&i.ID,
 			&i.HostUserID,
 			&i.Visibility,
+			&i.EndTime,
 			&i.CreateTime,
 			&i.UpdateTime,
 		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listCallBans = `-- name: ListCallBans :many
+SELECT call_id, user_id, create_time FROM call_bans
+WHERE call_id = $1::ulid
+  AND ($2::text = '' OR user_id < $2::ulid)
+ORDER BY user_id DESC
+LIMIT $3::int
+`
+
+type ListCallBansParams struct {
+	CallID       ulid.ULID `json:"call_id"`
+	CursorUserID string    `json:"cursor_user_id"`
+	PageSize     int32     `json:"page_size"`
+}
+
+func (q *Queries) ListCallBans(ctx context.Context, arg ListCallBansParams) ([]CallBan, error) {
+	rows, err := q.db.Query(ctx, listCallBans, arg.CallID, arg.CursorUserID, arg.PageSize)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []CallBan{}
+	for rows.Next() {
+		var i CallBan
+		if err := rows.Scan(&i.CallID, &i.UserID, &i.CreateTime); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -196,7 +249,7 @@ func (q *Queries) ListCallParticipants(ctx context.Context, callID ulid.ULID) ([
 }
 
 const listCallsByIDs = `-- name: ListCallsByIDs :many
-SELECT id, host_user_id, visibility, create_time, update_time FROM calls
+SELECT id, host_user_id, visibility, end_time, create_time, update_time FROM calls
 WHERE id = ANY($1::text[])
 `
 
@@ -213,6 +266,7 @@ func (q *Queries) ListCallsByIDs(ctx context.Context, ids []string) ([]Call, err
 			&i.ID,
 			&i.HostUserID,
 			&i.Visibility,
+			&i.EndTime,
 			&i.CreateTime,
 			&i.UpdateTime,
 		); err != nil {
@@ -224,6 +278,30 @@ func (q *Queries) ListCallsByIDs(ctx context.Context, ids []string) ([]Call, err
 		return nil, err
 	}
 	return items, nil
+}
+
+const markAllCallParticipantsDisconnected = `-- name: MarkAllCallParticipantsDisconnected :exec
+UPDATE call_participants
+SET disconnected_time = NOW()
+WHERE call_id = $1::ulid
+  AND disconnected_time IS NULL
+`
+
+func (q *Queries) MarkAllCallParticipantsDisconnected(ctx context.Context, callID ulid.ULID) error {
+	_, err := q.db.Exec(ctx, markAllCallParticipantsDisconnected, callID)
+	return err
+}
+
+const markCallEnded = `-- name: MarkCallEnded :exec
+UPDATE calls
+SET end_time = NOW(), update_time = NOW()
+WHERE id = $1::ulid
+  AND end_time IS NULL
+`
+
+func (q *Queries) MarkCallEnded(ctx context.Context, id ulid.ULID) error {
+	_, err := q.db.Exec(ctx, markCallEnded, id)
+	return err
 }
 
 const markCallParticipantDisconnected = `-- name: MarkCallParticipantDisconnected :execrows
@@ -245,6 +323,22 @@ func (q *Queries) MarkCallParticipantDisconnected(ctx context.Context, arg MarkC
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const updateCallHost = `-- name: UpdateCallHost :exec
+UPDATE calls
+SET host_user_id = $1::ulid, update_time = NOW()
+WHERE id = $2::ulid
+`
+
+type UpdateCallHostParams struct {
+	HostUserID ulid.ULID `json:"host_user_id"`
+	ID         ulid.ULID `json:"id"`
+}
+
+func (q *Queries) UpdateCallHost(ctx context.Context, arg UpdateCallHostParams) error {
+	_, err := q.db.Exec(ctx, updateCallHost, arg.HostUserID, arg.ID)
+	return err
 }
 
 const updateCallVisibility = `-- name: UpdateCallVisibility :exec

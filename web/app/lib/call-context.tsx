@@ -32,11 +32,22 @@ const HEARTBEAT_INTERVAL_MS = 30_000;
 export const CALL_DEFAULT_VOLUME = 0.7;
 export const CALL_UPDATED_EVENT = "reverie:call_updated";
 
+function friendlyJoinError(err: unknown): string {
+  const raw = err instanceof Error ? err.message : String(err);
+  if (raw.includes("banned")) return "この通話から追放されています";
+  if (raw.includes("ended")) return "この通話は終了しています";
+  if (raw.includes("locked")) return "この通話は非公開で参加できません";
+  if (raw.includes("guest")) return "この通話はログインユーザーのみ参加できます";
+  if (raw.includes("already_in")) return "別の通話に参加しています";
+  return raw;
+}
+
 export type ChatMessage = {
   id: string;
   identity: string;
   displayName: string;
   text: string;
+  time: number;
   system?: boolean;
 };
 
@@ -54,6 +65,8 @@ type CallContextValue = {
   chatMessages: ChatMessage[];
   volumes: Record<string, number>;
   hostMutedMe: boolean;
+  hostMutedIdentities: Set<string>;
+  becameHost: boolean;
   tick: number;
 
   join: (callId: string, guestDisplayName?: string) => Promise<JoinResult>;
@@ -65,6 +78,8 @@ type CallContextValue = {
   addSystemMessage: (text: string) => void;
   appendChatMessage: (msg: ChatMessage) => void;
   clearChatMessages: () => void;
+  dismissBecameHost: () => void;
+  markHostMuted: (identity: string, muted: boolean) => void;
 
   isSelfMuted: () => boolean;
   isParticipantMuted: (identity: string) => boolean;
@@ -93,7 +108,23 @@ export function CallProvider({ children }: { children: ReactNode }) {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [volumes, setVolumes] = useState<Record<string, number>>({});
   const [hostMutedMe, setHostMutedMe] = useState(false);
+  const [hostMutedIdentities, setHostMutedIdentities] = useState<Set<string>>(
+    new Set(),
+  );
+  const [becameHost, setBecameHost] = useState(false);
   const [tick, setTick] = useState(0);
+
+  const markHostMuted = useCallback((identity: string, muted: boolean) => {
+    setHostMutedIdentities((prev) => {
+      const has = prev.has(identity);
+      if (muted && has) return prev;
+      if (!muted && !has) return prev;
+      const next = new Set(prev);
+      if (muted) next.add(identity);
+      else next.delete(identity);
+      return next;
+    });
+  }, []);
   const rerender = useCallback(() => setTick((t) => t + 1), []);
 
   const roomRef = useRef<Room | null>(null);
@@ -105,10 +136,12 @@ export function CallProvider({ children }: { children: ReactNode }) {
   const intentionalLeaveRef = useRef(false);
   const volumesRef = useRef<Record<string, number>>({});
   const hostMutedMeRef = useRef(false);
+  const myUserNameRef = useRef<string | null>(null);
   const audioContainerRef = useRef<HTMLDivElement | null>(null);
 
   volumesRef.current = volumes;
   hostMutedMeRef.current = hostMutedMe;
+  myUserNameRef.current = myUserName;
   callIdRef.current = callId;
   isAuthenticatedRef.current = isAuthenticated;
 
@@ -122,6 +155,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
         identity: "system",
         displayName: "システム",
         text,
+        time: Date.now(),
         system: true,
       },
     ]);
@@ -325,6 +359,12 @@ export function CallProvider({ children }: { children: ReactNode }) {
                 setHostMutedMe(v);
                 hostMutedMeRef.current = v;
               }
+              if (typeof msg.targetIdentity === "string") {
+                markHostMuted(
+                  msg.targetIdentity,
+                  msg.type === "host_muted",
+                );
+              }
               const targetName =
                 typeof msg.targetDisplayName === "string"
                   ? msg.targetDisplayName
@@ -346,6 +386,41 @@ export function CallProvider({ children }: { children: ReactNode }) {
               );
               return;
             }
+            if (msg?.type === "host_kicked") {
+              const target =
+                typeof msg.targetDisplayName === "string"
+                  ? msg.targetDisplayName
+                  : "参加者";
+              addSystemMessage(`ホストが ${target} をキックしました`);
+              return;
+            }
+            if (msg?.type === "host_banned") {
+              const target =
+                typeof msg.targetDisplayName === "string"
+                  ? msg.targetDisplayName
+                  : "参加者";
+              addSystemMessage(`ホストが ${target} を追放しました`);
+              return;
+            }
+            if (msg?.type === "host_transferred") {
+              const newHostDisplayName =
+                typeof msg.newHostDisplayName === "string"
+                  ? msg.newHostDisplayName
+                  : "参加者";
+              const newHostName =
+                typeof msg.newHostName === "string" ? msg.newHostName : "";
+              addSystemMessage(
+                `${newHostDisplayName} が新しいホストになりました`,
+              );
+              if (
+                myUserNameRef.current &&
+                myUserNameRef.current === newHostName
+              ) {
+                setBecameHost(true);
+              }
+              window.dispatchEvent(new CustomEvent(CALL_UPDATED_EVENT));
+              return;
+            }
             if (
               msg?.type === "chat_message" &&
               typeof msg.text === "string" &&
@@ -358,6 +433,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
                 identity: participant.identity,
                 displayName: participant.name || participant.identity,
                 text: msg.text,
+                time: Date.now(),
               });
             }
           } catch {
@@ -391,6 +467,21 @@ export function CallProvider({ children }: { children: ReactNode }) {
       setConnected(false);
       setIdentity(null);
       setJoinError("ホストにより通話から退出させられました");
+      window.dispatchEvent(new CustomEvent(CALL_UPDATED_EVENT));
+      return;
+    }
+    if (reason === DisconnectReason.ROOM_DELETED) {
+      // Call was ended by the host. Clean up and surface the notice.
+      // Server has also set end_time, so any rejoin attempt would fail.
+      roomRef.current = null;
+      joinResRef.current = null;
+      setConnected(false);
+      setIdentity(null);
+      setJoinError("通話は終了しました");
+      setChatMessages([]);
+      setVolumes({});
+      setHostMutedMe(false);
+      hostMutedMeRef.current = false;
       window.dispatchEvent(new CustomEvent(CALL_UPDATED_EVENT));
       return;
     }
@@ -461,10 +552,11 @@ export function CallProvider({ children }: { children: ReactNode }) {
       return { ok: true };
     } catch (err) {
       console.error("JoinCall failed:", err);
-      const msg = err instanceof Error ? err.message : String(err);
+      const msg = friendlyJoinError(err);
       setJoinError(msg);
-      setCallId(null);
-      callIdRef.current = null;
+      // Keep callId so the route's joinError gating (call.callId === callId)
+      // continues to surface the error. connected stays false and roomRef is
+      // null, so the UI remains in the pre-join state and the user can retry.
       setConnected(false);
       joinResRef.current = null;
       setIdentity(null);
@@ -501,6 +593,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
     setVolumes({});
     setHostMutedMe(false);
     hostMutedMeRef.current = false;
+    setHostMutedIdentities(new Set());
   };
 
   const toggleSelfMic = async () => {
@@ -538,6 +631,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
       identity: local.identity,
       displayName: local.name || local.identity,
       text: trimmed,
+      time: Date.now(),
     });
   };
 
@@ -579,6 +673,8 @@ export function CallProvider({ children }: { children: ReactNode }) {
     chatMessages,
     volumes,
     hostMutedMe,
+    hostMutedIdentities,
+    becameHost,
     tick,
     join,
     leave,
@@ -589,6 +685,8 @@ export function CallProvider({ children }: { children: ReactNode }) {
     addSystemMessage,
     appendChatMessage,
     clearChatMessages,
+    dismissBecameHost: () => setBecameHost(false),
+    markHostMuted,
     isSelfMuted,
     isParticipantMuted,
     getRoom: () => roomRef.current,

@@ -40,6 +40,9 @@ func (uc *JoinCall) Execute(ctx context.Context, input JoinCallInput) (*JoinCall
 	if call == nil {
 		return nil, xerrors.ErrCallNotFound
 	}
+	if call.EndTime != nil {
+		return nil, xerrors.ErrCallEnded
+	}
 
 	if err := uc.checkJoinVisibility(call, input.RequesterID); err != nil {
 		return nil, err

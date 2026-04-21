@@ -13,8 +13,20 @@ func ToCall(row *sqlc.Call) *entity.Call {
 		ID:         row.ID,
 		HostUserID: row.HostUserID,
 		Visibility: entity.CallVisibility(row.Visibility),
+		EndTime:    row.EndTime,
 		CreateTime: row.CreateTime,
 		UpdateTime: row.UpdateTime,
+	}
+}
+
+func ToCallBan(row *sqlc.CallBan) *entity.CallBan {
+	if row == nil {
+		return nil
+	}
+	return &entity.CallBan{
+		CallID:     row.CallID,
+		UserID:     row.UserID,
+		CreateTime: row.CreateTime,
 	}
 }
 

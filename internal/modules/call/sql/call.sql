@@ -17,6 +17,7 @@ WHERE id = sqlc.arg(id)::ulid;
 -- ULID (monotonic, DESC). cursor_id="" means first page.
 SELECT DISTINCT c.* FROM calls c
 WHERE c.visibility IN ('open', 'users_only')
+  AND c.end_time IS NULL
   AND EXISTS (
     SELECT 1 FROM call_participants p
     WHERE p.call_id = c.id
@@ -74,3 +75,32 @@ SELECT EXISTS (
   WHERE call_id = sqlc.arg(call_id)::ulid
     AND user_id = sqlc.arg(user_id)::ulid
 ) AS banned;
+
+-- name: ListCallBans :many
+SELECT * FROM call_bans
+WHERE call_id = sqlc.arg(call_id)::ulid
+  AND (sqlc.arg(cursor_user_id)::text = '' OR user_id < sqlc.arg(cursor_user_id)::ulid)
+ORDER BY user_id DESC
+LIMIT sqlc.arg(page_size)::int;
+
+-- name: DeleteCallBan :exec
+DELETE FROM call_bans
+WHERE call_id = sqlc.arg(call_id)::ulid
+  AND user_id = sqlc.arg(user_id)::ulid;
+
+-- name: UpdateCallHost :exec
+UPDATE calls
+SET host_user_id = sqlc.arg(host_user_id)::ulid, update_time = NOW()
+WHERE id = sqlc.arg(id)::ulid;
+
+-- name: MarkAllCallParticipantsDisconnected :exec
+UPDATE call_participants
+SET disconnected_time = NOW()
+WHERE call_id = sqlc.arg(call_id)::ulid
+  AND disconnected_time IS NULL;
+
+-- name: MarkCallEnded :exec
+UPDATE calls
+SET end_time = NOW(), update_time = NOW()
+WHERE id = sqlc.arg(id)::ulid
+  AND end_time IS NULL;
