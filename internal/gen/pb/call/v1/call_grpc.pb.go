@@ -27,6 +27,9 @@ const (
 	CallService_JoinCall_FullMethodName                 = "/call.v1.CallService/JoinCall"
 	CallService_HeartbeatCall_FullMethodName            = "/call.v1.CallService/HeartbeatCall"
 	CallService_LeaveCall_FullMethodName                = "/call.v1.CallService/LeaveCall"
+	CallService_MuteCallParticipant_FullMethodName      = "/call.v1.CallService/MuteCallParticipant"
+	CallService_KickCallParticipant_FullMethodName      = "/call.v1.CallService/KickCallParticipant"
+	CallService_BanCallParticipant_FullMethodName       = "/call.v1.CallService/BanCallParticipant"
 )
 
 // CallServiceClient is the client API for CallService service.
@@ -59,6 +62,14 @@ type CallServiceClient interface {
 	// Mark the participant as disconnected. Should be called on intentional
 	// leave and (via navigator.sendBeacon) on page unload.
 	LeaveCall(ctx context.Context, in *LeaveCallRequest, opts ...grpc.CallOption) (*LeaveCallResponse, error)
+	// Server-side mute/unmute a participant's microphone. Host only.
+	MuteCallParticipant(ctx context.Context, in *MuteCallParticipantRequest, opts ...grpc.CallOption) (*MuteCallParticipantResponse, error)
+	// Temporarily remove a participant from the call. They can rejoin. Host
+	// only.
+	KickCallParticipant(ctx context.Context, in *KickCallParticipantRequest, opts ...grpc.CallOption) (*KickCallParticipantResponse, error)
+	// Permanently ban a participant from the call. Authenticated targets only
+	// (guest identities are ephemeral and cannot be banned). Host only.
+	BanCallParticipant(ctx context.Context, in *BanCallParticipantRequest, opts ...grpc.CallOption) (*BanCallParticipantResponse, error)
 }
 
 type callServiceClient struct {
@@ -149,6 +160,36 @@ func (c *callServiceClient) LeaveCall(ctx context.Context, in *LeaveCallRequest,
 	return out, nil
 }
 
+func (c *callServiceClient) MuteCallParticipant(ctx context.Context, in *MuteCallParticipantRequest, opts ...grpc.CallOption) (*MuteCallParticipantResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MuteCallParticipantResponse)
+	err := c.cc.Invoke(ctx, CallService_MuteCallParticipant_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *callServiceClient) KickCallParticipant(ctx context.Context, in *KickCallParticipantRequest, opts ...grpc.CallOption) (*KickCallParticipantResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(KickCallParticipantResponse)
+	err := c.cc.Invoke(ctx, CallService_KickCallParticipant_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *callServiceClient) BanCallParticipant(ctx context.Context, in *BanCallParticipantRequest, opts ...grpc.CallOption) (*BanCallParticipantResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(BanCallParticipantResponse)
+	err := c.cc.Invoke(ctx, CallService_BanCallParticipant_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CallServiceServer is the server API for CallService service.
 // All implementations must embed UnimplementedCallServiceServer
 // for forward compatibility.
@@ -179,6 +220,14 @@ type CallServiceServer interface {
 	// Mark the participant as disconnected. Should be called on intentional
 	// leave and (via navigator.sendBeacon) on page unload.
 	LeaveCall(context.Context, *LeaveCallRequest) (*LeaveCallResponse, error)
+	// Server-side mute/unmute a participant's microphone. Host only.
+	MuteCallParticipant(context.Context, *MuteCallParticipantRequest) (*MuteCallParticipantResponse, error)
+	// Temporarily remove a participant from the call. They can rejoin. Host
+	// only.
+	KickCallParticipant(context.Context, *KickCallParticipantRequest) (*KickCallParticipantResponse, error)
+	// Permanently ban a participant from the call. Authenticated targets only
+	// (guest identities are ephemeral and cannot be banned). Host only.
+	BanCallParticipant(context.Context, *BanCallParticipantRequest) (*BanCallParticipantResponse, error)
 	mustEmbedUnimplementedCallServiceServer()
 }
 
@@ -212,6 +261,15 @@ func (UnimplementedCallServiceServer) HeartbeatCall(context.Context, *HeartbeatC
 }
 func (UnimplementedCallServiceServer) LeaveCall(context.Context, *LeaveCallRequest) (*LeaveCallResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method LeaveCall not implemented")
+}
+func (UnimplementedCallServiceServer) MuteCallParticipant(context.Context, *MuteCallParticipantRequest) (*MuteCallParticipantResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MuteCallParticipant not implemented")
+}
+func (UnimplementedCallServiceServer) KickCallParticipant(context.Context, *KickCallParticipantRequest) (*KickCallParticipantResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method KickCallParticipant not implemented")
+}
+func (UnimplementedCallServiceServer) BanCallParticipant(context.Context, *BanCallParticipantRequest) (*BanCallParticipantResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BanCallParticipant not implemented")
 }
 func (UnimplementedCallServiceServer) mustEmbedUnimplementedCallServiceServer() {}
 func (UnimplementedCallServiceServer) testEmbeddedByValue()                     {}
@@ -378,6 +436,60 @@ func _CallService_LeaveCall_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CallService_MuteCallParticipant_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MuteCallParticipantRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CallServiceServer).MuteCallParticipant(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CallService_MuteCallParticipant_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CallServiceServer).MuteCallParticipant(ctx, req.(*MuteCallParticipantRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CallService_KickCallParticipant_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(KickCallParticipantRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CallServiceServer).KickCallParticipant(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CallService_KickCallParticipant_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CallServiceServer).KickCallParticipant(ctx, req.(*KickCallParticipantRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CallService_BanCallParticipant_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BanCallParticipantRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CallServiceServer).BanCallParticipant(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CallService_BanCallParticipant_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CallServiceServer).BanCallParticipant(ctx, req.(*BanCallParticipantRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CallService_ServiceDesc is the grpc.ServiceDesc for CallService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -416,6 +528,18 @@ var CallService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "LeaveCall",
 			Handler:    _CallService_LeaveCall_Handler,
+		},
+		{
+			MethodName: "MuteCallParticipant",
+			Handler:    _CallService_MuteCallParticipant_Handler,
+		},
+		{
+			MethodName: "KickCallParticipant",
+			Handler:    _CallService_KickCallParticipant_Handler,
+		},
+		{
+			MethodName: "BanCallParticipant",
+			Handler:    _CallService_BanCallParticipant_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

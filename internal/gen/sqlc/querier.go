@@ -13,6 +13,7 @@ import (
 type Querier interface {
 	CreateAuthProvider(ctx context.Context, arg CreateAuthProviderParams) error
 	CreateCall(ctx context.Context, arg CreateCallParams) error
+	CreateCallBan(ctx context.Context, arg CreateCallBanParams) error
 	CreateRefreshToken(ctx context.Context, arg CreateRefreshTokenParams) error
 	CreateUser(ctx context.Context, arg CreateUserParams) error
 	DeleteExpiredRefreshTokensByUserID(ctx context.Context, userID string) error
@@ -23,6 +24,7 @@ type Querier interface {
 	GetRefreshTokenByHash(ctx context.Context, tokenHash string) (RefreshToken, error)
 	GetUserByCustomID(ctx context.Context, customID string) (User, error)
 	HeartbeatCallParticipant(ctx context.Context, arg HeartbeatCallParticipantParams) (int64, error)
+	IsUserBannedFromCall(ctx context.Context, arg IsUserBannedFromCallParams) (bool, error)
 	// Returns all active non-hidden calls (OPEN and USERS_ONLY). The usecase
 	// filters further based on the caller's auth state. Keyset paginated by
 	// ULID (monotonic, DESC). cursor_id="" means first page.

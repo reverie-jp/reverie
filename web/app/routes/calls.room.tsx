@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router";
 import {
+  DisconnectReason,
   Room,
   RoomEvent,
   Track,
@@ -20,7 +21,7 @@ import {
   tokenStore,
   userClient,
 } from "~/lib/api-client";
-import { formatCall } from "~/lib/resource-name";
+import { formatCall, parseCallParticipant } from "~/lib/resource-name";
 import { Button } from "~/components/ui/button";
 
 const GUEST_DISPLAY_NAME_KEY = "reverie.guest_display_name";
@@ -45,6 +46,7 @@ type ChatMessage = {
   identity: string;
   displayName: string;
   text: string;
+  system?: boolean;
 };
 
 function makeMessageID(identity: string): string {
@@ -65,6 +67,9 @@ export default function CallRoomRoute() {
   const [joinError, setJoinError] = useState<string | null>(null);
   const [updatingVisibility, setUpdatingVisibility] = useState(false);
   const [inviteCopied, setInviteCopied] = useState(false);
+  const [moderatingIdentity, setModeratingIdentity] = useState<string | null>(
+    null,
+  );
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [, setTick] = useState(0);
@@ -75,6 +80,8 @@ export default function CallRoomRoute() {
   const refreshTimerRef = useRef<number | null>(null);
   const heartbeatTimerRef = useRef<number | null>(null);
   const intentionalLeaveRef = useRef(false);
+  const isSelfMutedRef = useRef(false);
+  const hostMutedMeRef = useRef(false);
 
   const rerender = () => setTick((t) => t + 1);
 
@@ -117,6 +124,30 @@ export default function CallRoomRoute() {
     }
   }, []);
 
+  const addSystemMessage = (text: string) => {
+    setChatMessages((prev) => [
+      ...prev,
+      {
+        id: `system-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        identity: "system",
+        displayName: "システム",
+        text,
+        system: true,
+      },
+    ]);
+  };
+
+  const publishRoomData = async (payload: unknown) => {
+    const room = roomRef.current;
+    if (!room) return;
+    try {
+      const bytes = new TextEncoder().encode(JSON.stringify(payload));
+      await room.localParticipant.publishData(bytes, { reliable: true });
+    } catch (err) {
+      console.warn("publishData failed:", err);
+    }
+  };
+
   const sendChat = async () => {
     const room = roomRef.current;
     const text = chatInput.trim();
@@ -147,6 +178,101 @@ export default function CallRoomRoute() {
       chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
     }
   }, [chatMessages]);
+
+  const isParticipantMuted = (identity: string): boolean => {
+    const room = roomRef.current;
+    if (!room) return false;
+    const participant =
+      room.localParticipant.identity === identity
+        ? room.localParticipant
+        : room.remoteParticipants.get(identity);
+    if (!participant) return false;
+    const audio = participant
+      .getTrackPublications()
+      .filter((pub) => pub.kind === Track.Kind.Audio);
+    if (audio.length === 0) return false;
+    return audio.every((pub) => pub.isMuted);
+  };
+
+  const handleMute = async (
+    identity: string,
+    displayName: string,
+    muted: boolean,
+  ) => {
+    if (!callName) return;
+    setModeratingIdentity(identity);
+    try {
+      await callClient.muteCallParticipant({
+        name: `${callName}/participants/${identity}`,
+        muted,
+      });
+      const kind = muted ? "host_muted" : "host_unmuted";
+      await publishRoomData({
+        type: kind,
+        targetIdentity: identity,
+        targetDisplayName: displayName,
+      });
+      addSystemMessage(
+        muted
+          ? `ホストが ${displayName} をミュートしました`
+          : `ホストが ${displayName} のミュートを解除しました`,
+      );
+    } catch (err) {
+      console.error("MuteCallParticipant failed:", err);
+    } finally {
+      setModeratingIdentity(null);
+    }
+  };
+
+  const handleKick = async (identity: string) => {
+    if (!callName) return;
+    if (!window.confirm("この参加者を一時的にキックしますか？")) return;
+    setModeratingIdentity(identity);
+    try {
+      await callClient.kickCallParticipant({
+        name: `${callName}/participants/${identity}`,
+      });
+      await fetchCallInfo({ silent: true });
+    } catch (err) {
+      console.error("KickCallParticipant failed:", err);
+    } finally {
+      setModeratingIdentity(null);
+    }
+  };
+
+  const handleBan = async (identity: string) => {
+    if (!callName) return;
+    if (!window.confirm("この参加者を永久に追放します。よろしいですか？"))
+      return;
+    setModeratingIdentity(identity);
+    try {
+      await callClient.banCallParticipant({
+        name: `${callName}/participants/${identity}`,
+      });
+      await fetchCallInfo({ silent: true });
+    } catch (err) {
+      console.error("BanCallParticipant failed:", err);
+    } finally {
+      setModeratingIdentity(null);
+    }
+  };
+
+  const handleToggleSelfMic = async () => {
+    const room = roomRef.current;
+    if (!room) return;
+    const wantUnmute = isSelfMutedRef.current;
+    if (wantUnmute && hostMutedMeRef.current) {
+      const myName = room.localParticipant.name || room.localParticipant.identity;
+      addSystemMessage(`${myName} がミュートの解除を求めています`);
+      await publishRoomData({ type: "unmute_request", requesterDisplayName: myName });
+      return;
+    }
+    try {
+      await room.localParticipant.setMicrophoneEnabled(wantUnmute);
+    } catch (err) {
+      console.warn("toggle mic failed:", err);
+    }
+  };
 
   const copyInviteLink = async () => {
     if (!callId) return;
@@ -305,6 +431,8 @@ export default function CallRoomRoute() {
       .on(RoomEvent.TrackUnsubscribed, (track: RemoteTrack) => {
         track.detach().forEach((el) => el.remove());
       })
+      .on(RoomEvent.TrackMuted, () => rerender())
+      .on(RoomEvent.TrackUnmuted, () => rerender())
       .on(
         RoomEvent.DataReceived,
         (payload: Uint8Array, participant?: RemoteParticipant) => {
@@ -312,6 +440,30 @@ export default function CallRoomRoute() {
             const msg = JSON.parse(new TextDecoder().decode(payload));
             if (msg?.type === "call_updated") {
               void fetchCallInfo({ silent: true });
+              return;
+            }
+            if (msg?.type === "host_muted" || msg?.type === "host_unmuted") {
+              const myIdentity = roomRef.current?.localParticipant.identity;
+              if (myIdentity && msg.targetIdentity === myIdentity) {
+                hostMutedMeRef.current = msg.type === "host_muted";
+              }
+              const targetName =
+                typeof msg.targetDisplayName === "string"
+                  ? msg.targetDisplayName
+                  : "参加者";
+              addSystemMessage(
+                msg.type === "host_muted"
+                  ? `ホストが ${targetName} をミュートしました`
+                  : `ホストが ${targetName} のミュートを解除しました`,
+              );
+              return;
+            }
+            if (msg?.type === "unmute_request") {
+              const requester =
+                typeof msg.requesterDisplayName === "string"
+                  ? msg.requesterDisplayName
+                  : "参加者";
+              addSystemMessage(`${requester} がミュートの解除を求めています`);
               return;
             }
             if (
@@ -334,15 +486,23 @@ export default function CallRoomRoute() {
           }
         },
       )
-      .on(RoomEvent.Disconnected, () => {
-        void handleDisconnected();
+      .on(RoomEvent.Disconnected, (reason?: DisconnectReason) => {
+        void handleDisconnected(reason);
       });
   };
 
-  const handleDisconnected = async () => {
+  const handleDisconnected = async (reason?: DisconnectReason) => {
     clearRefreshTimer();
+    clearHeartbeatTimer();
     if (intentionalLeaveRef.current) {
       intentionalLeaveRef.current = false;
+      return;
+    }
+    if (reason === DisconnectReason.PARTICIPANT_REMOVED) {
+      setConnected(false);
+      setJoinError("ホストにより通話から退出させられました");
+      void fetchCallInfo();
+      rerender();
       return;
     }
     if (!isAuthenticated) {
@@ -472,6 +632,9 @@ export default function CallRoomRoute() {
     : 0;
   const isHost =
     myUserName !== null && call.host !== undefined && myUserName === call.host.name;
+  const selfIdentity = latestJoinResRef.current?.identity ?? "";
+  const isSelfMuted = connected && isParticipantMuted(selfIdentity);
+  isSelfMutedRef.current = isSelfMuted;
 
   return (
     <div className="w-full min-h-full flex flex-col items-center justify-center px-6 py-8">
@@ -530,13 +693,32 @@ export default function CallRoomRoute() {
             </div>
           )
         ) : (
-          <Button
-            variant="destructive"
-            onClick={handleLeave}
-            className="w-full h-11"
-          >
-            退出
-          </Button>
+          <div className="flex flex-col gap-2">
+            {isSelfMuted && hostMutedMeRef.current && (
+              <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive flex items-center gap-2">
+                <span aria-hidden>🔇</span>
+                <span>あなたはミュートされています</span>
+              </div>
+            )}
+            <Button
+              variant="outline"
+              onClick={() => void handleToggleSelfMic()}
+              className="w-full h-11"
+            >
+              {isSelfMuted
+                ? hostMutedMeRef.current
+                  ? "解除をリクエスト"
+                  : "マイクをオンにする"
+                : "マイクをミュート"}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleLeave}
+              className="w-full h-11"
+            >
+              退出
+            </Button>
+          </div>
         )}
 
         {isHost && (
@@ -584,30 +766,92 @@ export default function CallRoomRoute() {
               まだ誰も参加していません
             </p>
           ) : (
-            <ul className="flex flex-col gap-1 text-sm">
-              {participants.map((p) => (
-                <li key={p.name} className="flex items-center gap-2">
-                  <span
-                    className={`size-1.5 rounded-full ${
-                      p.isCurrentlyConnected
-                        ? "bg-green-500"
-                        : "bg-muted-foreground/30"
-                    }`}
-                  />
-                  <span
-                    className={
-                      p.isCurrentlyConnected ? "" : "text-muted-foreground"
-                    }
+            <ul className="flex flex-col gap-2 text-sm">
+              {participants.map((p) => {
+                const identity = parseCallParticipant(p.name).identity;
+                const isTargetHost = call.host?.name === p.user?.name;
+                const isSelf =
+                  (myUserName && p.user?.name === myUserName) ||
+                  (!isAuthenticated &&
+                    latestJoinResRef.current?.identity === identity);
+                const canModerate =
+                  isHost &&
+                  !isTargetHost &&
+                  !isSelf &&
+                  p.isCurrentlyConnected;
+                const muted = isParticipantMuted(identity);
+                const busy = moderatingIdentity === identity;
+                return (
+                  <li
+                    key={p.name}
+                    className="flex items-center gap-2 flex-wrap"
                   >
-                    {p.user?.displayName || p.displayName}
-                  </span>
-                  {p.user && (
-                    <span className="text-xs text-muted-foreground">
-                      @{p.user.customId}
+                    <span
+                      className={`size-1.5 rounded-full ${
+                        p.isCurrentlyConnected
+                          ? "bg-green-500"
+                          : "bg-muted-foreground/30"
+                      }`}
+                    />
+                    <span
+                      className={
+                        p.isCurrentlyConnected ? "" : "text-muted-foreground"
+                      }
+                    >
+                      {p.user?.displayName || p.displayName}
                     </span>
-                  )}
-                </li>
-              ))}
+                    {p.user && (
+                      <span className="text-xs text-muted-foreground">
+                        @{p.user.customId}
+                      </span>
+                    )}
+                    {p.isCurrentlyConnected && muted && (
+                      <span
+                        className="text-xs text-muted-foreground"
+                        title="ミュート中"
+                      >
+                        🔇
+                      </span>
+                    )}
+                    {canModerate && (
+                      <span className="ml-auto flex gap-1">
+                        <Button
+                          size="xs"
+                          variant="outline"
+                          disabled={busy}
+                          onClick={() =>
+                            void handleMute(
+                              identity,
+                              p.user?.displayName || p.displayName,
+                              !muted,
+                            )
+                          }
+                        >
+                          {muted ? "解除" : "ミュート"}
+                        </Button>
+                        <Button
+                          size="xs"
+                          variant="outline"
+                          disabled={busy}
+                          onClick={() => void handleKick(identity)}
+                        >
+                          キック
+                        </Button>
+                        {p.user && (
+                          <Button
+                            size="xs"
+                            variant="destructive"
+                            disabled={busy}
+                            onClick={() => void handleBan(identity)}
+                          >
+                            追放
+                          </Button>
+                        )}
+                      </span>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>
@@ -619,21 +863,32 @@ export default function CallRoomRoute() {
             </p>
             <div
               ref={chatScrollRef}
-              className="flex flex-col gap-1 max-h-48 overflow-y-auto text-sm"
+              className="flex flex-col gap-1 h-48 overflow-y-auto text-sm"
             >
               {chatMessages.length === 0 ? (
                 <p className="text-xs text-muted-foreground">
                   まだメッセージはありません
                 </p>
               ) : (
-                chatMessages.map((m) => (
-                  <div key={m.id} className="leading-snug">
-                    <span className="text-xs font-medium">{m.displayName}</span>
-                    <span className="ml-2 whitespace-pre-wrap wrap-break-word">
+                chatMessages.map((m) =>
+                  m.system ? (
+                    <div
+                      key={m.id}
+                      className="text-xs text-muted-foreground italic leading-snug"
+                    >
                       {m.text}
-                    </span>
-                  </div>
-                ))
+                    </div>
+                  ) : (
+                    <div key={m.id} className="leading-snug">
+                      <span className="text-xs font-medium">
+                        {m.displayName}
+                      </span>
+                      <span className="ml-2 whitespace-pre-wrap wrap-break-word">
+                        {m.text}
+                      </span>
+                    </div>
+                  ),
+                )
               )}
             </div>
             <div className="flex gap-2">

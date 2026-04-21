@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { CreateCallRequest, CreateCallResponse, GetCallRequest, GetCallResponse, GetUserParticipatingCallRequest, GetUserParticipatingCallResponse, HeartbeatCallRequest, HeartbeatCallResponse, JoinCallRequest, JoinCallResponse, LeaveCallRequest, LeaveCallResponse, ListPublicCallsRequest, ListPublicCallsResponse, UpdateCallRequest, UpdateCallResponse } from "./call_pb.js";
+import { BanCallParticipantRequest, BanCallParticipantResponse, CreateCallRequest, CreateCallResponse, GetCallRequest, GetCallResponse, GetUserParticipatingCallRequest, GetUserParticipatingCallResponse, HeartbeatCallRequest, HeartbeatCallResponse, JoinCallRequest, JoinCallResponse, KickCallParticipantRequest, KickCallParticipantResponse, LeaveCallRequest, LeaveCallResponse, ListPublicCallsRequest, ListPublicCallsResponse, MuteCallParticipantRequest, MuteCallParticipantResponse, UpdateCallRequest, UpdateCallResponse } from "./call_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -108,6 +108,41 @@ export const CallService = {
       name: "LeaveCall",
       I: LeaveCallRequest,
       O: LeaveCallResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * Server-side mute/unmute a participant's microphone. Host only.
+     *
+     * @generated from rpc call.v1.CallService.MuteCallParticipant
+     */
+    muteCallParticipant: {
+      name: "MuteCallParticipant",
+      I: MuteCallParticipantRequest,
+      O: MuteCallParticipantResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * Temporarily remove a participant from the call. They can rejoin. Host
+     * only.
+     *
+     * @generated from rpc call.v1.CallService.KickCallParticipant
+     */
+    kickCallParticipant: {
+      name: "KickCallParticipant",
+      I: KickCallParticipantRequest,
+      O: KickCallParticipantResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * Permanently ban a participant from the call. Authenticated targets only
+     * (guest identities are ephemeral and cannot be banned). Host only.
+     *
+     * @generated from rpc call.v1.CallService.BanCallParticipant
+     */
+    banCallParticipant: {
+      name: "BanCallParticipant",
+      I: BanCallParticipantRequest,
+      O: BanCallParticipantResponse,
       kind: MethodKind.Unary,
     },
   }

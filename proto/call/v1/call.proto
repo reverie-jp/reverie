@@ -78,6 +78,32 @@ service CallService {
       body: "*"
     };
   }
+
+  // Server-side mute/unmute a participant's microphone. Host only.
+  rpc MuteCallParticipant(MuteCallParticipantRequest) returns (MuteCallParticipantResponse) {
+    option (google.api.http) = {
+      post: "/v1/{name=calls/*/participants/*}:mute"
+      body: "*"
+    };
+  }
+
+  // Temporarily remove a participant from the call. They can rejoin. Host
+  // only.
+  rpc KickCallParticipant(KickCallParticipantRequest) returns (KickCallParticipantResponse) {
+    option (google.api.http) = {
+      post: "/v1/{name=calls/*/participants/*}:kick"
+      body: "*"
+    };
+  }
+
+  // Permanently ban a participant from the call. Authenticated targets only
+  // (guest identities are ephemeral and cannot be banned). Host only.
+  rpc BanCallParticipant(BanCallParticipantRequest) returns (BanCallParticipantResponse) {
+    option (google.api.http) = {
+      post: "/v1/{name=calls/*/participants/*}:ban"
+      body: "*"
+    };
+  }
 }
 
 enum CallVisibility {
@@ -208,3 +234,26 @@ message LeaveCallRequest {
 }
 
 message LeaveCallResponse {}
+
+message MuteCallParticipantRequest {
+  // "calls/{ulid}/participants/{identity}"
+  string name = 1;
+  // True to mute, false to unmute.
+  bool muted = 2;
+}
+
+message MuteCallParticipantResponse {}
+
+message KickCallParticipantRequest {
+  // "calls/{ulid}/participants/{identity}"
+  string name = 1;
+}
+
+message KickCallParticipantResponse {}
+
+message BanCallParticipantRequest {
+  // "calls/{ulid}/participants/{identity}"
+  string name = 1;
+}
+
+message BanCallParticipantResponse {}

@@ -1033,6 +1033,258 @@ func (*LeaveCallResponse) Descriptor() ([]byte, []int) {
 	return file_call_v1_call_proto_rawDescGZIP(), []int{17}
 }
 
+type MuteCallParticipantRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// "calls/{ulid}/participants/{identity}"
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// True to mute, false to unmute.
+	Muted         bool `protobuf:"varint,2,opt,name=muted,proto3" json:"muted,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MuteCallParticipantRequest) Reset() {
+	*x = MuteCallParticipantRequest{}
+	mi := &file_call_v1_call_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MuteCallParticipantRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MuteCallParticipantRequest) ProtoMessage() {}
+
+func (x *MuteCallParticipantRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_call_v1_call_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MuteCallParticipantRequest.ProtoReflect.Descriptor instead.
+func (*MuteCallParticipantRequest) Descriptor() ([]byte, []int) {
+	return file_call_v1_call_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *MuteCallParticipantRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *MuteCallParticipantRequest) GetMuted() bool {
+	if x != nil {
+		return x.Muted
+	}
+	return false
+}
+
+type MuteCallParticipantResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MuteCallParticipantResponse) Reset() {
+	*x = MuteCallParticipantResponse{}
+	mi := &file_call_v1_call_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MuteCallParticipantResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MuteCallParticipantResponse) ProtoMessage() {}
+
+func (x *MuteCallParticipantResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_call_v1_call_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MuteCallParticipantResponse.ProtoReflect.Descriptor instead.
+func (*MuteCallParticipantResponse) Descriptor() ([]byte, []int) {
+	return file_call_v1_call_proto_rawDescGZIP(), []int{19}
+}
+
+type KickCallParticipantRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// "calls/{ulid}/participants/{identity}"
+	Name          string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *KickCallParticipantRequest) Reset() {
+	*x = KickCallParticipantRequest{}
+	mi := &file_call_v1_call_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *KickCallParticipantRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*KickCallParticipantRequest) ProtoMessage() {}
+
+func (x *KickCallParticipantRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_call_v1_call_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use KickCallParticipantRequest.ProtoReflect.Descriptor instead.
+func (*KickCallParticipantRequest) Descriptor() ([]byte, []int) {
+	return file_call_v1_call_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *KickCallParticipantRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+type KickCallParticipantResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *KickCallParticipantResponse) Reset() {
+	*x = KickCallParticipantResponse{}
+	mi := &file_call_v1_call_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *KickCallParticipantResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*KickCallParticipantResponse) ProtoMessage() {}
+
+func (x *KickCallParticipantResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_call_v1_call_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use KickCallParticipantResponse.ProtoReflect.Descriptor instead.
+func (*KickCallParticipantResponse) Descriptor() ([]byte, []int) {
+	return file_call_v1_call_proto_rawDescGZIP(), []int{21}
+}
+
+type BanCallParticipantRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// "calls/{ulid}/participants/{identity}"
+	Name          string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BanCallParticipantRequest) Reset() {
+	*x = BanCallParticipantRequest{}
+	mi := &file_call_v1_call_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BanCallParticipantRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BanCallParticipantRequest) ProtoMessage() {}
+
+func (x *BanCallParticipantRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_call_v1_call_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BanCallParticipantRequest.ProtoReflect.Descriptor instead.
+func (*BanCallParticipantRequest) Descriptor() ([]byte, []int) {
+	return file_call_v1_call_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *BanCallParticipantRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+type BanCallParticipantResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BanCallParticipantResponse) Reset() {
+	*x = BanCallParticipantResponse{}
+	mi := &file_call_v1_call_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BanCallParticipantResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BanCallParticipantResponse) ProtoMessage() {}
+
+func (x *BanCallParticipantResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_call_v1_call_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BanCallParticipantResponse.ProtoReflect.Descriptor instead.
+func (*BanCallParticipantResponse) Descriptor() ([]byte, []int) {
+	return file_call_v1_call_proto_rawDescGZIP(), []int{23}
+}
+
 var File_call_v1_call_proto protoreflect.FileDescriptor
 
 const file_call_v1_call_proto_rawDesc = "" +
@@ -1097,12 +1349,23 @@ const file_call_v1_call_proto_rawDesc = "" +
 	"\x10LeaveCallRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12%\n" +
 	"\x0eguest_identity\x18\x02 \x01(\tR\rguestIdentity\"\x13\n" +
-	"\x11LeaveCallResponse*\x87\x01\n" +
+	"\x11LeaveCallResponse\"F\n" +
+	"\x1aMuteCallParticipantRequest\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
+	"\x05muted\x18\x02 \x01(\bR\x05muted\"\x1d\n" +
+	"\x1bMuteCallParticipantResponse\"0\n" +
+	"\x1aKickCallParticipantRequest\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\"\x1d\n" +
+	"\x1bKickCallParticipantResponse\"/\n" +
+	"\x19BanCallParticipantRequest\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\"\x1c\n" +
+	"\x1aBanCallParticipantResponse*\x87\x01\n" +
 	"\x0eCallVisibility\x12\x1f\n" +
 	"\x1bCALL_VISIBILITY_UNSPECIFIED\x10\x00\x12\x18\n" +
 	"\x14CALL_VISIBILITY_OPEN\x10\x01\x12\x1e\n" +
 	"\x1aCALL_VISIBILITY_USERS_ONLY\x10\x02\x12\x1a\n" +
-	"\x16CALL_VISIBILITY_LOCKED\x10\x032\x8a\a\n" +
+	"\x16CALL_VISIBILITY_LOCKED\x10\x032\xc8\n" +
+	"\n" +
 	"\vCallService\x12[\n" +
 	"\n" +
 	"CreateCall\x12\x1a.call.v1.CreateCallRequest\x1a\x1b.call.v1.CreateCallResponse\"\x14\x82\xd3\xe4\x93\x02\x0e:\x01*\"\t/v1/calls\x12X\n" +
@@ -1113,7 +1376,10 @@ const file_call_v1_call_proto_rawDesc = "" +
 	"\x18GetUserParticipatingCall\x12(.call.v1.GetUserParticipatingCallRequest\x1a).call.v1.GetUserParticipatingCallResponse\",\x82\xd3\xe4\x93\x02&\x12$/v1/{name=users/*}:participatingCall\x12c\n" +
 	"\bJoinCall\x12\x18.call.v1.JoinCallRequest\x1a\x19.call.v1.JoinCallResponse\"\"\x82\xd3\xe4\x93\x02\x1c:\x01*\"\x17/v1/{name=calls/*}:join\x12w\n" +
 	"\rHeartbeatCall\x12\x1d.call.v1.HeartbeatCallRequest\x1a\x1e.call.v1.HeartbeatCallResponse\"'\x82\xd3\xe4\x93\x02!:\x01*\"\x1c/v1/{name=calls/*}:heartbeat\x12g\n" +
-	"\tLeaveCall\x12\x19.call.v1.LeaveCallRequest\x1a\x1a.call.v1.LeaveCallResponse\"#\x82\xd3\xe4\x93\x02\x1d:\x01*\"\x18/v1/{name=calls/*}:leaveB\x88\x01\n" +
+	"\tLeaveCall\x12\x19.call.v1.LeaveCallRequest\x1a\x1a.call.v1.LeaveCallResponse\"#\x82\xd3\xe4\x93\x02\x1d:\x01*\"\x18/v1/{name=calls/*}:leave\x12\x93\x01\n" +
+	"\x13MuteCallParticipant\x12#.call.v1.MuteCallParticipantRequest\x1a$.call.v1.MuteCallParticipantResponse\"1\x82\xd3\xe4\x93\x02+:\x01*\"&/v1/{name=calls/*/participants/*}:mute\x12\x93\x01\n" +
+	"\x13KickCallParticipant\x12#.call.v1.KickCallParticipantRequest\x1a$.call.v1.KickCallParticipantResponse\"1\x82\xd3\xe4\x93\x02+:\x01*\"&/v1/{name=calls/*/participants/*}:kick\x12\x8f\x01\n" +
+	"\x12BanCallParticipant\x12\".call.v1.BanCallParticipantRequest\x1a#.call.v1.BanCallParticipantResponse\"0\x82\xd3\xe4\x93\x02*:\x01*\"%/v1/{name=calls/*/participants/*}:banB\x88\x01\n" +
 	"\vcom.call.v1B\tCallProtoP\x01Z1reverie.jp/reverie/internal/gen/pb/call/v1;callv1\xa2\x02\x03CXX\xaa\x02\aCall.V1\xca\x02\aCall\\V1\xe2\x02\x13Call\\V1\\GPBMetadata\xea\x02\bCall::V1b\x06proto3"
 
 var (
@@ -1129,7 +1395,7 @@ func file_call_v1_call_proto_rawDescGZIP() []byte {
 }
 
 var file_call_v1_call_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_call_v1_call_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
+var file_call_v1_call_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
 var file_call_v1_call_proto_goTypes = []any{
 	(CallVisibility)(0),                      // 0: call.v1.CallVisibility
 	(*Call)(nil),                             // 1: call.v1.Call
@@ -1150,26 +1416,32 @@ var file_call_v1_call_proto_goTypes = []any{
 	(*HeartbeatCallResponse)(nil),            // 16: call.v1.HeartbeatCallResponse
 	(*LeaveCallRequest)(nil),                 // 17: call.v1.LeaveCallRequest
 	(*LeaveCallResponse)(nil),                // 18: call.v1.LeaveCallResponse
-	(*v1.User)(nil),                          // 19: user.v1.User
-	(*timestamppb.Timestamp)(nil),            // 20: google.protobuf.Timestamp
-	(*fieldmaskpb.FieldMask)(nil),            // 21: google.protobuf.FieldMask
+	(*MuteCallParticipantRequest)(nil),       // 19: call.v1.MuteCallParticipantRequest
+	(*MuteCallParticipantResponse)(nil),      // 20: call.v1.MuteCallParticipantResponse
+	(*KickCallParticipantRequest)(nil),       // 21: call.v1.KickCallParticipantRequest
+	(*KickCallParticipantResponse)(nil),      // 22: call.v1.KickCallParticipantResponse
+	(*BanCallParticipantRequest)(nil),        // 23: call.v1.BanCallParticipantRequest
+	(*BanCallParticipantResponse)(nil),       // 24: call.v1.BanCallParticipantResponse
+	(*v1.User)(nil),                          // 25: user.v1.User
+	(*timestamppb.Timestamp)(nil),            // 26: google.protobuf.Timestamp
+	(*fieldmaskpb.FieldMask)(nil),            // 27: google.protobuf.FieldMask
 }
 var file_call_v1_call_proto_depIdxs = []int32{
-	19, // 0: call.v1.Call.host:type_name -> user.v1.User
+	25, // 0: call.v1.Call.host:type_name -> user.v1.User
 	0,  // 1: call.v1.Call.visibility:type_name -> call.v1.CallVisibility
-	20, // 2: call.v1.Call.create_time:type_name -> google.protobuf.Timestamp
-	19, // 3: call.v1.CallParticipant.user:type_name -> user.v1.User
-	20, // 4: call.v1.CallParticipant.first_join_time:type_name -> google.protobuf.Timestamp
+	26, // 2: call.v1.Call.create_time:type_name -> google.protobuf.Timestamp
+	25, // 3: call.v1.CallParticipant.user:type_name -> user.v1.User
+	26, // 4: call.v1.CallParticipant.first_join_time:type_name -> google.protobuf.Timestamp
 	0,  // 5: call.v1.CreateCallRequest.visibility:type_name -> call.v1.CallVisibility
 	1,  // 6: call.v1.CreateCallResponse.call:type_name -> call.v1.Call
 	1,  // 7: call.v1.GetCallResponse.call:type_name -> call.v1.Call
 	2,  // 8: call.v1.GetCallResponse.participants:type_name -> call.v1.CallParticipant
 	1,  // 9: call.v1.UpdateCallRequest.call:type_name -> call.v1.Call
-	21, // 10: call.v1.UpdateCallRequest.update_mask:type_name -> google.protobuf.FieldMask
+	27, // 10: call.v1.UpdateCallRequest.update_mask:type_name -> google.protobuf.FieldMask
 	1,  // 11: call.v1.UpdateCallResponse.call:type_name -> call.v1.Call
 	1,  // 12: call.v1.ListPublicCallsResponse.calls:type_name -> call.v1.Call
 	1,  // 13: call.v1.GetUserParticipatingCallResponse.call:type_name -> call.v1.Call
-	20, // 14: call.v1.JoinCallResponse.expire_time:type_name -> google.protobuf.Timestamp
+	26, // 14: call.v1.JoinCallResponse.expire_time:type_name -> google.protobuf.Timestamp
 	3,  // 15: call.v1.CallService.CreateCall:input_type -> call.v1.CreateCallRequest
 	5,  // 16: call.v1.CallService.GetCall:input_type -> call.v1.GetCallRequest
 	7,  // 17: call.v1.CallService.UpdateCall:input_type -> call.v1.UpdateCallRequest
@@ -1178,16 +1450,22 @@ var file_call_v1_call_proto_depIdxs = []int32{
 	13, // 20: call.v1.CallService.JoinCall:input_type -> call.v1.JoinCallRequest
 	15, // 21: call.v1.CallService.HeartbeatCall:input_type -> call.v1.HeartbeatCallRequest
 	17, // 22: call.v1.CallService.LeaveCall:input_type -> call.v1.LeaveCallRequest
-	4,  // 23: call.v1.CallService.CreateCall:output_type -> call.v1.CreateCallResponse
-	6,  // 24: call.v1.CallService.GetCall:output_type -> call.v1.GetCallResponse
-	8,  // 25: call.v1.CallService.UpdateCall:output_type -> call.v1.UpdateCallResponse
-	10, // 26: call.v1.CallService.ListPublicCalls:output_type -> call.v1.ListPublicCallsResponse
-	12, // 27: call.v1.CallService.GetUserParticipatingCall:output_type -> call.v1.GetUserParticipatingCallResponse
-	14, // 28: call.v1.CallService.JoinCall:output_type -> call.v1.JoinCallResponse
-	16, // 29: call.v1.CallService.HeartbeatCall:output_type -> call.v1.HeartbeatCallResponse
-	18, // 30: call.v1.CallService.LeaveCall:output_type -> call.v1.LeaveCallResponse
-	23, // [23:31] is the sub-list for method output_type
-	15, // [15:23] is the sub-list for method input_type
+	19, // 23: call.v1.CallService.MuteCallParticipant:input_type -> call.v1.MuteCallParticipantRequest
+	21, // 24: call.v1.CallService.KickCallParticipant:input_type -> call.v1.KickCallParticipantRequest
+	23, // 25: call.v1.CallService.BanCallParticipant:input_type -> call.v1.BanCallParticipantRequest
+	4,  // 26: call.v1.CallService.CreateCall:output_type -> call.v1.CreateCallResponse
+	6,  // 27: call.v1.CallService.GetCall:output_type -> call.v1.GetCallResponse
+	8,  // 28: call.v1.CallService.UpdateCall:output_type -> call.v1.UpdateCallResponse
+	10, // 29: call.v1.CallService.ListPublicCalls:output_type -> call.v1.ListPublicCallsResponse
+	12, // 30: call.v1.CallService.GetUserParticipatingCall:output_type -> call.v1.GetUserParticipatingCallResponse
+	14, // 31: call.v1.CallService.JoinCall:output_type -> call.v1.JoinCallResponse
+	16, // 32: call.v1.CallService.HeartbeatCall:output_type -> call.v1.HeartbeatCallResponse
+	18, // 33: call.v1.CallService.LeaveCall:output_type -> call.v1.LeaveCallResponse
+	20, // 34: call.v1.CallService.MuteCallParticipant:output_type -> call.v1.MuteCallParticipantResponse
+	22, // 35: call.v1.CallService.KickCallParticipant:output_type -> call.v1.KickCallParticipantResponse
+	24, // 36: call.v1.CallService.BanCallParticipant:output_type -> call.v1.BanCallParticipantResponse
+	26, // [26:37] is the sub-list for method output_type
+	15, // [15:26] is the sub-list for method input_type
 	15, // [15:15] is the sub-list for extension type_name
 	15, // [15:15] is the sub-list for extension extendee
 	0,  // [0:15] is the sub-list for field type_name
@@ -1204,7 +1482,7 @@ func file_call_v1_call_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_call_v1_call_proto_rawDesc), len(file_call_v1_call_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   18,
+			NumMessages:   24,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

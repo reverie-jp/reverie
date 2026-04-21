@@ -45,6 +45,16 @@ func (uc *JoinCall) Execute(ctx context.Context, input JoinCallInput) (*JoinCall
 		return nil, err
 	}
 
+	if !input.RequesterID.IsZero() {
+		banned, err := uc.callRepo.IsUserBannedFromCall(ctx, call.ID, input.RequesterID)
+		if err != nil {
+			return nil, xerrors.ErrInternal.WithCause(err)
+		}
+		if banned {
+			return nil, xerrors.ErrCallBanned
+		}
+	}
+
 	identity, displayName, userID, err := uc.resolveParticipant(ctx, input)
 	if err != nil {
 		return nil, err

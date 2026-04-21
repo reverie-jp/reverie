@@ -1,4 +1,5 @@
 -- drop tables
+DROP TABLE IF EXISTS call_bans;
 DROP TABLE IF EXISTS call_participants;
 DROP TABLE IF EXISTS calls;
 DROP TABLE IF EXISTS refresh_tokens;

@@ -66,3 +66,10 @@ CREATE INDEX idx_call_participants_order ON call_participants(call_id, first_joi
 CREATE INDEX idx_call_participants_user_id ON call_participants(user_id) WHERE user_id IS NOT NULL;
 CREATE INDEX idx_call_participants_active ON call_participants(call_id, last_seen_time) WHERE disconnected_time IS NULL;
 CREATE INDEX idx_call_participants_active_user ON call_participants(user_id, last_seen_time) WHERE user_id IS NOT NULL AND disconnected_time IS NULL;
+
+CREATE TABLE IF NOT EXISTS call_bans (
+    call_id ulid NOT NULL REFERENCES calls(id) ON DELETE CASCADE,
+    user_id ulid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    create_time TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (call_id, user_id)
+);

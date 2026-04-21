@@ -27,6 +27,22 @@ func (q *Queries) CreateCall(ctx context.Context, arg CreateCallParams) error {
 	return err
 }
 
+const createCallBan = `-- name: CreateCallBan :exec
+INSERT INTO call_bans (call_id, user_id)
+VALUES ($1::ulid, $2::ulid)
+ON CONFLICT DO NOTHING
+`
+
+type CreateCallBanParams struct {
+	CallID ulid.ULID `json:"call_id"`
+	UserID ulid.ULID `json:"user_id"`
+}
+
+func (q *Queries) CreateCallBan(ctx context.Context, arg CreateCallBanParams) error {
+	_, err := q.db.Exec(ctx, createCallBan, arg.CallID, arg.UserID)
+	return err
+}
+
 const getActiveCallByUser = `-- name: GetActiveCallByUser :one
 SELECT c.id, c.host_user_id, c.visibility, c.create_time, c.update_time FROM calls c
 JOIN call_participants p ON p.call_id = c.id
@@ -74,6 +90,26 @@ func (q *Queries) HeartbeatCallParticipant(ctx context.Context, arg HeartbeatCal
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const isUserBannedFromCall = `-- name: IsUserBannedFromCall :one
+SELECT EXISTS (
+  SELECT 1 FROM call_bans
+  WHERE call_id = $1::ulid
+    AND user_id = $2::ulid
+) AS banned
+`
+
+type IsUserBannedFromCallParams struct {
+	CallID ulid.ULID `json:"call_id"`
+	UserID ulid.ULID `json:"user_id"`
+}
+
+func (q *Queries) IsUserBannedFromCall(ctx context.Context, arg IsUserBannedFromCallParams) (bool, error) {
+	row := q.db.QueryRow(ctx, isUserBannedFromCall, arg.CallID, arg.UserID)
+	var banned bool
+	err := row.Scan(&banned)
+	return banned, err
 }
 
 const listActivePublicCalls = `-- name: ListActivePublicCalls :many

@@ -104,6 +104,12 @@ type Call struct {
 	UpdateTime time.Time      `json:"update_time"`
 }
 
+type CallBan struct {
+	CallID     ulid.ULID `json:"call_id"`
+	UserID     ulid.ULID `json:"user_id"`
+	CreateTime time.Time `json:"create_time"`
+}
+
 type CallParticipant struct {
 	CallID              ulid.ULID  `json:"call_id"`
 	ParticipantIdentity string     `json:"participant_identity"`

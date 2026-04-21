@@ -15,6 +15,9 @@ type Handler struct {
 	joinCall                 *usecase.JoinCall
 	heartbeatCall            *usecase.HeartbeatCall
 	leaveCall                *usecase.LeaveCall
+	muteCallParticipant      *usecase.MuteCallParticipant
+	kickCallParticipant      *usecase.KickCallParticipant
+	banCallParticipant       *usecase.BanCallParticipant
 }
 
 func New(
@@ -26,6 +29,9 @@ func New(
 	joinCall *usecase.JoinCall,
 	heartbeatCall *usecase.HeartbeatCall,
 	leaveCall *usecase.LeaveCall,
+	muteCallParticipant *usecase.MuteCallParticipant,
+	kickCallParticipant *usecase.KickCallParticipant,
+	banCallParticipant *usecase.BanCallParticipant,
 ) *Handler {
 	return &Handler{
 		createCall:               createCall,
@@ -36,5 +42,8 @@ func New(
 		joinCall:                 joinCall,
 		heartbeatCall:            heartbeatCall,
 		leaveCall:                leaveCall,
+		muteCallParticipant:      muteCallParticipant,
+		kickCallParticipant:      kickCallParticipant,
+		banCallParticipant:       banCallParticipant,
 	}
 }

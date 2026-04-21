@@ -62,3 +62,15 @@ WHERE p.user_id = sqlc.arg(user_id)::ulid
   AND p.disconnected_time IS NULL
 ORDER BY p.last_seen_time DESC
 LIMIT 1;
+
+-- name: CreateCallBan :exec
+INSERT INTO call_bans (call_id, user_id)
+VALUES (sqlc.arg(call_id)::ulid, sqlc.arg(user_id)::ulid)
+ON CONFLICT DO NOTHING;
+
+-- name: IsUserBannedFromCall :one
+SELECT EXISTS (
+  SELECT 1 FROM call_bans
+  WHERE call_id = sqlc.arg(call_id)::ulid
+    AND user_id = sqlc.arg(user_id)::ulid
+) AS banned;
