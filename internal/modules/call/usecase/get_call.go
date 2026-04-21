@@ -103,10 +103,15 @@ func checkViewVisibility(call *entity.Call, requesterID ulid.ULID, viewerIdentit
 	case entity.CallVisibilityOpen:
 		return nil
 	case entity.CallVisibilityUsersOnly:
-		if requesterID.IsZero() {
-			return xerrors.ErrUnauthenticated
+		if !requesterID.IsZero() {
+			return nil
 		}
-		return nil
+		// Grandfather guests who were already participating when the host
+		// tightened visibility — they stay in, but no new guests can view.
+		if viewerIdentity != "" && activeIdentities[viewerIdentity] {
+			return nil
+		}
+		return xerrors.ErrUnauthenticated
 	case entity.CallVisibilityLocked:
 		if !requesterID.IsZero() && call.HostUserID == requesterID {
 			return nil

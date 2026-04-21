@@ -3,9 +3,13 @@ import { Button } from "~/components/ui/button";
 import { tokenStore } from "~/lib/api-client";
 import type { Route } from "./+types/login";
 
-export const clientLoader = (_args: Route.ClientLoaderArgs) => {
+const RETURN_TO_KEY = "reverie.auth_return_to";
+
+export const clientLoader = ({ request }: Route.ClientLoaderArgs) => {
+  const url = new URL(request.url);
+  const returnTo = url.searchParams.get("returnTo");
   if (tokenStore.getAccessToken()) {
-    return redirect("/");
+    return redirect(returnTo && returnTo.startsWith("/") ? returnTo : "/");
   }
   return null;
 };
@@ -42,6 +46,14 @@ export default function Login() {
         "VITE_GOOGLE_CLIENT_ID / VITE_GOOGLE_REDIRECT_URI are not set",
       );
       return;
+    }
+    const returnTo = new URLSearchParams(window.location.search).get(
+      "returnTo",
+    );
+    if (returnTo && returnTo.startsWith("/")) {
+      sessionStorage.setItem(RETURN_TO_KEY, returnTo);
+    } else {
+      sessionStorage.removeItem(RETURN_TO_KEY);
     }
     const params = new URLSearchParams({
       client_id: clientId,

@@ -74,9 +74,11 @@ async function refreshTokens(): Promise<boolean> {
 
 function redirectToLogin() {
   tokenStore.clear();
-  if (typeof window !== "undefined" && window.location.pathname !== "/login") {
-    window.location.href = "/login";
-  }
+  if (typeof window === "undefined") return;
+  const { pathname, search } = window.location;
+  if (pathname === "/login" || pathname === "/auth/callback") return;
+  const returnTo = `${pathname}${search}`;
+  window.location.href = `/login?returnTo=${encodeURIComponent(returnTo)}`;
 }
 
 const authInterceptor: Interceptor = (next) => async (req) => {

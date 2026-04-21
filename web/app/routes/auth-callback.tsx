@@ -3,6 +3,8 @@ import { useNavigate, useSearchParams } from "react-router";
 import { accountClient, tokenStore } from "~/lib/api-client";
 import { AuthProvider } from "~/lib/gen/account/v1/account_pb";
 
+const RETURN_TO_KEY = "reverie.auth_return_to";
+
 export default function AuthCallback() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -36,7 +38,11 @@ export default function AuthCallback() {
           res.tokenPair.accessToken,
           res.tokenPair.refreshToken,
         );
-        navigate("/", { replace: true });
+        const returnTo = sessionStorage.getItem(RETURN_TO_KEY);
+        sessionStorage.removeItem(RETURN_TO_KEY);
+        const dest =
+          returnTo && returnTo.startsWith("/") ? returnTo : "/";
+        navigate(dest, { replace: true });
       })
       .catch((err) => {
         console.error("SocialLogin failed:", err);

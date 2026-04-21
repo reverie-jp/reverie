@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router";
+import { Link, useParams } from "react-router";
 import {
   Room,
   RoomEvent,
@@ -64,6 +64,7 @@ export default function CallRoomRoute() {
   const [connecting, setConnecting] = useState(false);
   const [joinError, setJoinError] = useState<string | null>(null);
   const [updatingVisibility, setUpdatingVisibility] = useState(false);
+  const [inviteCopied, setInviteCopied] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [, setTick] = useState(0);
@@ -146,6 +147,18 @@ export default function CallRoomRoute() {
       chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
     }
   }, [chatMessages]);
+
+  const copyInviteLink = async () => {
+    if (!callId) return;
+    const url = `${window.location.origin}/calls/${callId}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setInviteCopied(true);
+      window.setTimeout(() => setInviteCopied(false), 1500);
+    } catch (err) {
+      console.warn("clipboard.writeText failed:", err);
+    }
+  };
 
   const handleUpdateVisibility = async (visibility: CallVisibility) => {
     if (!callName) return;
@@ -475,25 +488,47 @@ export default function CallRoomRoute() {
         </div>
 
         {!connected ? (
-          <div className="flex flex-col gap-3">
-            {!isAuthenticated && (
-              <input
-                className="w-full h-11 px-3 rounded-md border border-input bg-background text-sm"
-                placeholder="表示名（ゲスト）"
-                value={guestDisplayName}
-                onChange={(e) => setGuestDisplayName(e.target.value)}
-              />
-            )}
-            <Button
-              onClick={handleJoin}
-              disabled={
-                connecting || (!isAuthenticated && !guestDisplayName.trim())
-              }
-              className="w-full h-11"
-            >
-              {connecting ? "参加中..." : "通話に参加"}
-            </Button>
-          </div>
+          call.visibility === CallVisibility.USERS_ONLY && !isAuthenticated ? (
+            <div className="flex flex-col gap-3">
+              <p className="text-sm text-muted-foreground text-center">
+                この通話はログインしているユーザーのみ参加できます
+              </p>
+              <Link
+                to={`/login?returnTo=${encodeURIComponent(`/calls/${callId}`)}`}
+                className="w-full"
+              >
+                <Button className="w-full h-11">ログインして参加</Button>
+              </Link>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {!isAuthenticated && (
+                <input
+                  className="w-full h-11 px-3 rounded-md border border-input bg-background text-sm"
+                  placeholder="表示名（ゲスト）"
+                  value={guestDisplayName}
+                  onChange={(e) => setGuestDisplayName(e.target.value)}
+                />
+              )}
+              <Button
+                onClick={handleJoin}
+                disabled={
+                  connecting || (!isAuthenticated && !guestDisplayName.trim())
+                }
+                className="w-full h-11"
+              >
+                {connecting ? "参加中..." : "通話に参加"}
+              </Button>
+              {!isAuthenticated && (
+                <Link
+                  to={`/login?returnTo=${encodeURIComponent(`/calls/${callId}`)}`}
+                  className="text-xs text-muted-foreground text-center underline underline-offset-2 hover:text-foreground"
+                >
+                  ログインして参加
+                </Link>
+              )}
+            </div>
+          )
         ) : (
           <Button
             variant="destructive"
@@ -505,27 +540,38 @@ export default function CallRoomRoute() {
         )}
 
         {isHost && (
-          <div className="rounded-md border p-4 flex flex-col gap-2">
-            <p className="text-xs text-muted-foreground">
-              可視性（ホストのみ変更可能）
-            </p>
-            <div className="flex flex-col gap-1">
-              {UPDATABLE_VISIBILITIES.map((v) => (
-                <label
-                  key={v}
-                  className="flex items-center gap-2 text-sm cursor-pointer"
-                >
-                  <input
-                    type="radio"
-                    name="call-visibility"
-                    checked={call.visibility === v}
-                    disabled={updatingVisibility}
-                    onChange={() => void handleUpdateVisibility(v)}
-                  />
-                  {VISIBILITY_LABELS[v]}
-                </label>
-              ))}
+          <div className="rounded-md border p-4 flex flex-col gap-3">
+            <div className="flex flex-col gap-2">
+              <p className="text-xs text-muted-foreground">
+                可視性（ホストのみ変更可能）
+              </p>
+              <div className="flex flex-col gap-1">
+                {UPDATABLE_VISIBILITIES.map((v) => (
+                  <label
+                    key={v}
+                    className="flex items-center gap-2 text-sm cursor-pointer"
+                  >
+                    <input
+                      type="radio"
+                      name="call-visibility"
+                      checked={call.visibility === v}
+                      disabled={updatingVisibility}
+                      onChange={() => void handleUpdateVisibility(v)}
+                    />
+                    {VISIBILITY_LABELS[v]}
+                  </label>
+                ))}
+              </div>
             </div>
+            {call.visibility !== CallVisibility.LOCKED && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => void copyInviteLink()}
+              >
+                {inviteCopied ? "コピーしました" : "招待リンクをコピー"}
+              </Button>
+            )}
           </div>
         )}
 
