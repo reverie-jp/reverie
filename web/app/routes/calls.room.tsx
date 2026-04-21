@@ -440,12 +440,12 @@ export default function CallRoomRoute() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [callName]);
 
-  // Refetch when participants connect/disconnect in LiveKit (context tick bumps)
+  // Refetch when participants connect/disconnect in LiveKit.
   useEffect(() => {
     if (!connected) return;
     void fetchCallInfo({ silent: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [call.tick]);
+  }, [call.participantTick]);
 
   useEffect(() => {
     if (chatScrollRef.current) {

@@ -73,6 +73,7 @@ type CallContextValue = {
   hostMutedMe: boolean;
   becameHost: boolean;
   tick: number;
+  participantTick: number;
 
   join: (callId: string, guestDisplayName?: string) => Promise<JoinResult>;
   leave: () => Promise<void>;
@@ -117,8 +118,13 @@ export function CallProvider({ children }: { children: ReactNode }) {
   const [hostMutedMe, setHostMutedMe] = useState(false);
   const [becameHost, setBecameHost] = useState(false);
   const [tick, setTick] = useState(0);
+  const [participantTick, setParticipantTick] = useState(0);
 
   const rerender = useCallback(() => setTick((t) => t + 1), []);
+  const bumpParticipantTick = useCallback(
+    () => setParticipantTick((t) => t + 1),
+    [],
+  );
 
   const roomRef = useRef<Room | null>(null);
   const joinResRef = useRef<JoinCallResponse | null>(null);
@@ -316,12 +322,14 @@ export function CallProvider({ children }: { children: ReactNode }) {
     room
       .on(RoomEvent.ParticipantConnected, (p: RemoteParticipant) => {
         rerender();
+        bumpParticipantTick();
         addSystemMessage(
           `${p.name || p.identity} が通話に参加しました`,
         );
       })
       .on(RoomEvent.ParticipantDisconnected, (p: RemoteParticipant) => {
         rerender();
+        bumpParticipantTick();
         addSystemMessage(`${p.name || p.identity} が退出しました`);
       })
       .on(
@@ -686,6 +694,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
     hostMutedMe,
     becameHost,
     tick,
+    participantTick,
     join,
     leave,
     toggleSelfMic,

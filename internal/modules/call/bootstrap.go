@@ -22,7 +22,7 @@ func InitModule(q *sqlc.Queries, userGateway usergw.Gateway, lk *livekit.Client,
 	getUserParticipatingCall := usecase.NewGetUserParticipatingCall(callRepo, userGateway)
 	joinCall := usecase.NewJoinCall(callRepo, userGateway, lk, tokenTTL)
 	heartbeatCall := usecase.NewHeartbeatCall(callRepo)
-	leaveCall := usecase.NewLeaveCall(callRepo)
+	leaveCall := usecase.NewLeaveCall(callRepo, lk)
 	muteCallParticipant := usecase.NewMuteCallParticipant(callRepo, lk)
 	unmuteCallParticipant := usecase.NewUnmuteCallParticipant(callRepo, lk)
 	kickCallParticipant := usecase.NewKickCallParticipant(callRepo, lk)
