@@ -1,32 +1,32 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useParams } from "react-router";
-import {
-  DisconnectReason,
-  Room,
-  RoomEvent,
-  Track,
-  type RemoteTrack,
-  type RemoteTrackPublication,
-  type RemoteParticipant,
-} from "livekit-client";
+import { Link, useNavigate, useParams } from "react-router";
+import { ParticipantEvent, Track, type Participant } from "livekit-client";
 import type {
   CallParticipant,
   GetCallResponse,
-  JoinCallResponse,
 } from "~/lib/gen/call/v1/call_pb";
 import { CallVisibility } from "~/lib/gen/call/v1/call_pb";
-import {
-  API_BASE_URL,
-  callClient,
-  tokenStore,
-  userClient,
-} from "~/lib/api-client";
+import { callClient } from "~/lib/api-client";
 import { formatCall, parseCallParticipant } from "~/lib/resource-name";
+import {
+  CALL_DEFAULT_VOLUME,
+  CALL_UPDATED_EVENT,
+  useCall,
+} from "~/lib/call-context";
 import { Button } from "~/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+} from "~/components/ui/drawer";
+import { Slider } from "~/components/ui/slider";
+import { GoogleLoginButton } from "~/components/google-login-button";
 
 const GUEST_DISPLAY_NAME_KEY = "reverie.guest_display_name";
-const REFRESH_MARGIN_MS = 60_000;
-const HEARTBEAT_INTERVAL_MS = 30_000;
 
 const VISIBILITY_LABELS: Record<CallVisibility, string> = {
   [CallVisibility.UNSPECIFIED]: "不明",
@@ -41,49 +41,343 @@ const UPDATABLE_VISIBILITIES: CallVisibility[] = [
   CallVisibility.LOCKED,
 ];
 
-type ChatMessage = {
-  id: string;
-  identity: string;
-  displayName: string;
-  text: string;
-  system?: boolean;
-};
+function formatDuration(ms: number): string {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  const mm = String(m).padStart(2, "0");
+  const ss = String(s).padStart(2, "0");
+  return h > 0 ? `${h}:${mm}:${ss}` : `${m}:${ss}`;
+}
 
-function makeMessageID(identity: string): string {
-  return `${identity}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+function SpeakerAvatar({
+  participant,
+  avatarUrl,
+  displayName,
+  connected,
+}: {
+  participant: Participant | null;
+  avatarUrl?: string;
+  displayName: string;
+  connected: boolean;
+}) {
+  const avatarRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!participant || !connected) return;
+    const el = avatarRef.current;
+    if (!el) return;
+
+    let audioCtx: AudioContext | null = null;
+    let analyser: AnalyserNode | null = null;
+    let source: MediaStreamAudioSourceNode | null = null;
+    let data: Uint8Array<ArrayBuffer> | null = null;
+    let animationId = 0;
+    let cleaned = false;
+
+    const reset = () => {
+      el.style.transform = "";
+      el.style.boxShadow = "";
+    };
+
+    const tryAttach = () => {
+      if (cleaned || analyser) return;
+      const pub = participant
+        .getTrackPublications()
+        .find((p) => p.kind === Track.Kind.Audio);
+      const mst = pub?.track?.mediaStreamTrack;
+      if (!mst || pub?.isMuted) {
+        reset();
+        return;
+      }
+      audioCtx = new AudioContext();
+      source = audioCtx.createMediaStreamSource(new MediaStream([mst]));
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.4;
+      source.connect(analyser);
+      data = new Uint8Array(new ArrayBuffer(analyser.frequencyBinCount));
+
+      const GAIN = 6;
+      const draw = () => {
+        if (cleaned || !analyser || !data) return;
+        animationId = requestAnimationFrame(draw);
+        analyser.getByteTimeDomainData(data);
+        let sum = 0;
+        for (let i = 0; i < data.length; i++) {
+          const v = (data[i] - 128) / 128;
+          sum += v * v;
+        }
+        const rms = Math.sqrt(sum / data.length);
+        const level = Math.min(1, rms * GAIN);
+        el.style.transform = `scale(${(1 + level * 0.18).toFixed(3)})`;
+        if (level > 0.04) {
+          const ringPx = 2 + Math.round(level * 6);
+          const alpha = (0.25 + level * 0.5).toFixed(2);
+          el.style.boxShadow = `0 0 0 ${ringPx}px rgb(34 197 94 / ${alpha})`;
+        } else {
+          el.style.boxShadow = "";
+        }
+      };
+      draw();
+    };
+
+    const teardown = () => {
+      cancelAnimationFrame(animationId);
+      animationId = 0;
+      try {
+        source?.disconnect();
+      } catch {}
+      source = null;
+      analyser = null;
+      data = null;
+      audioCtx?.close().catch(() => undefined);
+      audioCtx = null;
+      reset();
+    };
+
+    const onTrackChanged = () => {
+      const pub = participant
+        .getTrackPublications()
+        .find((p) => p.kind === Track.Kind.Audio);
+      const mst = pub?.track?.mediaStreamTrack;
+      if (!mst || pub?.isMuted) {
+        if (analyser) teardown();
+        else reset();
+        return;
+      }
+      if (!analyser) tryAttach();
+    };
+
+    tryAttach();
+    participant.on(ParticipantEvent.TrackSubscribed, onTrackChanged);
+    participant.on(ParticipantEvent.TrackUnsubscribed, onTrackChanged);
+    participant.on(ParticipantEvent.TrackMuted, onTrackChanged);
+    participant.on(ParticipantEvent.TrackUnmuted, onTrackChanged);
+    participant.on(ParticipantEvent.LocalTrackPublished, onTrackChanged);
+    participant.on(ParticipantEvent.LocalTrackUnpublished, onTrackChanged);
+
+    return () => {
+      cleaned = true;
+      participant.off(ParticipantEvent.TrackSubscribed, onTrackChanged);
+      participant.off(ParticipantEvent.TrackUnsubscribed, onTrackChanged);
+      participant.off(ParticipantEvent.TrackMuted, onTrackChanged);
+      participant.off(ParticipantEvent.TrackUnmuted, onTrackChanged);
+      participant.off(ParticipantEvent.LocalTrackPublished, onTrackChanged);
+      participant.off(ParticipantEvent.LocalTrackUnpublished, onTrackChanged);
+      cancelAnimationFrame(animationId);
+      try {
+        source?.disconnect();
+      } catch {}
+      audioCtx?.close().catch(() => undefined);
+      reset();
+    };
+  }, [participant, connected]);
+
+  return (
+    <div
+      ref={avatarRef}
+      className="rounded-full transition-[transform,box-shadow] duration-75"
+    >
+      <Avatar className="size-12">
+        {avatarUrl && <AvatarImage src={avatarUrl} alt={displayName} />}
+        <AvatarFallback className="text-sm">
+          {displayName.slice(0, 2)}
+        </AvatarFallback>
+      </Avatar>
+    </div>
+  );
+}
+
+function VoiceMeter({ participant }: { participant: Participant | null }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx2d = canvas.getContext("2d");
+    if (!ctx2d) return;
+    if (!participant) {
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx2d.clearRect(0, 0, w, h);
+      return;
+    }
+
+    let audioCtx: AudioContext | null = null;
+    let analyser: AnalyserNode | null = null;
+    let source: MediaStreamAudioSourceNode | null = null;
+    let data: Uint8Array<ArrayBuffer> | null = null;
+    let animationId = 0;
+    let cleaned = false;
+
+    const NUM_BARS = 5;
+    const BAR_GAP = 2;
+    const MIN_BAR_HEIGHT = 2;
+
+    const drawBars = (levels: number[]) => {
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx2d.clearRect(0, 0, w, h);
+      const barWidth = (w - BAR_GAP * (NUM_BARS - 1)) / NUM_BARS;
+      for (let i = 0; i < NUM_BARS; i++) {
+        const level = levels[i] ?? 0;
+        const barHeight = Math.max(MIN_BAR_HEIGHT, level * h);
+        const x = i * (barWidth + BAR_GAP);
+        const y = h - barHeight;
+        ctx2d.fillStyle = level > 0.05 ? "#22c55e" : "#9ca3af";
+        ctx2d.fillRect(x, y, barWidth, barHeight);
+      }
+    };
+
+    const drawFlat = () => {
+      drawBars(new Array(NUM_BARS).fill(0));
+    };
+
+    const tryAttach = () => {
+      if (cleaned || analyser) return;
+      const pub = participant
+        .getTrackPublications()
+        .find((p) => p.kind === Track.Kind.Audio);
+      const mst = pub?.track?.mediaStreamTrack;
+      if (!mst || pub?.isMuted) {
+        drawFlat();
+        return;
+      }
+      audioCtx = new AudioContext();
+      source = audioCtx.createMediaStreamSource(new MediaStream([mst]));
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.6;
+      source.connect(analyser);
+      data = new Uint8Array(new ArrayBuffer(analyser.frequencyBinCount));
+
+      const binHz = audioCtx.sampleRate / analyser.fftSize;
+      const minFreq = 150;
+      const maxFreq = 5000;
+      const ratio = maxFreq / minFreq;
+      const barBins: [number, number][] = [];
+      const barCenterHz: number[] = [];
+      for (let b = 0; b < NUM_BARS; b++) {
+        const lo = minFreq * Math.pow(ratio, b / NUM_BARS);
+        const hi = minFreq * Math.pow(ratio, (b + 1) / NUM_BARS);
+        const loBin = Math.max(0, Math.floor(lo / binHz));
+        const hiBin = Math.min(data.length - 1, Math.ceil(hi / binHz));
+        barBins.push([loBin, Math.max(loBin, hiBin)]);
+        barCenterHz.push(Math.sqrt(lo * hi));
+      }
+      const gains = barCenterHz.map((hz) => Math.sqrt(hz / barCenterHz[0]));
+      const SENSITIVITY = 0.55;
+
+      const draw = () => {
+        if (cleaned || !analyser || !data) return;
+        animationId = requestAnimationFrame(draw);
+        analyser.getByteFrequencyData(data);
+        const levels: number[] = [];
+        for (let b = 0; b < NUM_BARS; b++) {
+          const [loBin, hiBin] = barBins[b];
+          let sum = 0;
+          const n = hiBin - loBin + 1;
+          for (let i = loBin; i <= hiBin; i++) sum += data[i];
+          const avg = n > 0 ? sum / n / 255 : 0;
+          levels.push(Math.min(1, avg * gains[b] * SENSITIVITY));
+        }
+        drawBars(levels);
+      };
+      draw();
+    };
+
+    const teardownAnalyser = () => {
+      cancelAnimationFrame(animationId);
+      animationId = 0;
+      try {
+        source?.disconnect();
+      } catch {}
+      source = null;
+      analyser = null;
+      data = null;
+      audioCtx?.close().catch(() => undefined);
+      audioCtx = null;
+      drawFlat();
+    };
+
+    const onTrackChanged = () => {
+      const pub = participant
+        .getTrackPublications()
+        .find((p) => p.kind === Track.Kind.Audio);
+      const mst = pub?.track?.mediaStreamTrack;
+      if (!mst || pub?.isMuted) {
+        if (analyser) teardownAnalyser();
+        else drawFlat();
+        return;
+      }
+      if (!analyser) tryAttach();
+    };
+
+    tryAttach();
+    participant.on(ParticipantEvent.TrackSubscribed, onTrackChanged);
+    participant.on(ParticipantEvent.TrackUnsubscribed, onTrackChanged);
+    participant.on(ParticipantEvent.TrackMuted, onTrackChanged);
+    participant.on(ParticipantEvent.TrackUnmuted, onTrackChanged);
+    participant.on(ParticipantEvent.LocalTrackPublished, onTrackChanged);
+    participant.on(ParticipantEvent.LocalTrackUnpublished, onTrackChanged);
+
+    return () => {
+      cleaned = true;
+      participant.off(ParticipantEvent.TrackSubscribed, onTrackChanged);
+      participant.off(ParticipantEvent.TrackUnsubscribed, onTrackChanged);
+      participant.off(ParticipantEvent.TrackMuted, onTrackChanged);
+      participant.off(ParticipantEvent.TrackUnmuted, onTrackChanged);
+      participant.off(ParticipantEvent.LocalTrackPublished, onTrackChanged);
+      participant.off(ParticipantEvent.LocalTrackUnpublished, onTrackChanged);
+      cancelAnimationFrame(animationId);
+      try {
+        source?.disconnect();
+      } catch {}
+      audioCtx?.close().catch(() => undefined);
+    };
+  }, [participant]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      width={28}
+      height={14}
+      className="inline-block"
+      aria-hidden
+    />
+  );
 }
 
 export default function CallRoomRoute() {
   const { callId } = useParams<{ callId: string }>();
   const callName = callId ? formatCall(callId) : "";
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [myUserName, setMyUserName] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const call = useCall();
+
   const [guestDisplayName, setGuestDisplayName] = useState("");
   const [callInfo, setCallInfo] = useState<GetCallResponse | null>(null);
   const [loadingCall, setLoadingCall] = useState(true);
   const [callLoadError, setCallLoadError] = useState<string | null>(null);
-  const [connected, setConnected] = useState(false);
-  const [connecting, setConnecting] = useState(false);
-  const [joinError, setJoinError] = useState<string | null>(null);
   const [updatingVisibility, setUpdatingVisibility] = useState(false);
   const [inviteCopied, setInviteCopied] = useState(false);
   const [moderatingIdentity, setModeratingIdentity] = useState<string | null>(
     null,
   );
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
-  const [, setTick] = useState(0);
+  const [drawerIdentity, setDrawerIdentity] = useState<string | null>(null);
+  const [now, setNow] = useState<number>(() => Date.now());
   const chatScrollRef = useRef<HTMLDivElement | null>(null);
-  const roomRef = useRef<Room | null>(null);
-  const audioContainerRef = useRef<HTMLDivElement | null>(null);
-  const latestJoinResRef = useRef<JoinCallResponse | null>(null);
-  const refreshTimerRef = useRef<number | null>(null);
-  const heartbeatTimerRef = useRef<number | null>(null);
-  const intentionalLeaveRef = useRef(false);
-  const isSelfMutedRef = useRef(false);
-  const hostMutedMeRef = useRef(false);
 
-  const rerender = () => setTick((t) => t + 1);
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  const connected = call.connected && call.callId === callId;
+  const connecting = call.connecting && call.callId === callId;
+  const joinError = call.callId === callId ? call.joinError : null;
 
   const fetchCallInfo = async (opts?: { silent?: boolean }) => {
     if (!callName) return;
@@ -95,7 +389,7 @@ export default function CallRoomRoute() {
     try {
       const res = await callClient.getCall({
         name: callName,
-        guestIdentity: latestJoinResRef.current?.identity ?? "",
+        guestIdentity: connected && call.identity ? call.identity : "",
       });
       setCallInfo(res);
     } catch (err) {
@@ -109,89 +403,82 @@ export default function CallRoomRoute() {
   };
 
   useEffect(() => {
-    const authed = Boolean(tokenStore.getAccessToken());
-    setIsAuthenticated(authed);
     setGuestDisplayName(localStorage.getItem(GUEST_DISPLAY_NAME_KEY) ?? "");
-    if (authed) {
-      userClient
-        .getMyUser({})
-        .then((res) => {
-          if (res.user) setMyUserName(res.user.name);
-        })
-        .catch((err) => {
-          console.warn("GetMyUser failed:", err);
-        });
-    }
   }, []);
 
-  const addSystemMessage = (text: string) => {
-    setChatMessages((prev) => [
-      ...prev,
-      {
-        id: `system-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        identity: "system",
-        displayName: "システム",
-        text,
-        system: true,
-      },
-    ]);
-  };
+  useEffect(() => {
+    void fetchCallInfo();
+    const onUpdated = () => void fetchCallInfo({ silent: true });
+    window.addEventListener(CALL_UPDATED_EVENT, onUpdated);
+    return () => window.removeEventListener(CALL_UPDATED_EVENT, onUpdated);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [callName]);
 
-  const publishRoomData = async (payload: unknown) => {
-    const room = roomRef.current;
-    if (!room) return;
-    try {
-      const bytes = new TextEncoder().encode(JSON.stringify(payload));
-      await room.localParticipant.publishData(bytes, { reliable: true });
-    } catch (err) {
-      console.warn("publishData failed:", err);
-    }
-  };
-
-  const sendChat = async () => {
-    const room = roomRef.current;
-    const text = chatInput.trim();
-    if (!room || !text) return;
-    try {
-      const payload = new TextEncoder().encode(
-        JSON.stringify({ type: "chat_message", text }),
-      );
-      await room.localParticipant.publishData(payload, { reliable: true });
-      const local = room.localParticipant;
-      setChatMessages((prev) => [
-        ...prev,
-        {
-          id: makeMessageID(local.identity),
-          identity: local.identity,
-          displayName: local.name || local.identity,
-          text,
-        },
-      ]);
-      setChatInput("");
-    } catch (err) {
-      console.warn("publishData (chat) failed:", err);
-    }
-  };
+  // Refetch when participants connect/disconnect in LiveKit (context tick bumps)
+  useEffect(() => {
+    if (!connected) return;
+    void fetchCallInfo({ silent: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [call.tick]);
 
   useEffect(() => {
     if (chatScrollRef.current) {
       chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
     }
-  }, [chatMessages]);
+  }, [call.chatMessages]);
 
-  const isParticipantMuted = (identity: string): boolean => {
-    const room = roomRef.current;
-    if (!room) return false;
-    const participant =
-      room.localParticipant.identity === identity
-        ? room.localParticipant
-        : room.remoteParticipants.get(identity);
-    if (!participant) return false;
-    const audio = participant
-      .getTrackPublications()
-      .filter((pub) => pub.kind === Track.Kind.Audio);
-    if (audio.length === 0) return false;
-    return audio.every((pub) => pub.isMuted);
+  const handleJoin = async () => {
+    if (!callId) return;
+    if (!call.isAuthenticated && !guestDisplayName.trim()) return;
+    if (call.callId && call.callId !== callId) {
+      // User is already in a different call. Leave current first.
+      await call.leave();
+    }
+    const res = await call.join(callId, guestDisplayName);
+    if (res.ok) {
+      await fetchCallInfo({ silent: true });
+    }
+  };
+
+  const handleLeave = async () => {
+    await call.leave();
+    await fetchCallInfo({ silent: true });
+  };
+
+  const sendChat = async () => {
+    const t = chatInput.trim();
+    if (!t) return;
+    await call.sendChat(t);
+    setChatInput("");
+  };
+
+  const copyInviteLink = async () => {
+    if (!callId) return;
+    const url = `${window.location.origin}/calls/${callId}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setInviteCopied(true);
+      window.setTimeout(() => setInviteCopied(false), 1500);
+    } catch (err) {
+      console.warn("clipboard.writeText failed:", err);
+    }
+  };
+
+  const handleUpdateVisibility = async (visibility: CallVisibility) => {
+    if (!callName) return;
+    setUpdatingVisibility(true);
+    try {
+      await callClient.updateCall({
+        call: { name: callName, visibility },
+        updateMask: { paths: ["visibility"] },
+      });
+      await fetchCallInfo({ silent: true });
+      await call.publishData({ type: "call_updated" });
+    } catch (err) {
+      console.error("UpdateCall failed:", err);
+    } finally {
+      setUpdatingVisibility(false);
+    }
   };
 
   const handleMute = async (
@@ -207,12 +494,12 @@ export default function CallRoomRoute() {
         muted,
       });
       const kind = muted ? "host_muted" : "host_unmuted";
-      await publishRoomData({
+      await call.publishData({
         type: kind,
         targetIdentity: identity,
         targetDisplayName: displayName,
       });
-      addSystemMessage(
+      call.addSystemMessage(
         muted
           ? `ホストが ${displayName} をミュートしました`
           : `ホストが ${displayName} のミュートを解除しました`,
@@ -257,356 +544,6 @@ export default function CallRoomRoute() {
     }
   };
 
-  const handleToggleSelfMic = async () => {
-    const room = roomRef.current;
-    if (!room) return;
-    const wantUnmute = isSelfMutedRef.current;
-    if (wantUnmute && hostMutedMeRef.current) {
-      const myName = room.localParticipant.name || room.localParticipant.identity;
-      addSystemMessage(`${myName} がミュートの解除を求めています`);
-      await publishRoomData({ type: "unmute_request", requesterDisplayName: myName });
-      return;
-    }
-    try {
-      await room.localParticipant.setMicrophoneEnabled(wantUnmute);
-    } catch (err) {
-      console.warn("toggle mic failed:", err);
-    }
-  };
-
-  const copyInviteLink = async () => {
-    if (!callId) return;
-    const url = `${window.location.origin}/calls/${callId}`;
-    try {
-      await navigator.clipboard.writeText(url);
-      setInviteCopied(true);
-      window.setTimeout(() => setInviteCopied(false), 1500);
-    } catch (err) {
-      console.warn("clipboard.writeText failed:", err);
-    }
-  };
-
-  const handleUpdateVisibility = async (visibility: CallVisibility) => {
-    if (!callName) return;
-    setUpdatingVisibility(true);
-    try {
-      await callClient.updateCall({
-        call: { name: callName, visibility },
-        updateMask: { paths: ["visibility"] },
-      });
-      await fetchCallInfo({ silent: true });
-      // Push to other connected participants so they refetch.
-      const room = roomRef.current;
-      if (room) {
-        try {
-          const payload = new TextEncoder().encode(
-            JSON.stringify({ type: "call_updated" }),
-          );
-          await room.localParticipant.publishData(payload, { reliable: true });
-        } catch (err) {
-          console.warn("publishData failed:", err);
-        }
-      }
-    } catch (err) {
-      console.error("UpdateCall failed:", err);
-    } finally {
-      setUpdatingVisibility(false);
-    }
-  };
-
-  useEffect(() => {
-    void fetchCallInfo();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [callName]);
-
-  const clearRefreshTimer = () => {
-    if (refreshTimerRef.current !== null) {
-      window.clearTimeout(refreshTimerRef.current);
-      refreshTimerRef.current = null;
-    }
-  };
-
-  const clearHeartbeatTimer = () => {
-    if (heartbeatTimerRef.current !== null) {
-      window.clearInterval(heartbeatTimerRef.current);
-      heartbeatTimerRef.current = null;
-    }
-  };
-
-  const startHeartbeat = () => {
-    clearHeartbeatTimer();
-    heartbeatTimerRef.current = window.setInterval(() => {
-      const res = latestJoinResRef.current;
-      if (!callName || !res) return;
-      void callClient
-        .heartbeatCall({
-          name: callName,
-          guestIdentity: isAuthenticated ? "" : res.identity,
-        })
-        .catch((err) => {
-          console.warn("HeartbeatCall failed:", err);
-        });
-    }, HEARTBEAT_INTERVAL_MS);
-  };
-
-  // Fire-and-forget LeaveCall that survives page unload. Regular fetch from the
-  // Connect client would be aborted by the browser; keepalive lets the request
-  // flush before the tab dies.
-  const sendLeaveBeacon = () => {
-    const res = latestJoinResRef.current;
-    if (!callName || !res) return;
-    const token = tokenStore.getAccessToken();
-    const body = JSON.stringify({
-      name: callName,
-      guestIdentity: isAuthenticated ? "" : res.identity,
-    });
-    try {
-      void fetch(`${API_BASE_URL}/call.v1.CallService/LeaveCall`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body,
-        keepalive: true,
-      }).catch(() => undefined);
-    } catch {
-      // ignore
-    }
-  };
-
-  const scheduleTokenRefresh = () => {
-    clearRefreshTimer();
-    if (!isAuthenticated) return;
-    const res = latestJoinResRef.current;
-    if (!res?.expireTime) return;
-    const expireMs = Number(res.expireTime.seconds) * 1000;
-    const delay = expireMs - Date.now() - REFRESH_MARGIN_MS;
-    if (delay <= 0) return;
-    refreshTimerRef.current = window.setTimeout(() => {
-      void refreshToken();
-    }, delay);
-  };
-
-  const refreshToken = async () => {
-    if (!callName) return;
-    try {
-      const res = await callClient.joinCall({
-        name: callName,
-        guestDisplayName: "",
-      });
-      if (res.identity !== latestJoinResRef.current?.identity) {
-        console.warn("Token refresh returned different identity; ignoring");
-        return;
-      }
-      latestJoinResRef.current = res;
-      scheduleTokenRefresh();
-    } catch (err) {
-      console.error("Token refresh failed:", err);
-    }
-  };
-
-  const attachRoomListeners = (room: Room) => {
-    room
-      .on(RoomEvent.ParticipantConnected, () => {
-        rerender();
-        void fetchCallInfo({ silent: true });
-      })
-      .on(RoomEvent.ParticipantDisconnected, () => {
-        rerender();
-        void fetchCallInfo({ silent: true });
-      })
-      .on(
-        RoomEvent.TrackSubscribed,
-        (
-          track: RemoteTrack,
-          _pub: RemoteTrackPublication,
-          _participant: RemoteParticipant,
-        ) => {
-          if (track.kind === Track.Kind.Audio && audioContainerRef.current) {
-            audioContainerRef.current.appendChild(track.attach());
-          }
-        },
-      )
-      .on(RoomEvent.TrackUnsubscribed, (track: RemoteTrack) => {
-        track.detach().forEach((el) => el.remove());
-      })
-      .on(RoomEvent.TrackMuted, () => rerender())
-      .on(RoomEvent.TrackUnmuted, () => rerender())
-      .on(
-        RoomEvent.DataReceived,
-        (payload: Uint8Array, participant?: RemoteParticipant) => {
-          try {
-            const msg = JSON.parse(new TextDecoder().decode(payload));
-            if (msg?.type === "call_updated") {
-              void fetchCallInfo({ silent: true });
-              return;
-            }
-            if (msg?.type === "host_muted" || msg?.type === "host_unmuted") {
-              const myIdentity = roomRef.current?.localParticipant.identity;
-              if (myIdentity && msg.targetIdentity === myIdentity) {
-                hostMutedMeRef.current = msg.type === "host_muted";
-              }
-              const targetName =
-                typeof msg.targetDisplayName === "string"
-                  ? msg.targetDisplayName
-                  : "参加者";
-              addSystemMessage(
-                msg.type === "host_muted"
-                  ? `ホストが ${targetName} をミュートしました`
-                  : `ホストが ${targetName} のミュートを解除しました`,
-              );
-              return;
-            }
-            if (msg?.type === "unmute_request") {
-              const requester =
-                typeof msg.requesterDisplayName === "string"
-                  ? msg.requesterDisplayName
-                  : "参加者";
-              addSystemMessage(`${requester} がミュートの解除を求めています`);
-              return;
-            }
-            if (
-              msg?.type === "chat_message" &&
-              typeof msg.text === "string" &&
-              participant
-            ) {
-              setChatMessages((prev) => [
-                ...prev,
-                {
-                  id: makeMessageID(participant.identity),
-                  identity: participant.identity,
-                  displayName: participant.name || participant.identity,
-                  text: msg.text,
-                },
-              ]);
-            }
-          } catch {
-            // ignore malformed payloads
-          }
-        },
-      )
-      .on(RoomEvent.Disconnected, (reason?: DisconnectReason) => {
-        void handleDisconnected(reason);
-      });
-  };
-
-  const handleDisconnected = async (reason?: DisconnectReason) => {
-    clearRefreshTimer();
-    clearHeartbeatTimer();
-    if (intentionalLeaveRef.current) {
-      intentionalLeaveRef.current = false;
-      return;
-    }
-    if (reason === DisconnectReason.PARTICIPANT_REMOVED) {
-      setConnected(false);
-      setJoinError("ホストにより通話から退出させられました");
-      void fetchCallInfo();
-      rerender();
-      return;
-    }
-    if (!isAuthenticated) {
-      setConnected(false);
-      setJoinError("接続が切れました。再参加してください");
-      void fetchCallInfo();
-      rerender();
-      return;
-    }
-    try {
-      const fresh = await callClient.joinCall({
-        name: callName,
-        guestDisplayName: "",
-      });
-      latestJoinResRef.current = fresh;
-      const newRoom = new Room();
-      attachRoomListeners(newRoom);
-      await newRoom.connect(fresh.url, fresh.accessToken);
-      await newRoom.localParticipant.setMicrophoneEnabled(true);
-      roomRef.current = newRoom;
-      scheduleTokenRefresh();
-      rerender();
-    } catch (err) {
-      console.error("Auto-reconnect failed:", err);
-      setConnected(false);
-      setJoinError("再接続に失敗しました。再参加してください");
-      void fetchCallInfo();
-      rerender();
-    }
-  };
-
-  const handleJoin = async () => {
-    if (!callName) return;
-    if (!isAuthenticated && !guestDisplayName.trim()) return;
-    setConnecting(true);
-    setJoinError(null);
-    try {
-      if (!isAuthenticated) {
-        localStorage.setItem(GUEST_DISPLAY_NAME_KEY, guestDisplayName);
-      }
-      const res = await callClient.joinCall({
-        name: callName,
-        guestDisplayName: isAuthenticated ? "" : guestDisplayName,
-      });
-      latestJoinResRef.current = res;
-
-      const room = new Room();
-      attachRoomListeners(room);
-      await room.connect(res.url, res.accessToken);
-      await room.localParticipant.setMicrophoneEnabled(true);
-
-      roomRef.current = room;
-      setConnected(true);
-      scheduleTokenRefresh();
-      startHeartbeat();
-      void fetchCallInfo({ silent: true });
-      rerender();
-    } catch (err) {
-      console.error("JoinCall failed:", err);
-      setJoinError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setConnecting(false);
-    }
-  };
-
-  const handleLeave = async () => {
-    intentionalLeaveRef.current = true;
-    clearRefreshTimer();
-    clearHeartbeatTimer();
-    const res = latestJoinResRef.current;
-    if (callName && res) {
-      try {
-        await callClient.leaveCall({
-          name: callName,
-          guestIdentity: isAuthenticated ? "" : res.identity,
-        });
-      } catch (err) {
-        console.warn("LeaveCall failed:", err);
-      }
-    }
-    await roomRef.current?.disconnect();
-    roomRef.current = null;
-    latestJoinResRef.current = null;
-    setConnected(false);
-    void fetchCallInfo({ silent: true });
-    rerender();
-  };
-
-  useEffect(() => {
-    const onPageHide = () => {
-      sendLeaveBeacon();
-    };
-    window.addEventListener("pagehide", onPageHide);
-    return () => {
-      window.removeEventListener("pagehide", onPageHide);
-      intentionalLeaveRef.current = true;
-      clearRefreshTimer();
-      clearHeartbeatTimer();
-      sendLeaveBeacon();
-      roomRef.current?.disconnect();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   if (loadingCall) {
     return (
       <div className="w-full min-h-full flex items-center justify-center">
@@ -625,101 +562,36 @@ export default function CallRoomRoute() {
     );
   }
 
-  const call = callInfo.call;
+  const callData = callInfo.call;
   const participants: CallParticipant[] = callInfo.participants;
-  const roomParticipantCount = roomRef.current
-    ? roomRef.current.remoteParticipants.size + 1
-    : 0;
+  const activeParticipantCount = participants.filter(
+    (p) => p.isCurrentlyConnected,
+  ).length;
   const isHost =
-    myUserName !== null && call.host !== undefined && myUserName === call.host.name;
-  const selfIdentity = latestJoinResRef.current?.identity ?? "";
-  const isSelfMuted = connected && isParticipantMuted(selfIdentity);
-  isSelfMutedRef.current = isSelfMuted;
+    call.myUserName !== null &&
+    callData.host !== undefined &&
+    call.myUserName === callData.host.name;
+  const isSelfMuted = call.isSelfMuted();
 
   return (
     <div className="w-full min-h-full flex flex-col items-center justify-center px-6 py-8">
       <div className="w-full max-w-md flex flex-col gap-6">
         <div className="text-center">
           <p className="text-xs text-muted-foreground">
-            {VISIBILITY_LABELS[call.visibility]}
+            {VISIBILITY_LABELS[callData.visibility]}
           </p>
           <p className="text-sm font-mono break-all">{callId}</p>
           <p className="text-[10px] text-muted-foreground truncate">
-            host: {call.host?.displayName ?? "unknown"}
-            {call.host?.customId ? ` @${call.host.customId}` : ""}
+            host: {callData.host?.displayName ?? "unknown"}
+            {callData.host?.customId ? ` @${callData.host.customId}` : ""}
           </p>
+          {callData.createTime && (
+            <p className="text-xs text-muted-foreground font-mono mt-1">
+              ⏱{" "}
+              {formatDuration(now - callData.createTime.toDate().getTime())}
+            </p>
+          )}
         </div>
-
-        {!connected ? (
-          call.visibility === CallVisibility.USERS_ONLY && !isAuthenticated ? (
-            <div className="flex flex-col gap-3">
-              <p className="text-sm text-muted-foreground text-center">
-                この通話はログインしているユーザーのみ参加できます
-              </p>
-              <Link
-                to={`/login?returnTo=${encodeURIComponent(`/calls/${callId}`)}`}
-                className="w-full"
-              >
-                <Button className="w-full h-11">ログインして参加</Button>
-              </Link>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-3">
-              {!isAuthenticated && (
-                <input
-                  className="w-full h-11 px-3 rounded-md border border-input bg-background text-sm"
-                  placeholder="表示名（ゲスト）"
-                  value={guestDisplayName}
-                  onChange={(e) => setGuestDisplayName(e.target.value)}
-                />
-              )}
-              <Button
-                onClick={handleJoin}
-                disabled={
-                  connecting || (!isAuthenticated && !guestDisplayName.trim())
-                }
-                className="w-full h-11"
-              >
-                {connecting ? "参加中..." : "通話に参加"}
-              </Button>
-              {!isAuthenticated && (
-                <Link
-                  to={`/login?returnTo=${encodeURIComponent(`/calls/${callId}`)}`}
-                  className="text-xs text-muted-foreground text-center underline underline-offset-2 hover:text-foreground"
-                >
-                  ログインして参加
-                </Link>
-              )}
-            </div>
-          )
-        ) : (
-          <div className="flex flex-col gap-2">
-            {isSelfMuted && hostMutedMeRef.current && (
-              <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive flex items-center gap-2">
-                <span aria-hidden>🔇</span>
-                <span>あなたはミュートされています</span>
-              </div>
-            )}
-            <Button
-              variant="outline"
-              onClick={() => void handleToggleSelfMic()}
-              className="w-full h-11"
-            >
-              {isSelfMuted
-                ? hostMutedMeRef.current
-                  ? "解除をリクエスト"
-                  : "マイクをオンにする"
-                : "マイクをミュート"}
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleLeave}
-              className="w-full h-11"
-            >
-              退出
-            </Button>
-          </div>
-        )}
 
         {isHost && (
           <div className="rounded-md border p-4 flex flex-col gap-3">
@@ -736,7 +608,7 @@ export default function CallRoomRoute() {
                     <input
                       type="radio"
                       name="call-visibility"
-                      checked={call.visibility === v}
+                      checked={callData.visibility === v}
                       disabled={updatingVisibility}
                       onChange={() => void handleUpdateVisibility(v)}
                     />
@@ -745,7 +617,7 @@ export default function CallRoomRoute() {
                 ))}
               </div>
             </div>
-            {call.visibility !== CallVisibility.LOCKED && (
+            {callData.visibility !== CallVisibility.LOCKED && (
               <Button
                 variant="outline"
                 size="sm"
@@ -759,100 +631,66 @@ export default function CallRoomRoute() {
 
         <div className="rounded-md border p-4">
           <p className="text-xs text-muted-foreground mb-2">
-            参加者（{connected ? `接続中: ${roomParticipantCount}` : "未接続"}）
+            参加者（接続中: {activeParticipantCount}）
           </p>
           {participants.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               まだ誰も参加していません
             </p>
           ) : (
-            <ul className="flex flex-col gap-2 text-sm">
+            <div className="grid grid-cols-4 gap-3">
               {participants.map((p) => {
                 const identity = parseCallParticipant(p.name).identity;
-                const isTargetHost = call.host?.name === p.user?.name;
-                const isSelf =
-                  (myUserName && p.user?.name === myUserName) ||
-                  (!isAuthenticated &&
-                    latestJoinResRef.current?.identity === identity);
-                const canModerate =
-                  isHost &&
-                  !isTargetHost &&
-                  !isSelf &&
-                  p.isCurrentlyConnected;
-                const muted = isParticipantMuted(identity);
-                const busy = moderatingIdentity === identity;
+                const muted = call.isParticipantMuted(identity);
+                const displayName = p.user?.displayName || p.displayName;
                 return (
-                  <li
+                  <button
                     key={p.name}
-                    className="flex items-center gap-2 flex-wrap"
-                  >
-                    <span
-                      className={`size-1.5 rounded-full ${
-                        p.isCurrentlyConnected
-                          ? "bg-green-500"
-                          : "bg-muted-foreground/30"
-                      }`}
-                    />
-                    <span
-                      className={
-                        p.isCurrentlyConnected ? "" : "text-muted-foreground"
+                    type="button"
+                    onClick={() => {
+                      if (!connected && p.user) {
+                        navigate(`/@${p.user.customId}`);
+                      } else {
+                        setDrawerIdentity(identity);
                       }
+                    }}
+                    className="flex flex-col items-center gap-1.5 rounded-md p-1 text-center hover:bg-muted/50 transition-colors"
+                  >
+                    <div
+                      className={`relative ${
+                        !p.isCurrentlyConnected ? "opacity-40" : ""
+                      }`}
                     >
-                      {p.user?.displayName || p.displayName}
+                      <SpeakerAvatar
+                        participant={
+                          p.isCurrentlyConnected && connected
+                            ? call.getLKParticipant(identity)
+                            : null
+                        }
+                        avatarUrl={p.user?.avatarUrl}
+                        displayName={displayName}
+                        connected={connected && p.isCurrentlyConnected}
+                      />
+                      {p.isCurrentlyConnected && muted && (
+                        <span
+                          className="absolute -bottom-0.5 -right-0.5 text-[10px] leading-none bg-background rounded-full border p-0.5"
+                          title="ミュート中"
+                        >
+                          🔇
+                        </span>
+                      )}
+                    </div>
+                    <span
+                      className={`text-xs leading-tight truncate w-full ${
+                        !p.isCurrentlyConnected ? "text-muted-foreground" : ""
+                      }`}
+                    >
+                      {displayName}
                     </span>
-                    {p.user && (
-                      <span className="text-xs text-muted-foreground">
-                        @{p.user.customId}
-                      </span>
-                    )}
-                    {p.isCurrentlyConnected && muted && (
-                      <span
-                        className="text-xs text-muted-foreground"
-                        title="ミュート中"
-                      >
-                        🔇
-                      </span>
-                    )}
-                    {canModerate && (
-                      <span className="ml-auto flex gap-1">
-                        <Button
-                          size="xs"
-                          variant="outline"
-                          disabled={busy}
-                          onClick={() =>
-                            void handleMute(
-                              identity,
-                              p.user?.displayName || p.displayName,
-                              !muted,
-                            )
-                          }
-                        >
-                          {muted ? "解除" : "ミュート"}
-                        </Button>
-                        <Button
-                          size="xs"
-                          variant="outline"
-                          disabled={busy}
-                          onClick={() => void handleKick(identity)}
-                        >
-                          キック
-                        </Button>
-                        {p.user && (
-                          <Button
-                            size="xs"
-                            variant="destructive"
-                            disabled={busy}
-                            onClick={() => void handleBan(identity)}
-                          >
-                            追放
-                          </Button>
-                        )}
-                      </span>
-                    )}
-                  </li>
+                  </button>
                 );
               })}
-            </ul>
+            </div>
           )}
         </div>
 
@@ -865,12 +703,12 @@ export default function CallRoomRoute() {
               ref={chatScrollRef}
               className="flex flex-col gap-1 h-48 overflow-y-auto text-sm"
             >
-              {chatMessages.length === 0 ? (
+              {call.chatMessages.length === 0 ? (
                 <p className="text-xs text-muted-foreground">
                   まだメッセージはありません
                 </p>
               ) : (
-                chatMessages.map((m) =>
+                call.chatMessages.map((m) =>
                   m.system ? (
                     <div
                       key={m.id}
@@ -915,11 +753,267 @@ export default function CallRoomRoute() {
           </div>
         )}
 
+        {!connected ? (
+          callData.visibility === CallVisibility.USERS_ONLY &&
+          !call.isAuthenticated ? (
+            <div className="flex flex-col gap-3">
+              <p className="text-sm text-muted-foreground text-center">
+                この通話はログインしているユーザーのみ参加できます
+              </p>
+              <GoogleLoginButton returnTo={`/calls/${callId}`} />
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {!call.isAuthenticated && (
+                <input
+                  className="w-full h-11 px-3 rounded-md border border-input bg-background text-sm"
+                  placeholder="表示名（ゲスト）"
+                  value={guestDisplayName}
+                  onChange={(e) => setGuestDisplayName(e.target.value)}
+                />
+              )}
+              <Button
+                onClick={handleJoin}
+                disabled={
+                  connecting ||
+                  (!call.isAuthenticated && !guestDisplayName.trim())
+                }
+                className="w-full h-11"
+              >
+                {connecting ? "参加中..." : "通話に参加"}
+              </Button>
+              {!call.isAuthenticated && (
+                <Link
+                  to={`/login?returnTo=${encodeURIComponent(`/calls/${callId}`)}`}
+                  className="text-xs text-muted-foreground text-center underline underline-offset-2 hover:text-foreground"
+                >
+                  ログインして参加
+                </Link>
+              )}
+            </div>
+          )
+        ) : (
+          <div className="flex flex-col gap-2">
+            {isSelfMuted && call.hostMutedMe && (
+              <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive flex items-center gap-2">
+                <span aria-hidden>🔇</span>
+                <span>あなたはミュートされています</span>
+              </div>
+            )}
+            <Button
+              variant="outline"
+              onClick={() => void call.toggleSelfMic()}
+              className="w-full h-11"
+            >
+              {isSelfMuted
+                ? call.hostMutedMe
+                  ? "解除をリクエスト"
+                  : "マイクをオンにする"
+                : "マイクをミュート"}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleLeave}
+              className="w-full h-11"
+            >
+              退出
+            </Button>
+          </div>
+        )}
+
         {joinError && (
           <p className="text-sm text-destructive text-center">{joinError}</p>
         )}
       </div>
-      <div ref={audioContainerRef} className="hidden" aria-hidden />
+
+      <Drawer
+        open={drawerIdentity !== null}
+        onOpenChange={(open) => {
+          if (!open) setDrawerIdentity(null);
+        }}
+      >
+        <DrawerContent>
+          {(() => {
+            if (!drawerIdentity) return null;
+            const target = participants.find(
+              (pp) => parseCallParticipant(pp.name).identity === drawerIdentity,
+            );
+            if (!target) return null;
+            const targetIsHost = callData.host?.name === target.user?.name;
+            const targetIsSelf =
+              (call.myUserName && target.user?.name === call.myUserName) ||
+              (!call.isAuthenticated && call.identity === drawerIdentity);
+            const canModerateTarget =
+              isHost &&
+              !targetIsHost &&
+              !targetIsSelf &&
+              target.isCurrentlyConnected;
+            const targetMuted = call.isParticipantMuted(drawerIdentity);
+            const targetBusy = moderatingIdentity === drawerIdentity;
+            const u = target.user;
+            const close = () => setDrawerIdentity(null);
+            const joinedAt = u?.createTime?.toDate();
+            const displayName = u?.displayName || target.displayName;
+            return (
+              <>
+                <DrawerHeader>
+                  <DrawerTitle className="sr-only">
+                    {displayName} のプロフィール
+                  </DrawerTitle>
+                  <DrawerDescription className="sr-only">
+                    参加者の詳細とモデレーション操作
+                  </DrawerDescription>
+                </DrawerHeader>
+                <div className="px-4 flex flex-col gap-4">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="size-14">
+                      {u?.avatarUrl && (
+                        <AvatarImage src={u.avatarUrl} alt={displayName} />
+                      )}
+                      <AvatarFallback className="text-lg">
+                        {displayName.slice(0, 2)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-bold truncate">{displayName}</p>
+                      {u ? (
+                        <p className="text-sm text-muted-foreground truncate">
+                          @{u.customId}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">ゲスト</p>
+                      )}
+                    </div>
+                    {targetMuted && (
+                      <span
+                        className="text-xs text-muted-foreground"
+                        title="ミュート中"
+                      >
+                        🔇
+                      </span>
+                    )}
+                  </div>
+
+                  {u?.biography && (
+                    <p className="text-sm whitespace-pre-wrap">{u.biography}</p>
+                  )}
+
+                  {u && (
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+                      <span>
+                        <span className="font-bold">{u.followingCount}</span>{" "}
+                        <span className="text-muted-foreground">
+                          フォロー中
+                        </span>
+                      </span>
+                      <span>
+                        <span className="font-bold">{u.followerCount}</span>{" "}
+                        <span className="text-muted-foreground">
+                          フォロワー
+                        </span>
+                      </span>
+                      {joinedAt && (
+                        <span className="text-muted-foreground">
+                          {joinedAt.getFullYear()}年{joinedAt.getMonth() + 1}
+                          月に登録
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  {connected &&
+                    !targetIsSelf &&
+                    target.isCurrentlyConnected && (
+                      <div className="flex flex-col gap-2">
+                        <div className="flex justify-between text-xs">
+                          <span className="text-muted-foreground">
+                            音量（あなただけに適用）
+                          </span>
+                          <span>
+                            {Math.round(
+                              (call.volumes[drawerIdentity] ??
+                                CALL_DEFAULT_VOLUME) * 100,
+                            )}
+                            %
+                          </span>
+                        </div>
+                        <Slider
+                          value={[
+                            (call.volumes[drawerIdentity] ??
+                              CALL_DEFAULT_VOLUME) * 100,
+                          ]}
+                          min={0}
+                          max={100}
+                          step={5}
+                          onValueChange={(v) => {
+                            const n = Array.isArray(v) ? v[0] : v;
+                            call.setVolume(drawerIdentity, n / 100);
+                          }}
+                        />
+                      </div>
+                    )}
+                </div>
+                <DrawerFooter>
+                  {u && (
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        close();
+                        navigate(`/@${u.customId}`);
+                      }}
+                    >
+                      プロフィールを見る
+                    </Button>
+                  )}
+                  {canModerateTarget && (
+                    <>
+                      <Button
+                        variant="outline"
+                        disabled={targetBusy}
+                        onClick={async () => {
+                          await handleMute(
+                            drawerIdentity,
+                            displayName,
+                            !targetMuted,
+                          );
+                          close();
+                        }}
+                      >
+                        {targetMuted ? "ミュートを解除" : "ミュート"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        disabled={targetBusy}
+                        onClick={async () => {
+                          await handleKick(drawerIdentity);
+                          close();
+                        }}
+                      >
+                        キック
+                      </Button>
+                      {u && (
+                        <Button
+                          variant="destructive"
+                          disabled={targetBusy}
+                          onClick={async () => {
+                            await handleBan(drawerIdentity);
+                            close();
+                          }}
+                        >
+                          追放
+                        </Button>
+                      )}
+                    </>
+                  )}
+                  <Button variant="ghost" onClick={close}>
+                    閉じる
+                  </Button>
+                </DrawerFooter>
+              </>
+            );
+          })()}
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }
