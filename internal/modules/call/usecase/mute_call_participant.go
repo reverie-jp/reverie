@@ -36,7 +36,10 @@ func (uc *MuteCallParticipant) Execute(ctx context.Context, input MuteCallPartic
 		return xerrors.ErrCannotTargetHost
 	}
 
-	if err := uc.livekit.MuteParticipantMicrophone(ctx, call.ID.String(), input.Identity, input.Muted); err != nil {
+	if err := uc.livekit.MuteParticipantMicrophone(ctx, call.ID.String(), input.Identity, true); err != nil {
+		return xerrors.ErrInternal.WithCause(err)
+	}
+	if err := uc.callRepo.SetCallParticipantMutedByHost(ctx, call.ID, input.Identity); err != nil {
 		return xerrors.ErrInternal.WithCause(err)
 	}
 	return nil

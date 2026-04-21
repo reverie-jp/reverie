@@ -13,4 +13,5 @@ var (
 	ErrCannotTargetHost        = New("cannot_target_host", "the host cannot be moderated", connect.CodeFailedPrecondition)
 	ErrCannotBanGuest          = New("cannot_ban_guest", "guest participants cannot be permanently banned", connect.CodeFailedPrecondition)
 	ErrCallEnded               = New("call_ended", "call has ended", connect.CodeFailedPrecondition)
+	ErrCannotUnmuteSelfMuted   = New("cannot_unmute_self_muted", "this participant muted themselves and cannot be unmuted by the host", connect.CodeFailedPrecondition)
 )

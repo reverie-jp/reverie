@@ -24,6 +24,7 @@ func InitModule(q *sqlc.Queries, userGateway usergw.Gateway, lk *livekit.Client,
 	heartbeatCall := usecase.NewHeartbeatCall(callRepo)
 	leaveCall := usecase.NewLeaveCall(callRepo)
 	muteCallParticipant := usecase.NewMuteCallParticipant(callRepo, lk)
+	unmuteCallParticipant := usecase.NewUnmuteCallParticipant(callRepo, lk)
 	kickCallParticipant := usecase.NewKickCallParticipant(callRepo, lk)
 	banCallParticipant := usecase.NewBanCallParticipant(callRepo, lk)
 	transferCallHost := usecase.NewTransferCallHost(callRepo, userGateway)
@@ -41,6 +42,7 @@ func InitModule(q *sqlc.Queries, userGateway usergw.Gateway, lk *livekit.Client,
 		heartbeatCall,
 		leaveCall,
 		muteCallParticipant,
+		unmuteCallParticipant,
 		kickCallParticipant,
 		banCallParticipant,
 		transferCallHost,

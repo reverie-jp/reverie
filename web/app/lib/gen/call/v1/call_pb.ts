@@ -884,13 +884,6 @@ export class MuteCallParticipantRequest extends Message<MuteCallParticipantReque
    */
   name = "";
 
-  /**
-   * True to mute, false to unmute.
-   *
-   * @generated from field: bool muted = 2;
-   */
-  muted = false;
-
   constructor(data?: PartialMessage<MuteCallParticipantRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -900,7 +893,6 @@ export class MuteCallParticipantRequest extends Message<MuteCallParticipantReque
   static readonly typeName = "call.v1.MuteCallParticipantRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "muted", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): MuteCallParticipantRequest {
@@ -948,6 +940,76 @@ export class MuteCallParticipantResponse extends Message<MuteCallParticipantResp
 
   static equals(a: MuteCallParticipantResponse | PlainMessage<MuteCallParticipantResponse> | undefined, b: MuteCallParticipantResponse | PlainMessage<MuteCallParticipantResponse> | undefined): boolean {
     return proto3.util.equals(MuteCallParticipantResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message call.v1.UnmuteCallParticipantRequest
+ */
+export class UnmuteCallParticipantRequest extends Message<UnmuteCallParticipantRequest> {
+  /**
+   * "calls/{ulid}/participants/{identity}"
+   *
+   * @generated from field: string name = 1;
+   */
+  name = "";
+
+  constructor(data?: PartialMessage<UnmuteCallParticipantRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "call.v1.UnmuteCallParticipantRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UnmuteCallParticipantRequest {
+    return new UnmuteCallParticipantRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UnmuteCallParticipantRequest {
+    return new UnmuteCallParticipantRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UnmuteCallParticipantRequest {
+    return new UnmuteCallParticipantRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: UnmuteCallParticipantRequest | PlainMessage<UnmuteCallParticipantRequest> | undefined, b: UnmuteCallParticipantRequest | PlainMessage<UnmuteCallParticipantRequest> | undefined): boolean {
+    return proto3.util.equals(UnmuteCallParticipantRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message call.v1.UnmuteCallParticipantResponse
+ */
+export class UnmuteCallParticipantResponse extends Message<UnmuteCallParticipantResponse> {
+  constructor(data?: PartialMessage<UnmuteCallParticipantResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "call.v1.UnmuteCallParticipantResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UnmuteCallParticipantResponse {
+    return new UnmuteCallParticipantResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UnmuteCallParticipantResponse {
+    return new UnmuteCallParticipantResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UnmuteCallParticipantResponse {
+    return new UnmuteCallParticipantResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: UnmuteCallParticipantResponse | PlainMessage<UnmuteCallParticipantResponse> | undefined, b: UnmuteCallParticipantResponse | PlainMessage<UnmuteCallParticipantResponse> | undefined): boolean {
+    return proto3.util.equals(UnmuteCallParticipantResponse, a, b);
   }
 }
 

@@ -119,6 +119,7 @@ type CallParticipant struct {
 	FirstJoinTime       time.Time  `json:"first_join_time"`
 	LastSeenTime        time.Time  `json:"last_seen_time"`
 	DisconnectedTime    *time.Time `json:"disconnected_time"`
+	MutedByHost         bool       `json:"muted_by_host"`
 }
 
 type RefreshToken struct {

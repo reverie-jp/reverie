@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { BanCallParticipantRequest, BanCallParticipantResponse, CreateCallRequest, CreateCallResponse, EndCallRequest, EndCallResponse, GetCallRequest, GetCallResponse, GetUserParticipatingCallRequest, GetUserParticipatingCallResponse, HeartbeatCallRequest, HeartbeatCallResponse, JoinCallRequest, JoinCallResponse, KickCallParticipantRequest, KickCallParticipantResponse, LeaveCallRequest, LeaveCallResponse, ListCallBansRequest, ListCallBansResponse, ListPublicCallsRequest, ListPublicCallsResponse, MuteCallParticipantRequest, MuteCallParticipantResponse, TransferCallHostRequest, TransferCallHostResponse, UnbanCallParticipantRequest, UnbanCallParticipantResponse, UpdateCallRequest, UpdateCallResponse } from "./call_pb.js";
+import { BanCallParticipantRequest, BanCallParticipantResponse, CreateCallRequest, CreateCallResponse, EndCallRequest, EndCallResponse, GetCallRequest, GetCallResponse, GetUserParticipatingCallRequest, GetUserParticipatingCallResponse, HeartbeatCallRequest, HeartbeatCallResponse, JoinCallRequest, JoinCallResponse, KickCallParticipantRequest, KickCallParticipantResponse, LeaveCallRequest, LeaveCallResponse, ListCallBansRequest, ListCallBansResponse, ListPublicCallsRequest, ListPublicCallsResponse, MuteCallParticipantRequest, MuteCallParticipantResponse, TransferCallHostRequest, TransferCallHostResponse, UnbanCallParticipantRequest, UnbanCallParticipantResponse, UnmuteCallParticipantRequest, UnmuteCallParticipantResponse, UpdateCallRequest, UpdateCallResponse } from "./call_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -111,7 +111,7 @@ export const CallService = {
       kind: MethodKind.Unary,
     },
     /**
-     * Server-side mute/unmute a participant's microphone. Host only.
+     * Server-side mute a participant's microphone. Host only.
      *
      * @generated from rpc call.v1.CallService.MuteCallParticipant
      */
@@ -119,6 +119,18 @@ export const CallService = {
       name: "MuteCallParticipant",
       I: MuteCallParticipantRequest,
       O: MuteCallParticipantResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * Server-side unmute a participant that the host previously muted. Fails
+     * if the participant muted themselves. Host only.
+     *
+     * @generated from rpc call.v1.CallService.UnmuteCallParticipant
+     */
+    unmuteCallParticipant: {
+      name: "UnmuteCallParticipant",
+      I: UnmuteCallParticipantRequest,
+      O: UnmuteCallParticipantResponse,
       kind: MethodKind.Unary,
     },
     /**

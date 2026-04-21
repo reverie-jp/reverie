@@ -60,6 +60,7 @@ CREATE TABLE IF NOT EXISTS call_participants (
     first_join_time TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     last_seen_time TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     disconnected_time TIMESTAMPTZ,
+    muted_by_host BOOLEAN NOT NULL DEFAULT FALSE,
     PRIMARY KEY (call_id, participant_identity)
 );
 

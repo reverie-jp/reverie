@@ -11,6 +11,7 @@ import (
 )
 
 type Querier interface {
+	ClearCallParticipantMutedByHost(ctx context.Context, arg ClearCallParticipantMutedByHostParams) (int64, error)
 	CreateAuthProvider(ctx context.Context, arg CreateAuthProviderParams) error
 	CreateCall(ctx context.Context, arg CreateCallParams) error
 	CreateCallBan(ctx context.Context, arg CreateCallBanParams) error
@@ -37,6 +38,7 @@ type Querier interface {
 	MarkAllCallParticipantsDisconnected(ctx context.Context, callID ulid.ULID) error
 	MarkCallEnded(ctx context.Context, id ulid.ULID) error
 	MarkCallParticipantDisconnected(ctx context.Context, arg MarkCallParticipantDisconnectedParams) (int64, error)
+	SetCallParticipantMutedByHost(ctx context.Context, arg SetCallParticipantMutedByHostParams) error
 	UpdateCallHost(ctx context.Context, arg UpdateCallHostParams) error
 	UpdateCallVisibility(ctx context.Context, arg UpdateCallVisibilityParams) error
 	UpsertCallParticipant(ctx context.Context, arg UpsertCallParticipantParams) error

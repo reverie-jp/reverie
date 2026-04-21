@@ -42,5 +42,6 @@ func ToCallParticipant(row *sqlc.CallParticipant) *entity.CallParticipant {
 		FirstJoinTime:       row.FirstJoinTime,
 		LastSeenTime:        row.LastSeenTime,
 		DisconnectedTime:    row.DisconnectedTime,
+		MutedByHost:         row.MutedByHost,
 	}
 }

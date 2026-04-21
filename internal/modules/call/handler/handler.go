@@ -16,6 +16,7 @@ type Handler struct {
 	heartbeatCall            *usecase.HeartbeatCall
 	leaveCall                *usecase.LeaveCall
 	muteCallParticipant      *usecase.MuteCallParticipant
+	unmuteCallParticipant    *usecase.UnmuteCallParticipant
 	kickCallParticipant      *usecase.KickCallParticipant
 	banCallParticipant       *usecase.BanCallParticipant
 	transferCallHost         *usecase.TransferCallHost
@@ -34,6 +35,7 @@ func New(
 	heartbeatCall *usecase.HeartbeatCall,
 	leaveCall *usecase.LeaveCall,
 	muteCallParticipant *usecase.MuteCallParticipant,
+	unmuteCallParticipant *usecase.UnmuteCallParticipant,
 	kickCallParticipant *usecase.KickCallParticipant,
 	banCallParticipant *usecase.BanCallParticipant,
 	transferCallHost *usecase.TransferCallHost,
@@ -51,6 +53,7 @@ func New(
 		heartbeatCall:            heartbeatCall,
 		leaveCall:                leaveCall,
 		muteCallParticipant:      muteCallParticipant,
+		unmuteCallParticipant:    unmuteCallParticipant,
 		kickCallParticipant:      kickCallParticipant,
 		banCallParticipant:       banCallParticipant,
 		transferCallHost:         transferCallHost,

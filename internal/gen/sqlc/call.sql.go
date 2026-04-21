@@ -11,6 +11,27 @@ import (
 	"reverie.jp/reverie/internal/platform/ulid"
 )
 
+const clearCallParticipantMutedByHost = `-- name: ClearCallParticipantMutedByHost :execrows
+UPDATE call_participants
+SET muted_by_host = FALSE
+WHERE call_id = $1::ulid
+  AND participant_identity = $2
+  AND muted_by_host = TRUE
+`
+
+type ClearCallParticipantMutedByHostParams struct {
+	CallID              ulid.ULID `json:"call_id"`
+	ParticipantIdentity string    `json:"participant_identity"`
+}
+
+func (q *Queries) ClearCallParticipantMutedByHost(ctx context.Context, arg ClearCallParticipantMutedByHostParams) (int64, error) {
+	result, err := q.db.Exec(ctx, clearCallParticipantMutedByHost, arg.CallID, arg.ParticipantIdentity)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const createCall = `-- name: CreateCall :exec
 INSERT INTO calls (id, host_user_id, visibility)
 VALUES ($1, $2, $3)
@@ -215,7 +236,7 @@ func (q *Queries) ListCallBans(ctx context.Context, arg ListCallBansParams) ([]C
 }
 
 const listCallParticipants = `-- name: ListCallParticipants :many
-SELECT call_id, participant_identity, user_id, display_name, first_join_time, last_seen_time, disconnected_time FROM call_participants
+SELECT call_id, participant_identity, user_id, display_name, first_join_time, last_seen_time, disconnected_time, muted_by_host FROM call_participants
 WHERE call_id = $1::ulid
 ORDER BY first_join_time ASC
 `
@@ -237,6 +258,7 @@ func (q *Queries) ListCallParticipants(ctx context.Context, callID ulid.ULID) ([
 			&i.FirstJoinTime,
 			&i.LastSeenTime,
 			&i.DisconnectedTime,
+			&i.MutedByHost,
 		); err != nil {
 			return nil, err
 		}
@@ -325,6 +347,23 @@ func (q *Queries) MarkCallParticipantDisconnected(ctx context.Context, arg MarkC
 	return result.RowsAffected(), nil
 }
 
+const setCallParticipantMutedByHost = `-- name: SetCallParticipantMutedByHost :exec
+UPDATE call_participants
+SET muted_by_host = TRUE
+WHERE call_id = $1::ulid
+  AND participant_identity = $2
+`
+
+type SetCallParticipantMutedByHostParams struct {
+	CallID              ulid.ULID `json:"call_id"`
+	ParticipantIdentity string    `json:"participant_identity"`
+}
+
+func (q *Queries) SetCallParticipantMutedByHost(ctx context.Context, arg SetCallParticipantMutedByHostParams) error {
+	_, err := q.db.Exec(ctx, setCallParticipantMutedByHost, arg.CallID, arg.ParticipantIdentity)
+	return err
+}
+
 const updateCallHost = `-- name: UpdateCallHost :exec
 UPDATE calls
 SET host_user_id = $1::ulid, update_time = NOW()
@@ -363,7 +402,14 @@ VALUES ($1, $2, $3, $4, NOW(), NULL)
 ON CONFLICT (call_id, participant_identity) DO UPDATE
 SET last_seen_time = NOW(),
     disconnected_time = NULL,
-    display_name = EXCLUDED.display_name
+    display_name = EXCLUDED.display_name,
+    -- Fresh rejoin after disconnect: reset host-mute since LiveKit creates
+    -- a new unmuted track. Token refresh on an active participant preserves
+    -- it (disconnected_time was NULL before upsert).
+    muted_by_host = CASE
+      WHEN call_participants.disconnected_time IS NOT NULL THEN FALSE
+      ELSE call_participants.muted_by_host
+    END
 `
 
 type UpsertCallParticipantParams struct {

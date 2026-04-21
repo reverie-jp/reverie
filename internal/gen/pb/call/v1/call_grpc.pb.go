@@ -28,6 +28,7 @@ const (
 	CallService_HeartbeatCall_FullMethodName            = "/call.v1.CallService/HeartbeatCall"
 	CallService_LeaveCall_FullMethodName                = "/call.v1.CallService/LeaveCall"
 	CallService_MuteCallParticipant_FullMethodName      = "/call.v1.CallService/MuteCallParticipant"
+	CallService_UnmuteCallParticipant_FullMethodName    = "/call.v1.CallService/UnmuteCallParticipant"
 	CallService_KickCallParticipant_FullMethodName      = "/call.v1.CallService/KickCallParticipant"
 	CallService_BanCallParticipant_FullMethodName       = "/call.v1.CallService/BanCallParticipant"
 	CallService_TransferCallHost_FullMethodName         = "/call.v1.CallService/TransferCallHost"
@@ -66,8 +67,11 @@ type CallServiceClient interface {
 	// Mark the participant as disconnected. Should be called on intentional
 	// leave and (via navigator.sendBeacon) on page unload.
 	LeaveCall(ctx context.Context, in *LeaveCallRequest, opts ...grpc.CallOption) (*LeaveCallResponse, error)
-	// Server-side mute/unmute a participant's microphone. Host only.
+	// Server-side mute a participant's microphone. Host only.
 	MuteCallParticipant(ctx context.Context, in *MuteCallParticipantRequest, opts ...grpc.CallOption) (*MuteCallParticipantResponse, error)
+	// Server-side unmute a participant that the host previously muted. Fails
+	// if the participant muted themselves. Host only.
+	UnmuteCallParticipant(ctx context.Context, in *UnmuteCallParticipantRequest, opts ...grpc.CallOption) (*UnmuteCallParticipantResponse, error)
 	// Temporarily remove a participant from the call. They can rejoin. Host
 	// only.
 	KickCallParticipant(ctx context.Context, in *KickCallParticipantRequest, opts ...grpc.CallOption) (*KickCallParticipantResponse, error)
@@ -184,6 +188,16 @@ func (c *callServiceClient) MuteCallParticipant(ctx context.Context, in *MuteCal
 	return out, nil
 }
 
+func (c *callServiceClient) UnmuteCallParticipant(ctx context.Context, in *UnmuteCallParticipantRequest, opts ...grpc.CallOption) (*UnmuteCallParticipantResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UnmuteCallParticipantResponse)
+	err := c.cc.Invoke(ctx, CallService_UnmuteCallParticipant_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *callServiceClient) KickCallParticipant(ctx context.Context, in *KickCallParticipantRequest, opts ...grpc.CallOption) (*KickCallParticipantResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(KickCallParticipantResponse)
@@ -274,8 +288,11 @@ type CallServiceServer interface {
 	// Mark the participant as disconnected. Should be called on intentional
 	// leave and (via navigator.sendBeacon) on page unload.
 	LeaveCall(context.Context, *LeaveCallRequest) (*LeaveCallResponse, error)
-	// Server-side mute/unmute a participant's microphone. Host only.
+	// Server-side mute a participant's microphone. Host only.
 	MuteCallParticipant(context.Context, *MuteCallParticipantRequest) (*MuteCallParticipantResponse, error)
+	// Server-side unmute a participant that the host previously muted. Fails
+	// if the participant muted themselves. Host only.
+	UnmuteCallParticipant(context.Context, *UnmuteCallParticipantRequest) (*UnmuteCallParticipantResponse, error)
 	// Temporarily remove a participant from the call. They can rejoin. Host
 	// only.
 	KickCallParticipant(context.Context, *KickCallParticipantRequest) (*KickCallParticipantResponse, error)
@@ -328,6 +345,9 @@ func (UnimplementedCallServiceServer) LeaveCall(context.Context, *LeaveCallReque
 }
 func (UnimplementedCallServiceServer) MuteCallParticipant(context.Context, *MuteCallParticipantRequest) (*MuteCallParticipantResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method MuteCallParticipant not implemented")
+}
+func (UnimplementedCallServiceServer) UnmuteCallParticipant(context.Context, *UnmuteCallParticipantRequest) (*UnmuteCallParticipantResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UnmuteCallParticipant not implemented")
 }
 func (UnimplementedCallServiceServer) KickCallParticipant(context.Context, *KickCallParticipantRequest) (*KickCallParticipantResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method KickCallParticipant not implemented")
@@ -530,6 +550,24 @@ func _CallService_MuteCallParticipant_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CallService_UnmuteCallParticipant_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UnmuteCallParticipantRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CallServiceServer).UnmuteCallParticipant(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CallService_UnmuteCallParticipant_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CallServiceServer).UnmuteCallParticipant(ctx, req.(*UnmuteCallParticipantRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _CallService_KickCallParticipant_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(KickCallParticipantRequest)
 	if err := dec(in); err != nil {
@@ -680,6 +718,10 @@ var CallService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "MuteCallParticipant",
 			Handler:    _CallService_MuteCallParticipant_Handler,
+		},
+		{
+			MethodName: "UnmuteCallParticipant",
+			Handler:    _CallService_UnmuteCallParticipant_Handler,
 		},
 		{
 			MethodName: "KickCallParticipant",

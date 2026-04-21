@@ -79,10 +79,19 @@ service CallService {
     };
   }
 
-  // Server-side mute/unmute a participant's microphone. Host only.
+  // Server-side mute a participant's microphone. Host only.
   rpc MuteCallParticipant(MuteCallParticipantRequest) returns (MuteCallParticipantResponse) {
     option (google.api.http) = {
       post: "/v1/{name=calls/*/participants/*}:mute"
+      body: "*"
+    };
+  }
+
+  // Server-side unmute a participant that the host previously muted. Fails
+  // if the participant muted themselves. Host only.
+  rpc UnmuteCallParticipant(UnmuteCallParticipantRequest) returns (UnmuteCallParticipantResponse) {
+    option (google.api.http) = {
+      post: "/v1/{name=calls/*/participants/*}:unmute"
       body: "*"
     };
   }
@@ -274,11 +283,16 @@ message LeaveCallResponse {}
 message MuteCallParticipantRequest {
   // "calls/{ulid}/participants/{identity}"
   string name = 1;
-  // True to mute, false to unmute.
-  bool muted = 2;
 }
 
 message MuteCallParticipantResponse {}
+
+message UnmuteCallParticipantRequest {
+  // "calls/{ulid}/participants/{identity}"
+  string name = 1;
+}
+
+message UnmuteCallParticipantResponse {}
 
 message KickCallParticipantRequest {
   // "calls/{ulid}/participants/{identity}"

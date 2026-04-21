@@ -49,6 +49,12 @@ export type ChatMessage = {
   text: string;
   time: number;
   system?: boolean;
+  // When set, this system message is a muted participant requesting unmute.
+  // The host can approve it inline from the chat.
+  unmuteRequest?: {
+    targetIdentity: string;
+    targetDisplayName: string;
+  };
 };
 
 type JoinResult = { ok: true } | { ok: false; error: string };
@@ -65,7 +71,6 @@ type CallContextValue = {
   chatMessages: ChatMessage[];
   volumes: Record<string, number>;
   hostMutedMe: boolean;
-  hostMutedIdentities: Set<string>;
   becameHost: boolean;
   tick: number;
 
@@ -75,11 +80,13 @@ type CallContextValue = {
   sendChat: (text: string) => Promise<void>;
   setVolume: (identity: string, value: number) => void;
   publishData: (payload: unknown) => Promise<void>;
-  addSystemMessage: (text: string) => void;
+  addSystemMessage: (
+    text: string,
+    extra?: { unmuteRequest?: ChatMessage["unmuteRequest"] },
+  ) => void;
   appendChatMessage: (msg: ChatMessage) => void;
   clearChatMessages: () => void;
   dismissBecameHost: () => void;
-  markHostMuted: (identity: string, muted: boolean) => void;
 
   isSelfMuted: () => boolean;
   isParticipantMuted: (identity: string) => boolean;
@@ -108,23 +115,9 @@ export function CallProvider({ children }: { children: ReactNode }) {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [volumes, setVolumes] = useState<Record<string, number>>({});
   const [hostMutedMe, setHostMutedMe] = useState(false);
-  const [hostMutedIdentities, setHostMutedIdentities] = useState<Set<string>>(
-    new Set(),
-  );
   const [becameHost, setBecameHost] = useState(false);
   const [tick, setTick] = useState(0);
 
-  const markHostMuted = useCallback((identity: string, muted: boolean) => {
-    setHostMutedIdentities((prev) => {
-      const has = prev.has(identity);
-      if (muted && has) return prev;
-      if (!muted && !has) return prev;
-      const next = new Set(prev);
-      if (muted) next.add(identity);
-      else next.delete(identity);
-      return next;
-    });
-  }, []);
   const rerender = useCallback(() => setTick((t) => t + 1), []);
 
   const roomRef = useRef<Room | null>(null);
@@ -147,19 +140,26 @@ export function CallProvider({ children }: { children: ReactNode }) {
 
   const callName = callId ? formatCall(callId) : "";
 
-  const addSystemMessage = useCallback((text: string) => {
-    setChatMessages((prev) => [
-      ...prev,
-      {
-        id: `system-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        identity: "system",
-        displayName: "システム",
-        text,
-        time: Date.now(),
-        system: true,
-      },
-    ]);
-  }, []);
+  const addSystemMessage = useCallback(
+    (
+      text: string,
+      extra?: { unmuteRequest?: ChatMessage["unmuteRequest"] },
+    ) => {
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          id: `system-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          identity: "system",
+          displayName: "システム",
+          text,
+          time: Date.now(),
+          system: true,
+          ...(extra ?? {}),
+        },
+      ]);
+    },
+    [],
+  );
 
   const appendChatMessage = useCallback((msg: ChatMessage) => {
     setChatMessages((prev) => [...prev, msg]);
@@ -359,12 +359,6 @@ export function CallProvider({ children }: { children: ReactNode }) {
                 setHostMutedMe(v);
                 hostMutedMeRef.current = v;
               }
-              if (typeof msg.targetIdentity === "string") {
-                markHostMuted(
-                  msg.targetIdentity,
-                  msg.type === "host_muted",
-                );
-              }
               const targetName =
                 typeof msg.targetDisplayName === "string"
                   ? msg.targetDisplayName
@@ -381,8 +375,20 @@ export function CallProvider({ children }: { children: ReactNode }) {
                 typeof msg.requesterDisplayName === "string"
                   ? msg.requesterDisplayName
                   : "参加者";
+              const requesterIdentity =
+                typeof msg.requesterIdentity === "string"
+                  ? msg.requesterIdentity
+                  : "";
               addSystemMessage(
                 `${requester} がミュートの解除を求めています`,
+                requesterIdentity
+                  ? {
+                      unmuteRequest: {
+                        targetIdentity: requesterIdentity,
+                        targetDisplayName: requester,
+                      },
+                    }
+                  : undefined,
               );
               return;
             }
@@ -593,7 +599,6 @@ export function CallProvider({ children }: { children: ReactNode }) {
     setVolumes({});
     setHostMutedMe(false);
     hostMutedMeRef.current = false;
-    setHostMutedIdentities(new Set());
   };
 
   const toggleSelfMic = async () => {
@@ -603,9 +608,15 @@ export function CallProvider({ children }: { children: ReactNode }) {
     if (wantUnmute && hostMutedMeRef.current) {
       const myName =
         room.localParticipant.name || room.localParticipant.identity;
-      addSystemMessage(`${myName} がミュートの解除を求めています`);
+      addSystemMessage(`${myName} がミュートの解除を求めています`, {
+        unmuteRequest: {
+          targetIdentity: room.localParticipant.identity,
+          targetDisplayName: myName,
+        },
+      });
       await publishData({
         type: "unmute_request",
+        requesterIdentity: room.localParticipant.identity,
         requesterDisplayName: myName,
       });
       return;
@@ -673,7 +684,6 @@ export function CallProvider({ children }: { children: ReactNode }) {
     chatMessages,
     volumes,
     hostMutedMe,
-    hostMutedIdentities,
     becameHost,
     tick,
     join,
@@ -686,7 +696,6 @@ export function CallProvider({ children }: { children: ReactNode }) {
     appendChatMessage,
     clearChatMessages,
     dismissBecameHost: () => setBecameHost(false),
-    markHostMuted,
     isSelfMuted,
     isParticipantMuted,
     getRoom: () => roomRef.current,

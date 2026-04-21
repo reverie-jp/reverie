@@ -55,6 +55,9 @@ const (
 	// CallServiceMuteCallParticipantProcedure is the fully-qualified name of the CallService's
 	// MuteCallParticipant RPC.
 	CallServiceMuteCallParticipantProcedure = "/call.v1.CallService/MuteCallParticipant"
+	// CallServiceUnmuteCallParticipantProcedure is the fully-qualified name of the CallService's
+	// UnmuteCallParticipant RPC.
+	CallServiceUnmuteCallParticipantProcedure = "/call.v1.CallService/UnmuteCallParticipant"
 	// CallServiceKickCallParticipantProcedure is the fully-qualified name of the CallService's
 	// KickCallParticipant RPC.
 	CallServiceKickCallParticipantProcedure = "/call.v1.CallService/KickCallParticipant"
@@ -102,8 +105,11 @@ type CallServiceClient interface {
 	// Mark the participant as disconnected. Should be called on intentional
 	// leave and (via navigator.sendBeacon) on page unload.
 	LeaveCall(context.Context, *connect.Request[v1.LeaveCallRequest]) (*connect.Response[v1.LeaveCallResponse], error)
-	// Server-side mute/unmute a participant's microphone. Host only.
+	// Server-side mute a participant's microphone. Host only.
 	MuteCallParticipant(context.Context, *connect.Request[v1.MuteCallParticipantRequest]) (*connect.Response[v1.MuteCallParticipantResponse], error)
+	// Server-side unmute a participant that the host previously muted. Fails
+	// if the participant muted themselves. Host only.
+	UnmuteCallParticipant(context.Context, *connect.Request[v1.UnmuteCallParticipantRequest]) (*connect.Response[v1.UnmuteCallParticipantResponse], error)
 	// Temporarily remove a participant from the call. They can rejoin. Host
 	// only.
 	KickCallParticipant(context.Context, *connect.Request[v1.KickCallParticipantRequest]) (*connect.Response[v1.KickCallParticipantResponse], error)
@@ -187,6 +193,12 @@ func NewCallServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(callServiceMethods.ByName("MuteCallParticipant")),
 			connect.WithClientOptions(opts...),
 		),
+		unmuteCallParticipant: connect.NewClient[v1.UnmuteCallParticipantRequest, v1.UnmuteCallParticipantResponse](
+			httpClient,
+			baseURL+CallServiceUnmuteCallParticipantProcedure,
+			connect.WithSchema(callServiceMethods.ByName("UnmuteCallParticipant")),
+			connect.WithClientOptions(opts...),
+		),
 		kickCallParticipant: connect.NewClient[v1.KickCallParticipantRequest, v1.KickCallParticipantResponse](
 			httpClient,
 			baseURL+CallServiceKickCallParticipantProcedure,
@@ -237,6 +249,7 @@ type callServiceClient struct {
 	heartbeatCall            *connect.Client[v1.HeartbeatCallRequest, v1.HeartbeatCallResponse]
 	leaveCall                *connect.Client[v1.LeaveCallRequest, v1.LeaveCallResponse]
 	muteCallParticipant      *connect.Client[v1.MuteCallParticipantRequest, v1.MuteCallParticipantResponse]
+	unmuteCallParticipant    *connect.Client[v1.UnmuteCallParticipantRequest, v1.UnmuteCallParticipantResponse]
 	kickCallParticipant      *connect.Client[v1.KickCallParticipantRequest, v1.KickCallParticipantResponse]
 	banCallParticipant       *connect.Client[v1.BanCallParticipantRequest, v1.BanCallParticipantResponse]
 	transferCallHost         *connect.Client[v1.TransferCallHostRequest, v1.TransferCallHostResponse]
@@ -288,6 +301,11 @@ func (c *callServiceClient) LeaveCall(ctx context.Context, req *connect.Request[
 // MuteCallParticipant calls call.v1.CallService.MuteCallParticipant.
 func (c *callServiceClient) MuteCallParticipant(ctx context.Context, req *connect.Request[v1.MuteCallParticipantRequest]) (*connect.Response[v1.MuteCallParticipantResponse], error) {
 	return c.muteCallParticipant.CallUnary(ctx, req)
+}
+
+// UnmuteCallParticipant calls call.v1.CallService.UnmuteCallParticipant.
+func (c *callServiceClient) UnmuteCallParticipant(ctx context.Context, req *connect.Request[v1.UnmuteCallParticipantRequest]) (*connect.Response[v1.UnmuteCallParticipantResponse], error) {
+	return c.unmuteCallParticipant.CallUnary(ctx, req)
 }
 
 // KickCallParticipant calls call.v1.CallService.KickCallParticipant.
@@ -348,8 +366,11 @@ type CallServiceHandler interface {
 	// Mark the participant as disconnected. Should be called on intentional
 	// leave and (via navigator.sendBeacon) on page unload.
 	LeaveCall(context.Context, *connect.Request[v1.LeaveCallRequest]) (*connect.Response[v1.LeaveCallResponse], error)
-	// Server-side mute/unmute a participant's microphone. Host only.
+	// Server-side mute a participant's microphone. Host only.
 	MuteCallParticipant(context.Context, *connect.Request[v1.MuteCallParticipantRequest]) (*connect.Response[v1.MuteCallParticipantResponse], error)
+	// Server-side unmute a participant that the host previously muted. Fails
+	// if the participant muted themselves. Host only.
+	UnmuteCallParticipant(context.Context, *connect.Request[v1.UnmuteCallParticipantRequest]) (*connect.Response[v1.UnmuteCallParticipantResponse], error)
 	// Temporarily remove a participant from the call. They can rejoin. Host
 	// only.
 	KickCallParticipant(context.Context, *connect.Request[v1.KickCallParticipantRequest]) (*connect.Response[v1.KickCallParticipantResponse], error)
@@ -429,6 +450,12 @@ func NewCallServiceHandler(svc CallServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(callServiceMethods.ByName("MuteCallParticipant")),
 		connect.WithHandlerOptions(opts...),
 	)
+	callServiceUnmuteCallParticipantHandler := connect.NewUnaryHandler(
+		CallServiceUnmuteCallParticipantProcedure,
+		svc.UnmuteCallParticipant,
+		connect.WithSchema(callServiceMethods.ByName("UnmuteCallParticipant")),
+		connect.WithHandlerOptions(opts...),
+	)
 	callServiceKickCallParticipantHandler := connect.NewUnaryHandler(
 		CallServiceKickCallParticipantProcedure,
 		svc.KickCallParticipant,
@@ -485,6 +512,8 @@ func NewCallServiceHandler(svc CallServiceHandler, opts ...connect.HandlerOption
 			callServiceLeaveCallHandler.ServeHTTP(w, r)
 		case CallServiceMuteCallParticipantProcedure:
 			callServiceMuteCallParticipantHandler.ServeHTTP(w, r)
+		case CallServiceUnmuteCallParticipantProcedure:
+			callServiceUnmuteCallParticipantHandler.ServeHTTP(w, r)
 		case CallServiceKickCallParticipantProcedure:
 			callServiceKickCallParticipantHandler.ServeHTTP(w, r)
 		case CallServiceBanCallParticipantProcedure:
@@ -540,6 +569,10 @@ func (UnimplementedCallServiceHandler) LeaveCall(context.Context, *connect.Reque
 
 func (UnimplementedCallServiceHandler) MuteCallParticipant(context.Context, *connect.Request[v1.MuteCallParticipantRequest]) (*connect.Response[v1.MuteCallParticipantResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("call.v1.CallService.MuteCallParticipant is not implemented"))
+}
+
+func (UnimplementedCallServiceHandler) UnmuteCallParticipant(context.Context, *connect.Request[v1.UnmuteCallParticipantRequest]) (*connect.Response[v1.UnmuteCallParticipantResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("call.v1.CallService.UnmuteCallParticipant is not implemented"))
 }
 
 func (UnimplementedCallServiceHandler) KickCallParticipant(context.Context, *connect.Request[v1.KickCallParticipantRequest]) (*connect.Response[v1.KickCallParticipantResponse], error) {

@@ -391,6 +391,9 @@ export default function CallRoomRoute() {
   const [bansLoading, setBansLoading] = useState(false);
   const [bansError, setBansError] = useState<string | null>(null);
   const [unbanningName, setUnbanningName] = useState<string | null>(null);
+  const [resolvedUnmuteMsgIds, setResolvedUnmuteMsgIds] = useState<Set<string>>(
+    new Set(),
+  );
   const chatScrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -638,12 +641,13 @@ export default function CallRoomRoute() {
     if (!callName) return;
     setModeratingIdentity(identity);
     try {
-      await callClient.muteCallParticipant({
-        name: `${callName}/participants/${identity}`,
-        muted,
-      });
+      const name = `${callName}/participants/${identity}`;
+      if (muted) {
+        await callClient.muteCallParticipant({ name });
+      } else {
+        await callClient.unmuteCallParticipant({ name });
+      }
       const kind = muted ? "host_muted" : "host_unmuted";
-      call.markHostMuted(identity, muted);
       await call.publishData({
         type: kind,
         targetIdentity: identity,
@@ -654,6 +658,20 @@ export default function CallRoomRoute() {
           ? `ホストが ${displayName} をミュートしました`
           : `ホストが ${displayName} のミュートを解除しました`,
       );
+      if (!muted) {
+        // Mark any existing unmute-request chat entries for this identity as
+        // resolved so their "解除" buttons don't reappear on a subsequent
+        // re-mute.
+        setResolvedUnmuteMsgIds((prev) => {
+          const next = new Set(prev);
+          for (const m of call.chatMessages) {
+            if (m.unmuteRequest?.targetIdentity === identity) {
+              next.add(m.id);
+            }
+          }
+          return next;
+        });
+      }
     } catch (err) {
       console.error("MuteCallParticipant failed:", err);
     } finally {
@@ -886,12 +904,35 @@ export default function CallRoomRoute() {
                   m.system ? (
                     <div
                       key={m.id}
-                      className="text-xs text-muted-foreground italic leading-snug"
+                      className="text-xs text-muted-foreground italic leading-snug flex items-center gap-2 flex-wrap"
                     >
-                      <span className="font-mono mr-1">
-                        {formatClockTime(m.time)}
+                      <span>
+                        <span className="font-mono mr-1">
+                          {formatClockTime(m.time)}
+                        </span>
+                        {m.text}
                       </span>
-                      {m.text}
+                      {m.unmuteRequest &&
+                        isHost &&
+                        call.isParticipantMuted(
+                          m.unmuteRequest.targetIdentity,
+                        ) &&
+                        !resolvedUnmuteMsgIds.has(m.id) && (
+                          <Button
+                            size="xs"
+                            variant="outline"
+                            onClick={() => {
+                              const req = m.unmuteRequest!;
+                              void handleMute(
+                                req.targetIdentity,
+                                req.targetDisplayName,
+                                false,
+                              );
+                            }}
+                          >
+                            解除
+                          </Button>
+                        )}
                     </div>
                   ) : (
                     <div key={m.id} className="leading-snug">
@@ -1151,28 +1192,7 @@ export default function CallRoomRoute() {
                   )}
                   {canModerateTarget && (
                     <>
-                      {targetMuted ? (
-                        call.hostMutedIdentities.has(drawerIdentity) ? (
-                          <Button
-                            variant="outline"
-                            disabled={targetBusy}
-                            onClick={async () => {
-                              await handleMute(
-                                drawerIdentity,
-                                displayName,
-                                false,
-                              );
-                              close();
-                            }}
-                          >
-                            ミュートを解除
-                          </Button>
-                        ) : (
-                          <p className="text-xs text-muted-foreground text-center">
-                            このユーザーは自分でミュート中なので、ホストから解除できません
-                          </p>
-                        )
-                      ) : (
+                      {!targetMuted && (
                         <Button
                           variant="outline"
                           disabled={targetBusy}

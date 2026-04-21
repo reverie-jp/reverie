@@ -31,6 +31,8 @@ type Repository interface {
 	UpsertCallParticipant(ctx context.Context, params UpsertCallParticipantParams) error
 	HeartbeatCallParticipant(ctx context.Context, callID ulid.ULID, identity string) (int64, error)
 	MarkCallParticipantDisconnected(ctx context.Context, callID ulid.ULID, identity string) (int64, error)
+	SetCallParticipantMutedByHost(ctx context.Context, callID ulid.ULID, identity string) error
+	ClearCallParticipantMutedByHost(ctx context.Context, callID ulid.ULID, identity string) (int64, error)
 	ListCallParticipants(ctx context.Context, callID ulid.ULID) ([]*entity.CallParticipant, error)
 	CreateCallBan(ctx context.Context, callID, userID ulid.ULID) error
 	IsUserBannedFromCall(ctx context.Context, callID, userID ulid.ULID) (bool, error)

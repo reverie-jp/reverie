@@ -31,6 +31,7 @@ type CallParticipant struct {
 	FirstJoinTime       time.Time
 	LastSeenTime        time.Time
 	DisconnectedTime    *time.Time
+	MutedByHost         bool
 }
 
 type CallBan struct {

@@ -34,7 +34,27 @@ VALUES ($1, $2, $3, $4, NOW(), NULL)
 ON CONFLICT (call_id, participant_identity) DO UPDATE
 SET last_seen_time = NOW(),
     disconnected_time = NULL,
-    display_name = EXCLUDED.display_name;
+    display_name = EXCLUDED.display_name,
+    -- Fresh rejoin after disconnect: reset host-mute since LiveKit creates
+    -- a new unmuted track. Token refresh on an active participant preserves
+    -- it (disconnected_time was NULL before upsert).
+    muted_by_host = CASE
+      WHEN call_participants.disconnected_time IS NOT NULL THEN FALSE
+      ELSE call_participants.muted_by_host
+    END;
+
+-- name: SetCallParticipantMutedByHost :exec
+UPDATE call_participants
+SET muted_by_host = TRUE
+WHERE call_id = sqlc.arg(call_id)::ulid
+  AND participant_identity = sqlc.arg(participant_identity);
+
+-- name: ClearCallParticipantMutedByHost :execrows
+UPDATE call_participants
+SET muted_by_host = FALSE
+WHERE call_id = sqlc.arg(call_id)::ulid
+  AND participant_identity = sqlc.arg(participant_identity)
+  AND muted_by_host = TRUE;
 
 -- name: HeartbeatCallParticipant :execrows
 UPDATE call_participants

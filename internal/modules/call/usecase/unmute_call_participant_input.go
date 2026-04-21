@@ -7,13 +7,13 @@ import (
 	"reverie.jp/reverie/internal/platform/ulid"
 )
 
-type MuteCallParticipantInput struct {
+type UnmuteCallParticipantInput struct {
 	RequesterID ulid.ULID
 	CallID      ulid.ULID
 	Identity    string
 }
 
-func (i MuteCallParticipantInput) Validate() error {
+func (i UnmuteCallParticipantInput) Validate() error {
 	if i.RequesterID.IsZero() {
 		return errors.New("requester_id is required")
 	}

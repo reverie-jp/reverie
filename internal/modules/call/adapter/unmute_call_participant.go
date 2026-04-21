@@ -12,22 +12,22 @@ import (
 	"reverie.jp/reverie/internal/platform/xerrors"
 )
 
-func FromMuteCallParticipantRequest(ctx context.Context, req *connect.Request[callv1.MuteCallParticipantRequest]) (usecase.MuteCallParticipantInput, error) {
+func FromUnmuteCallParticipantRequest(ctx context.Context, req *connect.Request[callv1.UnmuteCallParticipantRequest]) (usecase.UnmuteCallParticipantInput, error) {
 	userID, ok := interceptor.UserIDFromContext(ctx)
 	if !ok {
-		return usecase.MuteCallParticipantInput{}, xerrors.ErrUnauthenticated
+		return usecase.UnmuteCallParticipantInput{}, xerrors.ErrUnauthenticated
 	}
 	callID, identity, err := resourcename.ParseCallParticipant(req.Msg.Name)
 	if err != nil {
-		return usecase.MuteCallParticipantInput{}, err
+		return usecase.UnmuteCallParticipantInput{}, err
 	}
-	return usecase.MuteCallParticipantInput{
+	return usecase.UnmuteCallParticipantInput{
 		RequesterID: userID,
 		CallID:      callID,
 		Identity:    identity,
 	}, nil
 }
 
-func ToMuteCallParticipantResponse() *connect.Response[callv1.MuteCallParticipantResponse] {
-	return connect.NewResponse(&callv1.MuteCallParticipantResponse{})
+func ToUnmuteCallParticipantResponse() *connect.Response[callv1.UnmuteCallParticipantResponse] {
+	return connect.NewResponse(&callv1.UnmuteCallParticipantResponse{})
 }
