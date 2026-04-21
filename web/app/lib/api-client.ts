@@ -31,7 +31,7 @@ export const tokenStore = {
   },
 };
 
-const API_BASE_URL =
+export const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://localhost:50051";
 
 // Procedures that don't need Authorization and must not trigger the 401-retry

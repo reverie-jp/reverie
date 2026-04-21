@@ -19,18 +19,46 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	CallService_JoinCall_FullMethodName = "/call.v1.CallService/JoinCall"
+	CallService_CreateCall_FullMethodName               = "/call.v1.CallService/CreateCall"
+	CallService_GetCall_FullMethodName                  = "/call.v1.CallService/GetCall"
+	CallService_UpdateCall_FullMethodName               = "/call.v1.CallService/UpdateCall"
+	CallService_ListPublicCalls_FullMethodName          = "/call.v1.CallService/ListPublicCalls"
+	CallService_GetUserParticipatingCall_FullMethodName = "/call.v1.CallService/GetUserParticipatingCall"
+	CallService_JoinCall_FullMethodName                 = "/call.v1.CallService/JoinCall"
+	CallService_HeartbeatCall_FullMethodName            = "/call.v1.CallService/HeartbeatCall"
+	CallService_LeaveCall_FullMethodName                = "/call.v1.CallService/LeaveCall"
 )
 
 // CallServiceClient is the client API for CallService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CallServiceClient interface {
+	// Create a new call. The caller becomes the host.
+	CreateCall(ctx context.Context, in *CreateCallRequest, opts ...grpc.CallOption) (*CreateCallResponse, error)
+	// Get a call by resource name. Returns the call plus ordered participants
+	// (with is_currently_connected derived from heartbeat state).
+	GetCall(ctx context.Context, in *GetCallRequest, opts ...grpc.CallOption) (*GetCallResponse, error)
+	// Update call attributes (currently only visibility). Host only.
+	UpdateCall(ctx context.Context, in *UpdateCallRequest, opts ...grpc.CallOption) (*UpdateCallResponse, error)
+	// List active, publicly-discoverable calls. Returns OPEN calls for guests
+	// and OPEN + USERS_ONLY for authenticated callers. Used by the home screen.
+	ListPublicCalls(ctx context.Context, in *ListPublicCallsRequest, opts ...grpc.CallOption) (*ListPublicCallsResponse, error)
+	// Get the call the given user is currently participating in (if any and
+	// if visible to the caller). Null means the user is not in any visible
+	// call.
+	GetUserParticipatingCall(ctx context.Context, in *GetUserParticipatingCallRequest, opts ...grpc.CallOption) (*GetUserParticipatingCallResponse, error)
 	// Join a call room. Returns a LiveKit access token and server URL.
 	// Authentication is optional. If the caller is authenticated the server
-	// derives the identity and display name from their user profile. Otherwise
-	// the server treats them as a guest and expects guest_display_name.
+	// derives the identity and display name from their user profile.
+	// Otherwise the server treats them as a guest and expects
+	// guest_display_name.
 	JoinCall(ctx context.Context, in *JoinCallRequest, opts ...grpc.CallOption) (*JoinCallResponse, error)
+	// Heartbeat to keep the participant marked as active. Clients should
+	// call this every 30 seconds while connected.
+	HeartbeatCall(ctx context.Context, in *HeartbeatCallRequest, opts ...grpc.CallOption) (*HeartbeatCallResponse, error)
+	// Mark the participant as disconnected. Should be called on intentional
+	// leave and (via navigator.sendBeacon) on page unload.
+	LeaveCall(ctx context.Context, in *LeaveCallRequest, opts ...grpc.CallOption) (*LeaveCallResponse, error)
 }
 
 type callServiceClient struct {
@@ -39,6 +67,56 @@ type callServiceClient struct {
 
 func NewCallServiceClient(cc grpc.ClientConnInterface) CallServiceClient {
 	return &callServiceClient{cc}
+}
+
+func (c *callServiceClient) CreateCall(ctx context.Context, in *CreateCallRequest, opts ...grpc.CallOption) (*CreateCallResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateCallResponse)
+	err := c.cc.Invoke(ctx, CallService_CreateCall_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *callServiceClient) GetCall(ctx context.Context, in *GetCallRequest, opts ...grpc.CallOption) (*GetCallResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetCallResponse)
+	err := c.cc.Invoke(ctx, CallService_GetCall_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *callServiceClient) UpdateCall(ctx context.Context, in *UpdateCallRequest, opts ...grpc.CallOption) (*UpdateCallResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateCallResponse)
+	err := c.cc.Invoke(ctx, CallService_UpdateCall_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *callServiceClient) ListPublicCalls(ctx context.Context, in *ListPublicCallsRequest, opts ...grpc.CallOption) (*ListPublicCallsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListPublicCallsResponse)
+	err := c.cc.Invoke(ctx, CallService_ListPublicCalls_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *callServiceClient) GetUserParticipatingCall(ctx context.Context, in *GetUserParticipatingCallRequest, opts ...grpc.CallOption) (*GetUserParticipatingCallResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetUserParticipatingCallResponse)
+	err := c.cc.Invoke(ctx, CallService_GetUserParticipatingCall_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *callServiceClient) JoinCall(ctx context.Context, in *JoinCallRequest, opts ...grpc.CallOption) (*JoinCallResponse, error) {
@@ -51,15 +129,56 @@ func (c *callServiceClient) JoinCall(ctx context.Context, in *JoinCallRequest, o
 	return out, nil
 }
 
+func (c *callServiceClient) HeartbeatCall(ctx context.Context, in *HeartbeatCallRequest, opts ...grpc.CallOption) (*HeartbeatCallResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(HeartbeatCallResponse)
+	err := c.cc.Invoke(ctx, CallService_HeartbeatCall_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *callServiceClient) LeaveCall(ctx context.Context, in *LeaveCallRequest, opts ...grpc.CallOption) (*LeaveCallResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(LeaveCallResponse)
+	err := c.cc.Invoke(ctx, CallService_LeaveCall_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CallServiceServer is the server API for CallService service.
 // All implementations must embed UnimplementedCallServiceServer
 // for forward compatibility.
 type CallServiceServer interface {
+	// Create a new call. The caller becomes the host.
+	CreateCall(context.Context, *CreateCallRequest) (*CreateCallResponse, error)
+	// Get a call by resource name. Returns the call plus ordered participants
+	// (with is_currently_connected derived from heartbeat state).
+	GetCall(context.Context, *GetCallRequest) (*GetCallResponse, error)
+	// Update call attributes (currently only visibility). Host only.
+	UpdateCall(context.Context, *UpdateCallRequest) (*UpdateCallResponse, error)
+	// List active, publicly-discoverable calls. Returns OPEN calls for guests
+	// and OPEN + USERS_ONLY for authenticated callers. Used by the home screen.
+	ListPublicCalls(context.Context, *ListPublicCallsRequest) (*ListPublicCallsResponse, error)
+	// Get the call the given user is currently participating in (if any and
+	// if visible to the caller). Null means the user is not in any visible
+	// call.
+	GetUserParticipatingCall(context.Context, *GetUserParticipatingCallRequest) (*GetUserParticipatingCallResponse, error)
 	// Join a call room. Returns a LiveKit access token and server URL.
 	// Authentication is optional. If the caller is authenticated the server
-	// derives the identity and display name from their user profile. Otherwise
-	// the server treats them as a guest and expects guest_display_name.
+	// derives the identity and display name from their user profile.
+	// Otherwise the server treats them as a guest and expects
+	// guest_display_name.
 	JoinCall(context.Context, *JoinCallRequest) (*JoinCallResponse, error)
+	// Heartbeat to keep the participant marked as active. Clients should
+	// call this every 30 seconds while connected.
+	HeartbeatCall(context.Context, *HeartbeatCallRequest) (*HeartbeatCallResponse, error)
+	// Mark the participant as disconnected. Should be called on intentional
+	// leave and (via navigator.sendBeacon) on page unload.
+	LeaveCall(context.Context, *LeaveCallRequest) (*LeaveCallResponse, error)
 	mustEmbedUnimplementedCallServiceServer()
 }
 
@@ -70,8 +189,29 @@ type CallServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedCallServiceServer struct{}
 
+func (UnimplementedCallServiceServer) CreateCall(context.Context, *CreateCallRequest) (*CreateCallResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateCall not implemented")
+}
+func (UnimplementedCallServiceServer) GetCall(context.Context, *GetCallRequest) (*GetCallResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetCall not implemented")
+}
+func (UnimplementedCallServiceServer) UpdateCall(context.Context, *UpdateCallRequest) (*UpdateCallResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateCall not implemented")
+}
+func (UnimplementedCallServiceServer) ListPublicCalls(context.Context, *ListPublicCallsRequest) (*ListPublicCallsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListPublicCalls not implemented")
+}
+func (UnimplementedCallServiceServer) GetUserParticipatingCall(context.Context, *GetUserParticipatingCallRequest) (*GetUserParticipatingCallResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUserParticipatingCall not implemented")
+}
 func (UnimplementedCallServiceServer) JoinCall(context.Context, *JoinCallRequest) (*JoinCallResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method JoinCall not implemented")
+}
+func (UnimplementedCallServiceServer) HeartbeatCall(context.Context, *HeartbeatCallRequest) (*HeartbeatCallResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method HeartbeatCall not implemented")
+}
+func (UnimplementedCallServiceServer) LeaveCall(context.Context, *LeaveCallRequest) (*LeaveCallResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LeaveCall not implemented")
 }
 func (UnimplementedCallServiceServer) mustEmbedUnimplementedCallServiceServer() {}
 func (UnimplementedCallServiceServer) testEmbeddedByValue()                     {}
@@ -94,6 +234,96 @@ func RegisterCallServiceServer(s grpc.ServiceRegistrar, srv CallServiceServer) {
 	s.RegisterService(&CallService_ServiceDesc, srv)
 }
 
+func _CallService_CreateCall_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateCallRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CallServiceServer).CreateCall(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CallService_CreateCall_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CallServiceServer).CreateCall(ctx, req.(*CreateCallRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CallService_GetCall_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetCallRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CallServiceServer).GetCall(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CallService_GetCall_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CallServiceServer).GetCall(ctx, req.(*GetCallRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CallService_UpdateCall_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateCallRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CallServiceServer).UpdateCall(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CallService_UpdateCall_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CallServiceServer).UpdateCall(ctx, req.(*UpdateCallRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CallService_ListPublicCalls_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListPublicCallsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CallServiceServer).ListPublicCalls(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CallService_ListPublicCalls_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CallServiceServer).ListPublicCalls(ctx, req.(*ListPublicCallsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CallService_GetUserParticipatingCall_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUserParticipatingCallRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CallServiceServer).GetUserParticipatingCall(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CallService_GetUserParticipatingCall_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CallServiceServer).GetUserParticipatingCall(ctx, req.(*GetUserParticipatingCallRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _CallService_JoinCall_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(JoinCallRequest)
 	if err := dec(in); err != nil {
@@ -112,6 +342,42 @@ func _CallService_JoinCall_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CallService_HeartbeatCall_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HeartbeatCallRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CallServiceServer).HeartbeatCall(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CallService_HeartbeatCall_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CallServiceServer).HeartbeatCall(ctx, req.(*HeartbeatCallRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CallService_LeaveCall_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LeaveCallRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CallServiceServer).LeaveCall(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CallService_LeaveCall_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CallServiceServer).LeaveCall(ctx, req.(*LeaveCallRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CallService_ServiceDesc is the grpc.ServiceDesc for CallService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -120,8 +386,36 @@ var CallService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*CallServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
+			MethodName: "CreateCall",
+			Handler:    _CallService_CreateCall_Handler,
+		},
+		{
+			MethodName: "GetCall",
+			Handler:    _CallService_GetCall_Handler,
+		},
+		{
+			MethodName: "UpdateCall",
+			Handler:    _CallService_UpdateCall_Handler,
+		},
+		{
+			MethodName: "ListPublicCalls",
+			Handler:    _CallService_ListPublicCalls_Handler,
+		},
+		{
+			MethodName: "GetUserParticipatingCall",
+			Handler:    _CallService_GetUserParticipatingCall_Handler,
+		},
+		{
 			MethodName: "JoinCall",
 			Handler:    _CallService_JoinCall_Handler,
+		},
+		{
+			MethodName: "HeartbeatCall",
+			Handler:    _CallService_HeartbeatCall_Handler,
+		},
+		{
+			MethodName: "LeaveCall",
+			Handler:    _CallService_LeaveCall_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

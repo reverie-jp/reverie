@@ -126,19 +126,21 @@ func (PostVisibility) EnumDescriptor() ([]byte, []int) {
 }
 
 type User struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	Id             string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	CustomId       string                 `protobuf:"bytes,2,opt,name=custom_id,json=customId,proto3" json:"custom_id,omitempty"`
-	DisplayName    string                 `protobuf:"bytes,3,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
-	Biography      *string                `protobuf:"bytes,4,opt,name=biography,proto3,oneof" json:"biography,omitempty"`
-	Location       *string                `protobuf:"bytes,5,opt,name=location,proto3,oneof" json:"location,omitempty"`
-	Website        *string                `protobuf:"bytes,6,opt,name=website,proto3,oneof" json:"website,omitempty"`
-	AvatarUrl      *string                `protobuf:"bytes,7,opt,name=avatar_url,json=avatarUrl,proto3,oneof" json:"avatar_url,omitempty"`
-	BannerUrl      *string                `protobuf:"bytes,8,opt,name=banner_url,json=bannerUrl,proto3,oneof" json:"banner_url,omitempty"`
-	IsPrivate      bool                   `protobuf:"varint,9,opt,name=is_private,json=isPrivate,proto3" json:"is_private,omitempty"`
-	OnlineStatus   OnlineStatus           `protobuf:"varint,10,opt,name=online_status,json=onlineStatus,proto3,enum=user.v1.OnlineStatus" json:"online_status,omitempty"`
-	FollowingCount int32                  `protobuf:"varint,11,opt,name=following_count,json=followingCount,proto3" json:"following_count,omitempty"`
-	FollowerCount  int32                  `protobuf:"varint,12,opt,name=follower_count,json=followerCount,proto3" json:"follower_count,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Resource name: "users/{custom_id}".
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// Handle portion of name, exposed for display convenience.
+	CustomId       string       `protobuf:"bytes,2,opt,name=custom_id,json=customId,proto3" json:"custom_id,omitempty"`
+	DisplayName    string       `protobuf:"bytes,3,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
+	Biography      *string      `protobuf:"bytes,4,opt,name=biography,proto3,oneof" json:"biography,omitempty"`
+	Location       *string      `protobuf:"bytes,5,opt,name=location,proto3,oneof" json:"location,omitempty"`
+	Website        *string      `protobuf:"bytes,6,opt,name=website,proto3,oneof" json:"website,omitempty"`
+	AvatarUrl      *string      `protobuf:"bytes,7,opt,name=avatar_url,json=avatarUrl,proto3,oneof" json:"avatar_url,omitempty"`
+	BannerUrl      *string      `protobuf:"bytes,8,opt,name=banner_url,json=bannerUrl,proto3,oneof" json:"banner_url,omitempty"`
+	IsPrivate      bool         `protobuf:"varint,9,opt,name=is_private,json=isPrivate,proto3" json:"is_private,omitempty"`
+	OnlineStatus   OnlineStatus `protobuf:"varint,10,opt,name=online_status,json=onlineStatus,proto3,enum=user.v1.OnlineStatus" json:"online_status,omitempty"`
+	FollowingCount int32        `protobuf:"varint,11,opt,name=following_count,json=followingCount,proto3" json:"following_count,omitempty"`
+	FollowerCount  int32        `protobuf:"varint,12,opt,name=follower_count,json=followerCount,proto3" json:"follower_count,omitempty"`
 	// Relationship to the requesting user.
 	IsFollowing   bool                   `protobuf:"varint,13,opt,name=is_following,json=isFollowing,proto3" json:"is_following,omitempty"`
 	IsFollowedBy  bool                   `protobuf:"varint,14,opt,name=is_followed_by,json=isFollowedBy,proto3" json:"is_followed_by,omitempty"`
@@ -179,9 +181,9 @@ func (*User) Descriptor() ([]byte, []int) {
 	return file_user_v1_user_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *User) GetId() string {
+func (x *User) GetName() string {
 	if x != nil {
-		return x.Id
+		return x.Name
 	}
 	return ""
 }
@@ -455,8 +457,9 @@ func (x *GetMyUserResponse) GetUser() *User {
 }
 
 type GetUserRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	CustomId      string                 `protobuf:"bytes,1,opt,name=custom_id,json=customId,proto3" json:"custom_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// "users/{custom_id}"
+	Name          string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -491,9 +494,9 @@ func (*GetUserRequest) Descriptor() ([]byte, []int) {
 	return file_user_v1_user_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *GetUserRequest) GetCustomId() string {
+func (x *GetUserRequest) GetName() string {
 	if x != nil {
-		return x.CustomId
+		return x.Name
 	}
 	return ""
 }
@@ -818,9 +821,9 @@ var File_user_v1_user_proto protoreflect.FileDescriptor
 
 const file_user_v1_user_proto_rawDesc = "" +
 	"\n" +
-	"\x12user/v1/user.proto\x12\auser.v1\x1a\x1cgoogle/api/annotations.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xb0\x05\n" +
-	"\x04User\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +
+	"\x12user/v1/user.proto\x12\auser.v1\x1a\x1cgoogle/api/annotations.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xb4\x05\n" +
+	"\x04User\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1b\n" +
 	"\tcustom_id\x18\x02 \x01(\tR\bcustomId\x12!\n" +
 	"\fdisplay_name\x18\x03 \x01(\tR\vdisplayName\x12!\n" +
 	"\tbiography\x18\x04 \x01(\tH\x00R\tbiography\x88\x01\x01\x12\x1f\n" +
@@ -858,9 +861,9 @@ const file_user_v1_user_proto_rawDesc = "" +
 	"\x12default_visibility\x18\x05 \x01(\x0e2\x17.user.v1.PostVisibilityR\x11defaultVisibility\"\x12\n" +
 	"\x10GetMyUserRequest\"6\n" +
 	"\x11GetMyUserResponse\x12!\n" +
-	"\x04user\x18\x01 \x01(\v2\r.user.v1.UserR\x04user\"-\n" +
-	"\x0eGetUserRequest\x12\x1b\n" +
-	"\tcustom_id\x18\x01 \x01(\tR\bcustomId\"4\n" +
+	"\x04user\x18\x01 \x01(\v2\r.user.v1.UserR\x04user\"$\n" +
+	"\x0eGetUserRequest\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\"4\n" +
 	"\x0fGetUserResponse\x12!\n" +
 	"\x04user\x18\x01 \x01(\v2\r.user.v1.UserR\x04user\"s\n" +
 	"\x11UpdateUserRequest\x12!\n" +
@@ -886,10 +889,10 @@ const file_user_v1_user_proto_rawDesc = "" +
 	"\x0ePostVisibility\x12\x1f\n" +
 	"\x1bPOST_VISIBILITY_UNSPECIFIED\x10\x00\x12\x1a\n" +
 	"\x16POST_VISIBILITY_PUBLIC\x10\x01\x12\x1d\n" +
-	"\x19POST_VISIBILITY_FOLLOWERS\x10\x022\x9a\x04\n" +
+	"\x19POST_VISIBILITY_FOLLOWERS\x10\x022\x97\x04\n" +
 	"\vUserService\x12X\n" +
-	"\tGetMyUser\x12\x19.user.v1.GetMyUserRequest\x1a\x1a.user.v1.GetMyUserResponse\"\x14\x82\xd3\xe4\x93\x02\x0e\x12\f/v1/users/me\x12[\n" +
-	"\aGetUser\x12\x17.user.v1.GetUserRequest\x1a\x18.user.v1.GetUserResponse\"\x1d\x82\xd3\xe4\x93\x02\x17\x12\x15/v1/users/{custom_id}\x12^\n" +
+	"\tGetMyUser\x12\x19.user.v1.GetMyUserRequest\x1a\x1a.user.v1.GetMyUserResponse\"\x14\x82\xd3\xe4\x93\x02\x0e\x12\f/v1/users/me\x12X\n" +
+	"\aGetUser\x12\x17.user.v1.GetUserRequest\x1a\x18.user.v1.GetUserResponse\"\x1a\x82\xd3\xe4\x93\x02\x14\x12\x12/v1/{name=users/*}\x12^\n" +
 	"\n" +
 	"UpdateUser\x12\x1a.user.v1.UpdateUserRequest\x1a\x1b.user.v1.UpdateUserResponse\"\x17\x82\xd3\xe4\x93\x02\x11:\x01*2\f/v1/users/me\x12s\n" +
 	"\x0fGetUserSettings\x12\x1f.user.v1.GetUserSettingsRequest\x1a .user.v1.GetUserSettingsResponse\"\x1d\x82\xd3\xe4\x93\x02\x17\x12\x15/v1/users/me/settings\x12\x7f\n" +

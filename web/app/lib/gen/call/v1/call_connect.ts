@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { JoinCallRequest, JoinCallResponse } from "./call_pb.js";
+import { CreateCallRequest, CreateCallResponse, GetCallRequest, GetCallResponse, GetUserParticipatingCallRequest, GetUserParticipatingCallResponse, HeartbeatCallRequest, HeartbeatCallResponse, JoinCallRequest, JoinCallResponse, LeaveCallRequest, LeaveCallResponse, ListPublicCallsRequest, ListPublicCallsResponse, UpdateCallRequest, UpdateCallResponse } from "./call_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -13,10 +13,70 @@ export const CallService = {
   typeName: "call.v1.CallService",
   methods: {
     /**
+     * Create a new call. The caller becomes the host.
+     *
+     * @generated from rpc call.v1.CallService.CreateCall
+     */
+    createCall: {
+      name: "CreateCall",
+      I: CreateCallRequest,
+      O: CreateCallResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * Get a call by resource name. Returns the call plus ordered participants
+     * (with is_currently_connected derived from heartbeat state).
+     *
+     * @generated from rpc call.v1.CallService.GetCall
+     */
+    getCall: {
+      name: "GetCall",
+      I: GetCallRequest,
+      O: GetCallResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * Update call attributes (currently only visibility). Host only.
+     *
+     * @generated from rpc call.v1.CallService.UpdateCall
+     */
+    updateCall: {
+      name: "UpdateCall",
+      I: UpdateCallRequest,
+      O: UpdateCallResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * List active, publicly-discoverable calls. Returns OPEN calls for guests
+     * and OPEN + USERS_ONLY for authenticated callers. Used by the home screen.
+     *
+     * @generated from rpc call.v1.CallService.ListPublicCalls
+     */
+    listPublicCalls: {
+      name: "ListPublicCalls",
+      I: ListPublicCallsRequest,
+      O: ListPublicCallsResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * Get the call the given user is currently participating in (if any and
+     * if visible to the caller). Null means the user is not in any visible
+     * call.
+     *
+     * @generated from rpc call.v1.CallService.GetUserParticipatingCall
+     */
+    getUserParticipatingCall: {
+      name: "GetUserParticipatingCall",
+      I: GetUserParticipatingCallRequest,
+      O: GetUserParticipatingCallResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
      * Join a call room. Returns a LiveKit access token and server URL.
      * Authentication is optional. If the caller is authenticated the server
-     * derives the identity and display name from their user profile. Otherwise
-     * the server treats them as a guest and expects guest_display_name.
+     * derives the identity and display name from their user profile.
+     * Otherwise the server treats them as a guest and expects
+     * guest_display_name.
      *
      * @generated from rpc call.v1.CallService.JoinCall
      */
@@ -24,6 +84,30 @@ export const CallService = {
       name: "JoinCall",
       I: JoinCallRequest,
       O: JoinCallResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * Heartbeat to keep the participant marked as active. Clients should
+     * call this every 30 seconds while connected.
+     *
+     * @generated from rpc call.v1.CallService.HeartbeatCall
+     */
+    heartbeatCall: {
+      name: "HeartbeatCall",
+      I: HeartbeatCallRequest,
+      O: HeartbeatCallResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * Mark the participant as disconnected. Should be called on intentional
+     * leave and (via navigator.sendBeacon) on page unload.
+     *
+     * @generated from rpc call.v1.CallService.LeaveCall
+     */
+    leaveCall: {
+      name: "LeaveCall",
+      I: LeaveCallRequest,
+      O: LeaveCallResponse,
       kind: MethodKind.Unary,
     },
   }

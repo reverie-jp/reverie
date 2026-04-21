@@ -33,17 +33,55 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
+	// CallServiceCreateCallProcedure is the fully-qualified name of the CallService's CreateCall RPC.
+	CallServiceCreateCallProcedure = "/call.v1.CallService/CreateCall"
+	// CallServiceGetCallProcedure is the fully-qualified name of the CallService's GetCall RPC.
+	CallServiceGetCallProcedure = "/call.v1.CallService/GetCall"
+	// CallServiceUpdateCallProcedure is the fully-qualified name of the CallService's UpdateCall RPC.
+	CallServiceUpdateCallProcedure = "/call.v1.CallService/UpdateCall"
+	// CallServiceListPublicCallsProcedure is the fully-qualified name of the CallService's
+	// ListPublicCalls RPC.
+	CallServiceListPublicCallsProcedure = "/call.v1.CallService/ListPublicCalls"
+	// CallServiceGetUserParticipatingCallProcedure is the fully-qualified name of the CallService's
+	// GetUserParticipatingCall RPC.
+	CallServiceGetUserParticipatingCallProcedure = "/call.v1.CallService/GetUserParticipatingCall"
 	// CallServiceJoinCallProcedure is the fully-qualified name of the CallService's JoinCall RPC.
 	CallServiceJoinCallProcedure = "/call.v1.CallService/JoinCall"
+	// CallServiceHeartbeatCallProcedure is the fully-qualified name of the CallService's HeartbeatCall
+	// RPC.
+	CallServiceHeartbeatCallProcedure = "/call.v1.CallService/HeartbeatCall"
+	// CallServiceLeaveCallProcedure is the fully-qualified name of the CallService's LeaveCall RPC.
+	CallServiceLeaveCallProcedure = "/call.v1.CallService/LeaveCall"
 )
 
 // CallServiceClient is a client for the call.v1.CallService service.
 type CallServiceClient interface {
+	// Create a new call. The caller becomes the host.
+	CreateCall(context.Context, *connect.Request[v1.CreateCallRequest]) (*connect.Response[v1.CreateCallResponse], error)
+	// Get a call by resource name. Returns the call plus ordered participants
+	// (with is_currently_connected derived from heartbeat state).
+	GetCall(context.Context, *connect.Request[v1.GetCallRequest]) (*connect.Response[v1.GetCallResponse], error)
+	// Update call attributes (currently only visibility). Host only.
+	UpdateCall(context.Context, *connect.Request[v1.UpdateCallRequest]) (*connect.Response[v1.UpdateCallResponse], error)
+	// List active, publicly-discoverable calls. Returns OPEN calls for guests
+	// and OPEN + USERS_ONLY for authenticated callers. Used by the home screen.
+	ListPublicCalls(context.Context, *connect.Request[v1.ListPublicCallsRequest]) (*connect.Response[v1.ListPublicCallsResponse], error)
+	// Get the call the given user is currently participating in (if any and
+	// if visible to the caller). Null means the user is not in any visible
+	// call.
+	GetUserParticipatingCall(context.Context, *connect.Request[v1.GetUserParticipatingCallRequest]) (*connect.Response[v1.GetUserParticipatingCallResponse], error)
 	// Join a call room. Returns a LiveKit access token and server URL.
 	// Authentication is optional. If the caller is authenticated the server
-	// derives the identity and display name from their user profile. Otherwise
-	// the server treats them as a guest and expects guest_display_name.
+	// derives the identity and display name from their user profile.
+	// Otherwise the server treats them as a guest and expects
+	// guest_display_name.
 	JoinCall(context.Context, *connect.Request[v1.JoinCallRequest]) (*connect.Response[v1.JoinCallResponse], error)
+	// Heartbeat to keep the participant marked as active. Clients should
+	// call this every 30 seconds while connected.
+	HeartbeatCall(context.Context, *connect.Request[v1.HeartbeatCallRequest]) (*connect.Response[v1.HeartbeatCallResponse], error)
+	// Mark the participant as disconnected. Should be called on intentional
+	// leave and (via navigator.sendBeacon) on page unload.
+	LeaveCall(context.Context, *connect.Request[v1.LeaveCallRequest]) (*connect.Response[v1.LeaveCallResponse], error)
 }
 
 // NewCallServiceClient constructs a client for the call.v1.CallService service. By default, it uses
@@ -57,10 +95,52 @@ func NewCallServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 	baseURL = strings.TrimRight(baseURL, "/")
 	callServiceMethods := v1.File_call_v1_call_proto.Services().ByName("CallService").Methods()
 	return &callServiceClient{
+		createCall: connect.NewClient[v1.CreateCallRequest, v1.CreateCallResponse](
+			httpClient,
+			baseURL+CallServiceCreateCallProcedure,
+			connect.WithSchema(callServiceMethods.ByName("CreateCall")),
+			connect.WithClientOptions(opts...),
+		),
+		getCall: connect.NewClient[v1.GetCallRequest, v1.GetCallResponse](
+			httpClient,
+			baseURL+CallServiceGetCallProcedure,
+			connect.WithSchema(callServiceMethods.ByName("GetCall")),
+			connect.WithClientOptions(opts...),
+		),
+		updateCall: connect.NewClient[v1.UpdateCallRequest, v1.UpdateCallResponse](
+			httpClient,
+			baseURL+CallServiceUpdateCallProcedure,
+			connect.WithSchema(callServiceMethods.ByName("UpdateCall")),
+			connect.WithClientOptions(opts...),
+		),
+		listPublicCalls: connect.NewClient[v1.ListPublicCallsRequest, v1.ListPublicCallsResponse](
+			httpClient,
+			baseURL+CallServiceListPublicCallsProcedure,
+			connect.WithSchema(callServiceMethods.ByName("ListPublicCalls")),
+			connect.WithClientOptions(opts...),
+		),
+		getUserParticipatingCall: connect.NewClient[v1.GetUserParticipatingCallRequest, v1.GetUserParticipatingCallResponse](
+			httpClient,
+			baseURL+CallServiceGetUserParticipatingCallProcedure,
+			connect.WithSchema(callServiceMethods.ByName("GetUserParticipatingCall")),
+			connect.WithClientOptions(opts...),
+		),
 		joinCall: connect.NewClient[v1.JoinCallRequest, v1.JoinCallResponse](
 			httpClient,
 			baseURL+CallServiceJoinCallProcedure,
 			connect.WithSchema(callServiceMethods.ByName("JoinCall")),
+			connect.WithClientOptions(opts...),
+		),
+		heartbeatCall: connect.NewClient[v1.HeartbeatCallRequest, v1.HeartbeatCallResponse](
+			httpClient,
+			baseURL+CallServiceHeartbeatCallProcedure,
+			connect.WithSchema(callServiceMethods.ByName("HeartbeatCall")),
+			connect.WithClientOptions(opts...),
+		),
+		leaveCall: connect.NewClient[v1.LeaveCallRequest, v1.LeaveCallResponse](
+			httpClient,
+			baseURL+CallServiceLeaveCallProcedure,
+			connect.WithSchema(callServiceMethods.ByName("LeaveCall")),
 			connect.WithClientOptions(opts...),
 		),
 	}
@@ -68,7 +148,39 @@ func NewCallServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 
 // callServiceClient implements CallServiceClient.
 type callServiceClient struct {
-	joinCall *connect.Client[v1.JoinCallRequest, v1.JoinCallResponse]
+	createCall               *connect.Client[v1.CreateCallRequest, v1.CreateCallResponse]
+	getCall                  *connect.Client[v1.GetCallRequest, v1.GetCallResponse]
+	updateCall               *connect.Client[v1.UpdateCallRequest, v1.UpdateCallResponse]
+	listPublicCalls          *connect.Client[v1.ListPublicCallsRequest, v1.ListPublicCallsResponse]
+	getUserParticipatingCall *connect.Client[v1.GetUserParticipatingCallRequest, v1.GetUserParticipatingCallResponse]
+	joinCall                 *connect.Client[v1.JoinCallRequest, v1.JoinCallResponse]
+	heartbeatCall            *connect.Client[v1.HeartbeatCallRequest, v1.HeartbeatCallResponse]
+	leaveCall                *connect.Client[v1.LeaveCallRequest, v1.LeaveCallResponse]
+}
+
+// CreateCall calls call.v1.CallService.CreateCall.
+func (c *callServiceClient) CreateCall(ctx context.Context, req *connect.Request[v1.CreateCallRequest]) (*connect.Response[v1.CreateCallResponse], error) {
+	return c.createCall.CallUnary(ctx, req)
+}
+
+// GetCall calls call.v1.CallService.GetCall.
+func (c *callServiceClient) GetCall(ctx context.Context, req *connect.Request[v1.GetCallRequest]) (*connect.Response[v1.GetCallResponse], error) {
+	return c.getCall.CallUnary(ctx, req)
+}
+
+// UpdateCall calls call.v1.CallService.UpdateCall.
+func (c *callServiceClient) UpdateCall(ctx context.Context, req *connect.Request[v1.UpdateCallRequest]) (*connect.Response[v1.UpdateCallResponse], error) {
+	return c.updateCall.CallUnary(ctx, req)
+}
+
+// ListPublicCalls calls call.v1.CallService.ListPublicCalls.
+func (c *callServiceClient) ListPublicCalls(ctx context.Context, req *connect.Request[v1.ListPublicCallsRequest]) (*connect.Response[v1.ListPublicCallsResponse], error) {
+	return c.listPublicCalls.CallUnary(ctx, req)
+}
+
+// GetUserParticipatingCall calls call.v1.CallService.GetUserParticipatingCall.
+func (c *callServiceClient) GetUserParticipatingCall(ctx context.Context, req *connect.Request[v1.GetUserParticipatingCallRequest]) (*connect.Response[v1.GetUserParticipatingCallResponse], error) {
+	return c.getUserParticipatingCall.CallUnary(ctx, req)
 }
 
 // JoinCall calls call.v1.CallService.JoinCall.
@@ -76,13 +188,44 @@ func (c *callServiceClient) JoinCall(ctx context.Context, req *connect.Request[v
 	return c.joinCall.CallUnary(ctx, req)
 }
 
+// HeartbeatCall calls call.v1.CallService.HeartbeatCall.
+func (c *callServiceClient) HeartbeatCall(ctx context.Context, req *connect.Request[v1.HeartbeatCallRequest]) (*connect.Response[v1.HeartbeatCallResponse], error) {
+	return c.heartbeatCall.CallUnary(ctx, req)
+}
+
+// LeaveCall calls call.v1.CallService.LeaveCall.
+func (c *callServiceClient) LeaveCall(ctx context.Context, req *connect.Request[v1.LeaveCallRequest]) (*connect.Response[v1.LeaveCallResponse], error) {
+	return c.leaveCall.CallUnary(ctx, req)
+}
+
 // CallServiceHandler is an implementation of the call.v1.CallService service.
 type CallServiceHandler interface {
+	// Create a new call. The caller becomes the host.
+	CreateCall(context.Context, *connect.Request[v1.CreateCallRequest]) (*connect.Response[v1.CreateCallResponse], error)
+	// Get a call by resource name. Returns the call plus ordered participants
+	// (with is_currently_connected derived from heartbeat state).
+	GetCall(context.Context, *connect.Request[v1.GetCallRequest]) (*connect.Response[v1.GetCallResponse], error)
+	// Update call attributes (currently only visibility). Host only.
+	UpdateCall(context.Context, *connect.Request[v1.UpdateCallRequest]) (*connect.Response[v1.UpdateCallResponse], error)
+	// List active, publicly-discoverable calls. Returns OPEN calls for guests
+	// and OPEN + USERS_ONLY for authenticated callers. Used by the home screen.
+	ListPublicCalls(context.Context, *connect.Request[v1.ListPublicCallsRequest]) (*connect.Response[v1.ListPublicCallsResponse], error)
+	// Get the call the given user is currently participating in (if any and
+	// if visible to the caller). Null means the user is not in any visible
+	// call.
+	GetUserParticipatingCall(context.Context, *connect.Request[v1.GetUserParticipatingCallRequest]) (*connect.Response[v1.GetUserParticipatingCallResponse], error)
 	// Join a call room. Returns a LiveKit access token and server URL.
 	// Authentication is optional. If the caller is authenticated the server
-	// derives the identity and display name from their user profile. Otherwise
-	// the server treats them as a guest and expects guest_display_name.
+	// derives the identity and display name from their user profile.
+	// Otherwise the server treats them as a guest and expects
+	// guest_display_name.
 	JoinCall(context.Context, *connect.Request[v1.JoinCallRequest]) (*connect.Response[v1.JoinCallResponse], error)
+	// Heartbeat to keep the participant marked as active. Clients should
+	// call this every 30 seconds while connected.
+	HeartbeatCall(context.Context, *connect.Request[v1.HeartbeatCallRequest]) (*connect.Response[v1.HeartbeatCallResponse], error)
+	// Mark the participant as disconnected. Should be called on intentional
+	// leave and (via navigator.sendBeacon) on page unload.
+	LeaveCall(context.Context, *connect.Request[v1.LeaveCallRequest]) (*connect.Response[v1.LeaveCallResponse], error)
 }
 
 // NewCallServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -92,16 +235,72 @@ type CallServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewCallServiceHandler(svc CallServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	callServiceMethods := v1.File_call_v1_call_proto.Services().ByName("CallService").Methods()
+	callServiceCreateCallHandler := connect.NewUnaryHandler(
+		CallServiceCreateCallProcedure,
+		svc.CreateCall,
+		connect.WithSchema(callServiceMethods.ByName("CreateCall")),
+		connect.WithHandlerOptions(opts...),
+	)
+	callServiceGetCallHandler := connect.NewUnaryHandler(
+		CallServiceGetCallProcedure,
+		svc.GetCall,
+		connect.WithSchema(callServiceMethods.ByName("GetCall")),
+		connect.WithHandlerOptions(opts...),
+	)
+	callServiceUpdateCallHandler := connect.NewUnaryHandler(
+		CallServiceUpdateCallProcedure,
+		svc.UpdateCall,
+		connect.WithSchema(callServiceMethods.ByName("UpdateCall")),
+		connect.WithHandlerOptions(opts...),
+	)
+	callServiceListPublicCallsHandler := connect.NewUnaryHandler(
+		CallServiceListPublicCallsProcedure,
+		svc.ListPublicCalls,
+		connect.WithSchema(callServiceMethods.ByName("ListPublicCalls")),
+		connect.WithHandlerOptions(opts...),
+	)
+	callServiceGetUserParticipatingCallHandler := connect.NewUnaryHandler(
+		CallServiceGetUserParticipatingCallProcedure,
+		svc.GetUserParticipatingCall,
+		connect.WithSchema(callServiceMethods.ByName("GetUserParticipatingCall")),
+		connect.WithHandlerOptions(opts...),
+	)
 	callServiceJoinCallHandler := connect.NewUnaryHandler(
 		CallServiceJoinCallProcedure,
 		svc.JoinCall,
 		connect.WithSchema(callServiceMethods.ByName("JoinCall")),
 		connect.WithHandlerOptions(opts...),
 	)
+	callServiceHeartbeatCallHandler := connect.NewUnaryHandler(
+		CallServiceHeartbeatCallProcedure,
+		svc.HeartbeatCall,
+		connect.WithSchema(callServiceMethods.ByName("HeartbeatCall")),
+		connect.WithHandlerOptions(opts...),
+	)
+	callServiceLeaveCallHandler := connect.NewUnaryHandler(
+		CallServiceLeaveCallProcedure,
+		svc.LeaveCall,
+		connect.WithSchema(callServiceMethods.ByName("LeaveCall")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/call.v1.CallService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
+		case CallServiceCreateCallProcedure:
+			callServiceCreateCallHandler.ServeHTTP(w, r)
+		case CallServiceGetCallProcedure:
+			callServiceGetCallHandler.ServeHTTP(w, r)
+		case CallServiceUpdateCallProcedure:
+			callServiceUpdateCallHandler.ServeHTTP(w, r)
+		case CallServiceListPublicCallsProcedure:
+			callServiceListPublicCallsHandler.ServeHTTP(w, r)
+		case CallServiceGetUserParticipatingCallProcedure:
+			callServiceGetUserParticipatingCallHandler.ServeHTTP(w, r)
 		case CallServiceJoinCallProcedure:
 			callServiceJoinCallHandler.ServeHTTP(w, r)
+		case CallServiceHeartbeatCallProcedure:
+			callServiceHeartbeatCallHandler.ServeHTTP(w, r)
+		case CallServiceLeaveCallProcedure:
+			callServiceLeaveCallHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -111,6 +310,34 @@ func NewCallServiceHandler(svc CallServiceHandler, opts ...connect.HandlerOption
 // UnimplementedCallServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedCallServiceHandler struct{}
 
+func (UnimplementedCallServiceHandler) CreateCall(context.Context, *connect.Request[v1.CreateCallRequest]) (*connect.Response[v1.CreateCallResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("call.v1.CallService.CreateCall is not implemented"))
+}
+
+func (UnimplementedCallServiceHandler) GetCall(context.Context, *connect.Request[v1.GetCallRequest]) (*connect.Response[v1.GetCallResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("call.v1.CallService.GetCall is not implemented"))
+}
+
+func (UnimplementedCallServiceHandler) UpdateCall(context.Context, *connect.Request[v1.UpdateCallRequest]) (*connect.Response[v1.UpdateCallResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("call.v1.CallService.UpdateCall is not implemented"))
+}
+
+func (UnimplementedCallServiceHandler) ListPublicCalls(context.Context, *connect.Request[v1.ListPublicCallsRequest]) (*connect.Response[v1.ListPublicCallsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("call.v1.CallService.ListPublicCalls is not implemented"))
+}
+
+func (UnimplementedCallServiceHandler) GetUserParticipatingCall(context.Context, *connect.Request[v1.GetUserParticipatingCallRequest]) (*connect.Response[v1.GetUserParticipatingCallResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("call.v1.CallService.GetUserParticipatingCall is not implemented"))
+}
+
 func (UnimplementedCallServiceHandler) JoinCall(context.Context, *connect.Request[v1.JoinCallRequest]) (*connect.Response[v1.JoinCallResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("call.v1.CallService.JoinCall is not implemented"))
+}
+
+func (UnimplementedCallServiceHandler) HeartbeatCall(context.Context, *connect.Request[v1.HeartbeatCallRequest]) (*connect.Response[v1.HeartbeatCallResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("call.v1.CallService.HeartbeatCall is not implemented"))
+}
+
+func (UnimplementedCallServiceHandler) LeaveCall(context.Context, *connect.Request[v1.LeaveCallRequest]) (*connect.Response[v1.LeaveCallResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("call.v1.CallService.LeaveCall is not implemented"))
 }

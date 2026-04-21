@@ -33,9 +33,19 @@ type JoinTokenParams struct {
 
 func (c *Client) CreateJoinToken(params JoinTokenParams) (string, error) {
 	at := auth.NewAccessToken(c.apiKey, c.apiSecret)
+	canPublish := true
+	canSubscribe := true
+	canPublishData := true
+	// LiveKit's "VideoGrant" covers all real-time media permissions. Restricting
+	// sources to "microphone" keeps this an audio-only call — clients cannot
+	// publish camera or screen share even if they try.
 	grant := &auth.VideoGrant{
-		RoomJoin: true,
-		Room:     params.RoomID,
+		RoomJoin:          true,
+		Room:              params.RoomID,
+		CanPublish:        &canPublish,
+		CanSubscribe:      &canSubscribe,
+		CanPublishData:    &canPublishData,
+		CanPublishSources: []string{"microphone"},
 	}
 	at.SetVideoGrant(grant).
 		SetIdentity(params.Identity).

@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"reverie.jp/reverie/internal/domain/entity"
+	callrepo "reverie.jp/reverie/internal/modules/call/repository"
 	usergw "reverie.jp/reverie/internal/modules/user/gateway"
 	"reverie.jp/reverie/internal/platform/livekit"
 	"reverie.jp/reverie/internal/platform/ulid"
@@ -11,15 +13,17 @@ import (
 )
 
 type JoinCall struct {
-	livekit     *livekit.Client
+	callRepo    callrepo.Repository
 	userGateway usergw.Gateway
+	livekit     *livekit.Client
 	tokenTTL    time.Duration
 }
 
-func NewJoinCall(lk *livekit.Client, userGateway usergw.Gateway, tokenTTL time.Duration) *JoinCall {
+func NewJoinCall(callRepo callrepo.Repository, userGateway usergw.Gateway, lk *livekit.Client, tokenTTL time.Duration) *JoinCall {
 	return &JoinCall{
-		livekit:     lk,
+		callRepo:    callRepo,
 		userGateway: userGateway,
+		livekit:     lk,
 		tokenTTL:    tokenTTL,
 	}
 }
@@ -29,14 +33,39 @@ func (uc *JoinCall) Execute(ctx context.Context, input JoinCallInput) (*JoinCall
 		return nil, err
 	}
 
-	identity, displayName, err := uc.resolveParticipant(ctx, input)
+	call, err := uc.callRepo.GetCall(ctx, input.CallID)
+	if err != nil {
+		return nil, xerrors.ErrInternal.WithCause(err)
+	}
+	if call == nil {
+		return nil, xerrors.ErrCallNotFound
+	}
+
+	if err := uc.checkJoinVisibility(call, input.RequesterID); err != nil {
+		return nil, err
+	}
+
+	identity, displayName, userID, err := uc.resolveParticipant(ctx, input)
 	if err != nil {
 		return nil, err
 	}
 
+	if err := uc.enforceSingleCall(ctx, input.RequesterID, call.ID); err != nil {
+		return nil, err
+	}
+
+	if err := uc.callRepo.UpsertCallParticipant(ctx, callrepo.UpsertCallParticipantParams{
+		CallID:              call.ID,
+		ParticipantIdentity: identity,
+		UserID:              userID,
+		DisplayName:         displayName,
+	}); err != nil {
+		return nil, xerrors.ErrInternal.WithCause(err)
+	}
+
 	expireTime := time.Now().Add(uc.tokenTTL)
 	token, err := uc.livekit.CreateJoinToken(livekit.JoinTokenParams{
-		RoomID:      input.RoomID,
+		RoomID:      call.ID.String(),
 		Identity:    identity,
 		DisplayName: displayName,
 		TTL:         uc.tokenTTL,
@@ -53,17 +82,51 @@ func (uc *JoinCall) Execute(ctx context.Context, input JoinCallInput) (*JoinCall
 	}, nil
 }
 
-func (uc *JoinCall) resolveParticipant(ctx context.Context, input JoinCallInput) (identity, displayName string, err error) {
+func (uc *JoinCall) checkJoinVisibility(call *entity.Call, requesterID ulid.ULID) error {
+	switch call.Visibility {
+	case entity.CallVisibilityOpen:
+		return nil
+	case entity.CallVisibilityUsersOnly:
+		if requesterID.IsZero() {
+			return xerrors.ErrCallGuestNotAllowed
+		}
+		return nil
+	case entity.CallVisibilityLocked:
+		if call.HostUserID == requesterID {
+			return nil
+		}
+		return xerrors.ErrCallLocked
+	default:
+		return xerrors.ErrCallNotFound
+	}
+}
+
+func (uc *JoinCall) resolveParticipant(ctx context.Context, input JoinCallInput) (identity, displayName string, userID *ulid.ULID, err error) {
 	if input.RequesterID.IsZero() {
-		return "guest:" + ulid.New().String(), input.GuestDisplayName, nil
+		return "guest:" + ulid.New().String(), input.GuestDisplayName, nil, nil
 	}
 
 	view, err := uc.userGateway.BuildView(ctx, input.RequesterID, input.RequesterID)
 	if err != nil {
-		return "", "", xerrors.ErrInternal.WithCause(err)
+		return "", "", nil, xerrors.ErrInternal.WithCause(err)
 	}
 	if view == nil {
-		return "", "", xerrors.ErrNotFound.WithMessage("user not found")
+		return "", "", nil, xerrors.ErrUserNotFound
 	}
-	return "user:" + input.RequesterID.String(), view.User.DisplayName, nil
+	uid := view.User.ID
+	return "user:" + uid.String(), view.User.DisplayName, &uid, nil
+}
+
+func (uc *JoinCall) enforceSingleCall(ctx context.Context, requesterID, targetCallID ulid.ULID) error {
+	if requesterID.IsZero() {
+		return nil
+	}
+	active, err := uc.callRepo.GetActiveCallByUser(ctx, requesterID, participantStaleSeconds)
+	if err != nil {
+		return xerrors.ErrInternal.WithCause(err)
+	}
+	if active != nil && active.ID != targetCallID {
+		return xerrors.ErrAlreadyInAnotherCall
+	}
+	return nil
 }

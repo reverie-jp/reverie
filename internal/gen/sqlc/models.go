@@ -53,6 +53,67 @@ func (ns NullAuthProvider) Value() (driver.Value, error) {
 	return string(ns.AuthProvider), nil
 }
 
+type CallVisibility string
+
+const (
+	CallVisibilityOpen      CallVisibility = "open"
+	CallVisibilityUsersOnly CallVisibility = "users_only"
+	CallVisibilityLocked    CallVisibility = "locked"
+)
+
+func (e *CallVisibility) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = CallVisibility(s)
+	case string:
+		*e = CallVisibility(s)
+	default:
+		return fmt.Errorf("unsupported scan type for CallVisibility: %T", src)
+	}
+	return nil
+}
+
+type NullCallVisibility struct {
+	CallVisibility CallVisibility `json:"call_visibility"`
+	Valid          bool           `json:"valid"` // Valid is true if CallVisibility is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullCallVisibility) Scan(value interface{}) error {
+	if value == nil {
+		ns.CallVisibility, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.CallVisibility.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullCallVisibility) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.CallVisibility), nil
+}
+
+type Call struct {
+	ID         ulid.ULID      `json:"id"`
+	HostUserID ulid.ULID      `json:"host_user_id"`
+	Visibility CallVisibility `json:"visibility"`
+	CreateTime time.Time      `json:"create_time"`
+	UpdateTime time.Time      `json:"update_time"`
+}
+
+type CallParticipant struct {
+	CallID              ulid.ULID  `json:"call_id"`
+	ParticipantIdentity string     `json:"participant_identity"`
+	UserID              *ulid.ULID `json:"user_id"`
+	DisplayName         string     `json:"display_name"`
+	FirstJoinTime       time.Time  `json:"first_join_time"`
+	LastSeenTime        time.Time  `json:"last_seen_time"`
+	DisconnectedTime    *time.Time `json:"disconnected_time"`
+}
+
 type RefreshToken struct {
 	ID         ulid.ULID `json:"id"`
 	UserID     ulid.ULID `json:"user_id"`

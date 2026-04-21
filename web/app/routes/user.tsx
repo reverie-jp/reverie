@@ -10,8 +10,10 @@ import {
   MapPin,
   ShieldBan,
 } from "lucide-react";
-import { userClient } from "~/lib/api-client";
+import { callClient, userClient } from "~/lib/api-client";
+import { formatUser, parseCall } from "~/lib/resource-name";
 import { OnlineStatus, type User } from "~/lib/gen/user/v1/user_pb";
+import type { Call } from "~/lib/gen/call/v1/call_pb";
 
 export default function UserRoute() {
   const params = useParams<{ handle: string }>();
@@ -24,6 +26,7 @@ export default function UserRoute() {
   const customId = handle.slice(1);
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
+  const [participatingCall, setParticipatingCall] = useState<Call | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isBlocked, setIsBlocked] = useState(false);
@@ -36,13 +39,23 @@ export default function UserRoute() {
 
     const fetchProfile = async () => {
       try {
-        const res = await userClient.getUser({ customId });
+        const userName = formatUser(customId);
+        const [userRes, callRes] = await Promise.all([
+          userClient.getUser({ name: userName }),
+          callClient
+            .getUserParticipatingCall({ name: userName })
+            .catch((err) => {
+              console.error("GetUserParticipatingCall failed:", err);
+              return { call: null } as { call: Call | null };
+            }),
+        ]);
         if (cancelled) return;
-        if (!res.user) {
+        if (!userRes.user) {
           setError("ユーザーが見つかりません");
           return;
         }
-        setUser(res.user);
+        setUser(userRes.user);
+        setParticipatingCall(callRes.call ?? null);
       } catch (err) {
         if (cancelled) return;
         console.error("GetUser failed:", err);
@@ -145,6 +158,24 @@ export default function UserRoute() {
           </div>
           <p className="text-sm text-muted-foreground">@{user.customId}</p>
         </div>
+
+        {!user.isBlockedBy && participatingCall && (
+          <button
+            type="button"
+            onClick={() =>
+              navigate(`/calls/${parseCall(participatingCall.name)}`)
+            }
+            className="mt-3 w-full flex items-center justify-between rounded-md border px-3 py-2 text-sm hover:bg-muted"
+          >
+            <span className="flex items-center gap-2">
+              <span className="size-2 rounded-full bg-green-500 animate-pulse" />
+              通話中
+            </span>
+            <span className="text-xs text-muted-foreground font-mono truncate max-w-[50%]">
+              {parseCall(participatingCall.name)}
+            </span>
+          </button>
+        )}
 
         {!user.isBlockedBy && (
           <>

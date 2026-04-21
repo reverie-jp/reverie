@@ -5,7 +5,7 @@ export default [
   route("login", "routes/login.tsx"),
   route("auth/callback", "routes/auth-callback.tsx"),
   route("me", "routes/me.tsx"),
-  route("calls/:roomId", "routes/calls.room.tsx"),
+  route("calls/:callId", "routes/calls.room.tsx"),
   // React Router v7 can't parse literal-prefix params like `@:customId`
   // (the param must follow `/`), so we catch any top-level handle and
   // validate the `@` prefix inside the component.

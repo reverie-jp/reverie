@@ -17,7 +17,7 @@ service UserService {
   // Get user profile (includes online status).
   rpc GetUser(GetUserRequest) returns (GetUserResponse) {
     option (google.api.http) = {
-      get: "/v1/users/{custom_id}"
+      get: "/v1/{name=users/*}"
     };
   }
 
@@ -63,7 +63,9 @@ enum PostVisibility {
 // Resources
 
 message User {
-  string id = 1;
+  // Resource name: "users/{custom_id}".
+  string name = 1;
+  // Handle portion of name, exposed for display convenience.
   string custom_id = 2;
   string display_name = 3;
   optional string biography = 4;
@@ -100,7 +102,8 @@ message GetMyUserResponse {
 }
 
 message GetUserRequest {
-  string custom_id = 1;
+  // "users/{custom_id}"
+  string name = 1;
 }
 
 message GetUserResponse {

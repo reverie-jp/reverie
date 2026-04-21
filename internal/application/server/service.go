@@ -44,7 +44,7 @@ func initServices(cfg *config.Config, db *pgxpool.Pool, jwtManager *jwt.Manager)
 	userGateway := usergw.New(q)
 	accountService := account.InitModule(q, userGateway, tx, googleAuth, jwtManager)
 	userService := user.InitModule(userGateway)
-	callService := call.InitModule(livekitClient, userGateway, cfg.LiveKit.TokenTTL)
+	callService := call.InitModule(q, userGateway, livekitClient, cfg.LiveKit.TokenTTL)
 
 	return []Service{
 		{

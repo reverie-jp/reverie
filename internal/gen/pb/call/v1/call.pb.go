@@ -10,8 +10,10 @@ import (
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
+	v1 "reverie.jp/reverie/internal/gen/pb/user/v1"
 	sync "sync"
 	unsafe "unsafe"
 )
@@ -23,12 +25,709 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type CallVisibility int32
+
+const (
+	CallVisibility_CALL_VISIBILITY_UNSPECIFIED CallVisibility = 0
+	// Anyone with the URL can join, including guests.
+	CallVisibility_CALL_VISIBILITY_OPEN CallVisibility = 1
+	// Any authenticated user. Guests are rejected.
+	CallVisibility_CALL_VISIBILITY_USERS_ONLY CallVisibility = 2
+	// No new participants can join. Call is hidden from listings.
+	CallVisibility_CALL_VISIBILITY_LOCKED CallVisibility = 3
+)
+
+// Enum value maps for CallVisibility.
+var (
+	CallVisibility_name = map[int32]string{
+		0: "CALL_VISIBILITY_UNSPECIFIED",
+		1: "CALL_VISIBILITY_OPEN",
+		2: "CALL_VISIBILITY_USERS_ONLY",
+		3: "CALL_VISIBILITY_LOCKED",
+	}
+	CallVisibility_value = map[string]int32{
+		"CALL_VISIBILITY_UNSPECIFIED": 0,
+		"CALL_VISIBILITY_OPEN":        1,
+		"CALL_VISIBILITY_USERS_ONLY":  2,
+		"CALL_VISIBILITY_LOCKED":      3,
+	}
+)
+
+func (x CallVisibility) Enum() *CallVisibility {
+	p := new(CallVisibility)
+	*p = x
+	return p
+}
+
+func (x CallVisibility) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (CallVisibility) Descriptor() protoreflect.EnumDescriptor {
+	return file_call_v1_call_proto_enumTypes[0].Descriptor()
+}
+
+func (CallVisibility) Type() protoreflect.EnumType {
+	return &file_call_v1_call_proto_enumTypes[0]
+}
+
+func (x CallVisibility) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use CallVisibility.Descriptor instead.
+func (CallVisibility) EnumDescriptor() ([]byte, []int) {
+	return file_call_v1_call_proto_rawDescGZIP(), []int{0}
+}
+
+type Call struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Resource name: "calls/{ulid}".
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// The call's host.
+	Host          *v1.User               `protobuf:"bytes,2,opt,name=host,proto3" json:"host,omitempty"`
+	Visibility    CallVisibility         `protobuf:"varint,3,opt,name=visibility,proto3,enum=call.v1.CallVisibility" json:"visibility,omitempty"`
+	CreateTime    *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Call) Reset() {
+	*x = Call{}
+	mi := &file_call_v1_call_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Call) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Call) ProtoMessage() {}
+
+func (x *Call) ProtoReflect() protoreflect.Message {
+	mi := &file_call_v1_call_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Call.ProtoReflect.Descriptor instead.
+func (*Call) Descriptor() ([]byte, []int) {
+	return file_call_v1_call_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *Call) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *Call) GetHost() *v1.User {
+	if x != nil {
+		return x.Host
+	}
+	return nil
+}
+
+func (x *Call) GetVisibility() CallVisibility {
+	if x != nil {
+		return x.Visibility
+	}
+	return CallVisibility_CALL_VISIBILITY_UNSPECIFIED
+}
+
+func (x *Call) GetCreateTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreateTime
+	}
+	return nil
+}
+
+type CallParticipant struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Resource name: "calls/{call}/participants/{identity}".
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// Populated for authenticated participants only.
+	User *v1.User `protobuf:"bytes,2,opt,name=user,proto3" json:"user,omitempty"`
+	// Display name at the time of first join.
+	DisplayName   string                 `protobuf:"bytes,3,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
+	FirstJoinTime *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=first_join_time,json=firstJoinTime,proto3" json:"first_join_time,omitempty"`
+	// True if the heartbeat is recent.
+	IsCurrentlyConnected bool `protobuf:"varint,5,opt,name=is_currently_connected,json=isCurrentlyConnected,proto3" json:"is_currently_connected,omitempty"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
+}
+
+func (x *CallParticipant) Reset() {
+	*x = CallParticipant{}
+	mi := &file_call_v1_call_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CallParticipant) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CallParticipant) ProtoMessage() {}
+
+func (x *CallParticipant) ProtoReflect() protoreflect.Message {
+	mi := &file_call_v1_call_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CallParticipant.ProtoReflect.Descriptor instead.
+func (*CallParticipant) Descriptor() ([]byte, []int) {
+	return file_call_v1_call_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *CallParticipant) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *CallParticipant) GetUser() *v1.User {
+	if x != nil {
+		return x.User
+	}
+	return nil
+}
+
+func (x *CallParticipant) GetDisplayName() string {
+	if x != nil {
+		return x.DisplayName
+	}
+	return ""
+}
+
+func (x *CallParticipant) GetFirstJoinTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.FirstJoinTime
+	}
+	return nil
+}
+
+func (x *CallParticipant) GetIsCurrentlyConnected() bool {
+	if x != nil {
+		return x.IsCurrentlyConnected
+	}
+	return false
+}
+
+type CreateCallRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Visibility    CallVisibility         `protobuf:"varint,1,opt,name=visibility,proto3,enum=call.v1.CallVisibility" json:"visibility,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateCallRequest) Reset() {
+	*x = CreateCallRequest{}
+	mi := &file_call_v1_call_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateCallRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateCallRequest) ProtoMessage() {}
+
+func (x *CreateCallRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_call_v1_call_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateCallRequest.ProtoReflect.Descriptor instead.
+func (*CreateCallRequest) Descriptor() ([]byte, []int) {
+	return file_call_v1_call_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *CreateCallRequest) GetVisibility() CallVisibility {
+	if x != nil {
+		return x.Visibility
+	}
+	return CallVisibility_CALL_VISIBILITY_UNSPECIFIED
+}
+
+type CreateCallResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Call          *Call                  `protobuf:"bytes,1,opt,name=call,proto3" json:"call,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateCallResponse) Reset() {
+	*x = CreateCallResponse{}
+	mi := &file_call_v1_call_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateCallResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateCallResponse) ProtoMessage() {}
+
+func (x *CreateCallResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_call_v1_call_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateCallResponse.ProtoReflect.Descriptor instead.
+func (*CreateCallResponse) Descriptor() ([]byte, []int) {
+	return file_call_v1_call_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *CreateCallResponse) GetCall() *Call {
+	if x != nil {
+		return x.Call
+	}
+	return nil
+}
+
+type GetCallRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// "calls/{ulid}"
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// Optional. Guests that are currently participating should echo the
+	// identity received from JoinCallResponse so the server can recognize
+	// them as an in-call viewer (relevant for LOCKED calls). Ignored for
+	// authenticated callers.
+	GuestIdentity string `protobuf:"bytes,2,opt,name=guest_identity,json=guestIdentity,proto3" json:"guest_identity,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetCallRequest) Reset() {
+	*x = GetCallRequest{}
+	mi := &file_call_v1_call_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetCallRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetCallRequest) ProtoMessage() {}
+
+func (x *GetCallRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_call_v1_call_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetCallRequest.ProtoReflect.Descriptor instead.
+func (*GetCallRequest) Descriptor() ([]byte, []int) {
+	return file_call_v1_call_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *GetCallRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *GetCallRequest) GetGuestIdentity() string {
+	if x != nil {
+		return x.GuestIdentity
+	}
+	return ""
+}
+
+type GetCallResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Call          *Call                  `protobuf:"bytes,1,opt,name=call,proto3" json:"call,omitempty"`
+	Participants  []*CallParticipant     `protobuf:"bytes,2,rep,name=participants,proto3" json:"participants,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetCallResponse) Reset() {
+	*x = GetCallResponse{}
+	mi := &file_call_v1_call_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetCallResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetCallResponse) ProtoMessage() {}
+
+func (x *GetCallResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_call_v1_call_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetCallResponse.ProtoReflect.Descriptor instead.
+func (*GetCallResponse) Descriptor() ([]byte, []int) {
+	return file_call_v1_call_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *GetCallResponse) GetCall() *Call {
+	if x != nil {
+		return x.Call
+	}
+	return nil
+}
+
+func (x *GetCallResponse) GetParticipants() []*CallParticipant {
+	if x != nil {
+		return x.Participants
+	}
+	return nil
+}
+
+type UpdateCallRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Must include call.name. Other fields listed in update_mask are applied.
+	Call          *Call                  `protobuf:"bytes,1,opt,name=call,proto3" json:"call,omitempty"`
+	UpdateMask    *fieldmaskpb.FieldMask `protobuf:"bytes,2,opt,name=update_mask,json=updateMask,proto3" json:"update_mask,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateCallRequest) Reset() {
+	*x = UpdateCallRequest{}
+	mi := &file_call_v1_call_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateCallRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateCallRequest) ProtoMessage() {}
+
+func (x *UpdateCallRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_call_v1_call_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateCallRequest.ProtoReflect.Descriptor instead.
+func (*UpdateCallRequest) Descriptor() ([]byte, []int) {
+	return file_call_v1_call_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *UpdateCallRequest) GetCall() *Call {
+	if x != nil {
+		return x.Call
+	}
+	return nil
+}
+
+func (x *UpdateCallRequest) GetUpdateMask() *fieldmaskpb.FieldMask {
+	if x != nil {
+		return x.UpdateMask
+	}
+	return nil
+}
+
+type UpdateCallResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Call          *Call                  `protobuf:"bytes,1,opt,name=call,proto3" json:"call,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateCallResponse) Reset() {
+	*x = UpdateCallResponse{}
+	mi := &file_call_v1_call_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateCallResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateCallResponse) ProtoMessage() {}
+
+func (x *UpdateCallResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_call_v1_call_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateCallResponse.ProtoReflect.Descriptor instead.
+func (*UpdateCallResponse) Descriptor() ([]byte, []int) {
+	return file_call_v1_call_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *UpdateCallResponse) GetCall() *Call {
+	if x != nil {
+		return x.Call
+	}
+	return nil
+}
+
+type ListPublicCallsRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Maximum number of calls to return. Server may return fewer. Defaults to
+	// 50. Values above 100 are clamped to 100.
+	PageSize int32 `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	// Opaque cursor obtained from a prior response's next_page_token.
+	PageToken     string `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListPublicCallsRequest) Reset() {
+	*x = ListPublicCallsRequest{}
+	mi := &file_call_v1_call_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListPublicCallsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListPublicCallsRequest) ProtoMessage() {}
+
+func (x *ListPublicCallsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_call_v1_call_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListPublicCallsRequest.ProtoReflect.Descriptor instead.
+func (*ListPublicCallsRequest) Descriptor() ([]byte, []int) {
+	return file_call_v1_call_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *ListPublicCallsRequest) GetPageSize() int32 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+func (x *ListPublicCallsRequest) GetPageToken() string {
+	if x != nil {
+		return x.PageToken
+	}
+	return ""
+}
+
+type ListPublicCallsResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Calls []*Call                `protobuf:"bytes,1,rep,name=calls,proto3" json:"calls,omitempty"`
+	// Opaque cursor to pass as page_token to fetch the next page. Empty means
+	// there are no further pages.
+	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListPublicCallsResponse) Reset() {
+	*x = ListPublicCallsResponse{}
+	mi := &file_call_v1_call_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListPublicCallsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListPublicCallsResponse) ProtoMessage() {}
+
+func (x *ListPublicCallsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_call_v1_call_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListPublicCallsResponse.ProtoReflect.Descriptor instead.
+func (*ListPublicCallsResponse) Descriptor() ([]byte, []int) {
+	return file_call_v1_call_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *ListPublicCallsResponse) GetCalls() []*Call {
+	if x != nil {
+		return x.Calls
+	}
+	return nil
+}
+
+func (x *ListPublicCallsResponse) GetNextPageToken() string {
+	if x != nil {
+		return x.NextPageToken
+	}
+	return ""
+}
+
+type GetUserParticipatingCallRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// "users/{custom_id}"
+	Name          string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetUserParticipatingCallRequest) Reset() {
+	*x = GetUserParticipatingCallRequest{}
+	mi := &file_call_v1_call_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetUserParticipatingCallRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetUserParticipatingCallRequest) ProtoMessage() {}
+
+func (x *GetUserParticipatingCallRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_call_v1_call_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetUserParticipatingCallRequest.ProtoReflect.Descriptor instead.
+func (*GetUserParticipatingCallRequest) Descriptor() ([]byte, []int) {
+	return file_call_v1_call_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *GetUserParticipatingCallRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+type GetUserParticipatingCallResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Null if the user is not in any visible call.
+	Call          *Call `protobuf:"bytes,1,opt,name=call,proto3" json:"call,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetUserParticipatingCallResponse) Reset() {
+	*x = GetUserParticipatingCallResponse{}
+	mi := &file_call_v1_call_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetUserParticipatingCallResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetUserParticipatingCallResponse) ProtoMessage() {}
+
+func (x *GetUserParticipatingCallResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_call_v1_call_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetUserParticipatingCallResponse.ProtoReflect.Descriptor instead.
+func (*GetUserParticipatingCallResponse) Descriptor() ([]byte, []int) {
+	return file_call_v1_call_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *GetUserParticipatingCallResponse) GetCall() *Call {
+	if x != nil {
+		return x.Call
+	}
+	return nil
+}
+
 type JoinCallRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// ULID of the call room.
-	RoomId string `protobuf:"bytes,1,opt,name=room_id,json=roomId,proto3" json:"room_id,omitempty"`
-	// Display name shown to other participants. Required for guests. Ignored
-	// for authenticated callers (their profile display_name is used instead).
+	// "calls/{ulid}"
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// Required for guests. Ignored for authenticated callers.
 	GuestDisplayName string `protobuf:"bytes,2,opt,name=guest_display_name,json=guestDisplayName,proto3" json:"guest_display_name,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
@@ -36,7 +735,7 @@ type JoinCallRequest struct {
 
 func (x *JoinCallRequest) Reset() {
 	*x = JoinCallRequest{}
-	mi := &file_call_v1_call_proto_msgTypes[0]
+	mi := &file_call_v1_call_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -48,7 +747,7 @@ func (x *JoinCallRequest) String() string {
 func (*JoinCallRequest) ProtoMessage() {}
 
 func (x *JoinCallRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_call_v1_call_proto_msgTypes[0]
+	mi := &file_call_v1_call_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -61,12 +760,12 @@ func (x *JoinCallRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use JoinCallRequest.ProtoReflect.Descriptor instead.
 func (*JoinCallRequest) Descriptor() ([]byte, []int) {
-	return file_call_v1_call_proto_rawDescGZIP(), []int{0}
+	return file_call_v1_call_proto_rawDescGZIP(), []int{12}
 }
 
-func (x *JoinCallRequest) GetRoomId() string {
+func (x *JoinCallRequest) GetName() string {
 	if x != nil {
-		return x.RoomId
+		return x.Name
 	}
 	return ""
 }
@@ -84,8 +783,9 @@ type JoinCallResponse struct {
 	AccessToken string `protobuf:"bytes,1,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"`
 	// WebSocket URL of the LiveKit server.
 	Url string `protobuf:"bytes,2,opt,name=url,proto3" json:"url,omitempty"`
-	// The identity granted by the server. Format is "user:<ulid>" for
-	// authenticated callers and "guest:<ulid>" for guests.
+	// The LiveKit identity granted by the server. Format is "user:<ulid>" for
+	// authenticated callers and "guest:<ulid>" for guests. Clients echo this
+	// back in HeartbeatCall / LeaveCall requests as guest_identity.
 	Identity string `protobuf:"bytes,3,opt,name=identity,proto3" json:"identity,omitempty"`
 	// Expiry of access_token. Clients should refresh before this time.
 	ExpireTime    *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=expire_time,json=expireTime,proto3" json:"expire_time,omitempty"`
@@ -95,7 +795,7 @@ type JoinCallResponse struct {
 
 func (x *JoinCallResponse) Reset() {
 	*x = JoinCallResponse{}
-	mi := &file_call_v1_call_proto_msgTypes[1]
+	mi := &file_call_v1_call_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -107,7 +807,7 @@ func (x *JoinCallResponse) String() string {
 func (*JoinCallResponse) ProtoMessage() {}
 
 func (x *JoinCallResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_call_v1_call_proto_msgTypes[1]
+	mi := &file_call_v1_call_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -120,7 +820,7 @@ func (x *JoinCallResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use JoinCallResponse.ProtoReflect.Descriptor instead.
 func (*JoinCallResponse) Descriptor() ([]byte, []int) {
-	return file_call_v1_call_proto_rawDescGZIP(), []int{1}
+	return file_call_v1_call_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *JoinCallResponse) GetAccessToken() string {
@@ -151,22 +851,269 @@ func (x *JoinCallResponse) GetExpireTime() *timestamppb.Timestamp {
 	return nil
 }
 
+type HeartbeatCallRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// "calls/{ulid}"
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// Required for guests (echo of the identity from JoinCallResponse).
+	// Ignored for authenticated callers.
+	GuestIdentity string `protobuf:"bytes,2,opt,name=guest_identity,json=guestIdentity,proto3" json:"guest_identity,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HeartbeatCallRequest) Reset() {
+	*x = HeartbeatCallRequest{}
+	mi := &file_call_v1_call_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HeartbeatCallRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HeartbeatCallRequest) ProtoMessage() {}
+
+func (x *HeartbeatCallRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_call_v1_call_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HeartbeatCallRequest.ProtoReflect.Descriptor instead.
+func (*HeartbeatCallRequest) Descriptor() ([]byte, []int) {
+	return file_call_v1_call_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *HeartbeatCallRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *HeartbeatCallRequest) GetGuestIdentity() string {
+	if x != nil {
+		return x.GuestIdentity
+	}
+	return ""
+}
+
+type HeartbeatCallResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HeartbeatCallResponse) Reset() {
+	*x = HeartbeatCallResponse{}
+	mi := &file_call_v1_call_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HeartbeatCallResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HeartbeatCallResponse) ProtoMessage() {}
+
+func (x *HeartbeatCallResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_call_v1_call_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HeartbeatCallResponse.ProtoReflect.Descriptor instead.
+func (*HeartbeatCallResponse) Descriptor() ([]byte, []int) {
+	return file_call_v1_call_proto_rawDescGZIP(), []int{15}
+}
+
+type LeaveCallRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// "calls/{ulid}"
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// Required for guests (echo of the identity from JoinCallResponse).
+	// Ignored for authenticated callers.
+	GuestIdentity string `protobuf:"bytes,2,opt,name=guest_identity,json=guestIdentity,proto3" json:"guest_identity,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LeaveCallRequest) Reset() {
+	*x = LeaveCallRequest{}
+	mi := &file_call_v1_call_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LeaveCallRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LeaveCallRequest) ProtoMessage() {}
+
+func (x *LeaveCallRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_call_v1_call_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LeaveCallRequest.ProtoReflect.Descriptor instead.
+func (*LeaveCallRequest) Descriptor() ([]byte, []int) {
+	return file_call_v1_call_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *LeaveCallRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *LeaveCallRequest) GetGuestIdentity() string {
+	if x != nil {
+		return x.GuestIdentity
+	}
+	return ""
+}
+
+type LeaveCallResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LeaveCallResponse) Reset() {
+	*x = LeaveCallResponse{}
+	mi := &file_call_v1_call_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LeaveCallResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LeaveCallResponse) ProtoMessage() {}
+
+func (x *LeaveCallResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_call_v1_call_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LeaveCallResponse.ProtoReflect.Descriptor instead.
+func (*LeaveCallResponse) Descriptor() ([]byte, []int) {
+	return file_call_v1_call_proto_rawDescGZIP(), []int{17}
+}
+
 var File_call_v1_call_proto protoreflect.FileDescriptor
 
 const file_call_v1_call_proto_rawDesc = "" +
 	"\n" +
-	"\x12call/v1/call.proto\x12\acall.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"X\n" +
-	"\x0fJoinCallRequest\x12\x17\n" +
-	"\aroom_id\x18\x01 \x01(\tR\x06roomId\x12,\n" +
+	"\x12call/v1/call.proto\x12\acall.v1\x1a\x1cgoogle/api/annotations.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x12user/v1/user.proto\"\xb3\x01\n" +
+	"\x04Call\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12!\n" +
+	"\x04host\x18\x02 \x01(\v2\r.user.v1.UserR\x04host\x127\n" +
+	"\n" +
+	"visibility\x18\x03 \x01(\x0e2\x17.call.v1.CallVisibilityR\n" +
+	"visibility\x12;\n" +
+	"\vcreate_time\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"createTime\"\xe5\x01\n" +
+	"\x0fCallParticipant\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12!\n" +
+	"\x04user\x18\x02 \x01(\v2\r.user.v1.UserR\x04user\x12!\n" +
+	"\fdisplay_name\x18\x03 \x01(\tR\vdisplayName\x12B\n" +
+	"\x0ffirst_join_time\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\rfirstJoinTime\x124\n" +
+	"\x16is_currently_connected\x18\x05 \x01(\bR\x14isCurrentlyConnected\"L\n" +
+	"\x11CreateCallRequest\x127\n" +
+	"\n" +
+	"visibility\x18\x01 \x01(\x0e2\x17.call.v1.CallVisibilityR\n" +
+	"visibility\"7\n" +
+	"\x12CreateCallResponse\x12!\n" +
+	"\x04call\x18\x01 \x01(\v2\r.call.v1.CallR\x04call\"K\n" +
+	"\x0eGetCallRequest\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12%\n" +
+	"\x0eguest_identity\x18\x02 \x01(\tR\rguestIdentity\"r\n" +
+	"\x0fGetCallResponse\x12!\n" +
+	"\x04call\x18\x01 \x01(\v2\r.call.v1.CallR\x04call\x12<\n" +
+	"\fparticipants\x18\x02 \x03(\v2\x18.call.v1.CallParticipantR\fparticipants\"s\n" +
+	"\x11UpdateCallRequest\x12!\n" +
+	"\x04call\x18\x01 \x01(\v2\r.call.v1.CallR\x04call\x12;\n" +
+	"\vupdate_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\n" +
+	"updateMask\"7\n" +
+	"\x12UpdateCallResponse\x12!\n" +
+	"\x04call\x18\x01 \x01(\v2\r.call.v1.CallR\x04call\"T\n" +
+	"\x16ListPublicCallsRequest\x12\x1b\n" +
+	"\tpage_size\x18\x01 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\n" +
+	"page_token\x18\x02 \x01(\tR\tpageToken\"f\n" +
+	"\x17ListPublicCallsResponse\x12#\n" +
+	"\x05calls\x18\x01 \x03(\v2\r.call.v1.CallR\x05calls\x12&\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"5\n" +
+	"\x1fGetUserParticipatingCallRequest\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\"E\n" +
+	" GetUserParticipatingCallResponse\x12!\n" +
+	"\x04call\x18\x01 \x01(\v2\r.call.v1.CallR\x04call\"S\n" +
+	"\x0fJoinCallRequest\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12,\n" +
 	"\x12guest_display_name\x18\x02 \x01(\tR\x10guestDisplayName\"\xa0\x01\n" +
 	"\x10JoinCallResponse\x12!\n" +
 	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\x12\x10\n" +
 	"\x03url\x18\x02 \x01(\tR\x03url\x12\x1a\n" +
 	"\bidentity\x18\x03 \x01(\tR\bidentity\x12;\n" +
 	"\vexpire_time\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"expireTime2i\n" +
-	"\vCallService\x12Z\n" +
-	"\bJoinCall\x12\x18.call.v1.JoinCallRequest\x1a\x19.call.v1.JoinCallResponse\"\x19\x82\xd3\xe4\x93\x02\x13:\x01*\"\x0e/v1/calls:joinB\x88\x01\n" +
+	"expireTime\"Q\n" +
+	"\x14HeartbeatCallRequest\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12%\n" +
+	"\x0eguest_identity\x18\x02 \x01(\tR\rguestIdentity\"\x17\n" +
+	"\x15HeartbeatCallResponse\"M\n" +
+	"\x10LeaveCallRequest\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12%\n" +
+	"\x0eguest_identity\x18\x02 \x01(\tR\rguestIdentity\"\x13\n" +
+	"\x11LeaveCallResponse*\x87\x01\n" +
+	"\x0eCallVisibility\x12\x1f\n" +
+	"\x1bCALL_VISIBILITY_UNSPECIFIED\x10\x00\x12\x18\n" +
+	"\x14CALL_VISIBILITY_OPEN\x10\x01\x12\x1e\n" +
+	"\x1aCALL_VISIBILITY_USERS_ONLY\x10\x02\x12\x1a\n" +
+	"\x16CALL_VISIBILITY_LOCKED\x10\x032\x8a\a\n" +
+	"\vCallService\x12[\n" +
+	"\n" +
+	"CreateCall\x12\x1a.call.v1.CreateCallRequest\x1a\x1b.call.v1.CreateCallResponse\"\x14\x82\xd3\xe4\x93\x02\x0e:\x01*\"\t/v1/calls\x12X\n" +
+	"\aGetCall\x12\x17.call.v1.GetCallRequest\x1a\x18.call.v1.GetCallResponse\"\x1a\x82\xd3\xe4\x93\x02\x14\x12\x12/v1/{name=calls/*}\x12i\n" +
+	"\n" +
+	"UpdateCall\x12\x1a.call.v1.UpdateCallRequest\x1a\x1b.call.v1.UpdateCallResponse\"\"\x82\xd3\xe4\x93\x02\x1c:\x01*2\x17/v1/{call.name=calls/*}\x12r\n" +
+	"\x0fListPublicCalls\x12\x1f.call.v1.ListPublicCallsRequest\x1a .call.v1.ListPublicCallsResponse\"\x1c\x82\xd3\xe4\x93\x02\x16\x12\x14/v1/calls:listPublic\x12\x9d\x01\n" +
+	"\x18GetUserParticipatingCall\x12(.call.v1.GetUserParticipatingCallRequest\x1a).call.v1.GetUserParticipatingCallResponse\",\x82\xd3\xe4\x93\x02&\x12$/v1/{name=users/*}:participatingCall\x12c\n" +
+	"\bJoinCall\x12\x18.call.v1.JoinCallRequest\x1a\x19.call.v1.JoinCallResponse\"\"\x82\xd3\xe4\x93\x02\x1c:\x01*\"\x17/v1/{name=calls/*}:join\x12w\n" +
+	"\rHeartbeatCall\x12\x1d.call.v1.HeartbeatCallRequest\x1a\x1e.call.v1.HeartbeatCallResponse\"'\x82\xd3\xe4\x93\x02!:\x01*\"\x1c/v1/{name=calls/*}:heartbeat\x12g\n" +
+	"\tLeaveCall\x12\x19.call.v1.LeaveCallRequest\x1a\x1a.call.v1.LeaveCallResponse\"#\x82\xd3\xe4\x93\x02\x1d:\x01*\"\x18/v1/{name=calls/*}:leaveB\x88\x01\n" +
 	"\vcom.call.v1B\tCallProtoP\x01Z1reverie.jp/reverie/internal/gen/pb/call/v1;callv1\xa2\x02\x03CXX\xaa\x02\aCall.V1\xca\x02\aCall\\V1\xe2\x02\x13Call\\V1\\GPBMetadata\xea\x02\bCall::V1b\x06proto3"
 
 var (
@@ -181,21 +1128,69 @@ func file_call_v1_call_proto_rawDescGZIP() []byte {
 	return file_call_v1_call_proto_rawDescData
 }
 
-var file_call_v1_call_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_call_v1_call_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_call_v1_call_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
 var file_call_v1_call_proto_goTypes = []any{
-	(*JoinCallRequest)(nil),       // 0: call.v1.JoinCallRequest
-	(*JoinCallResponse)(nil),      // 1: call.v1.JoinCallResponse
-	(*timestamppb.Timestamp)(nil), // 2: google.protobuf.Timestamp
+	(CallVisibility)(0),                      // 0: call.v1.CallVisibility
+	(*Call)(nil),                             // 1: call.v1.Call
+	(*CallParticipant)(nil),                  // 2: call.v1.CallParticipant
+	(*CreateCallRequest)(nil),                // 3: call.v1.CreateCallRequest
+	(*CreateCallResponse)(nil),               // 4: call.v1.CreateCallResponse
+	(*GetCallRequest)(nil),                   // 5: call.v1.GetCallRequest
+	(*GetCallResponse)(nil),                  // 6: call.v1.GetCallResponse
+	(*UpdateCallRequest)(nil),                // 7: call.v1.UpdateCallRequest
+	(*UpdateCallResponse)(nil),               // 8: call.v1.UpdateCallResponse
+	(*ListPublicCallsRequest)(nil),           // 9: call.v1.ListPublicCallsRequest
+	(*ListPublicCallsResponse)(nil),          // 10: call.v1.ListPublicCallsResponse
+	(*GetUserParticipatingCallRequest)(nil),  // 11: call.v1.GetUserParticipatingCallRequest
+	(*GetUserParticipatingCallResponse)(nil), // 12: call.v1.GetUserParticipatingCallResponse
+	(*JoinCallRequest)(nil),                  // 13: call.v1.JoinCallRequest
+	(*JoinCallResponse)(nil),                 // 14: call.v1.JoinCallResponse
+	(*HeartbeatCallRequest)(nil),             // 15: call.v1.HeartbeatCallRequest
+	(*HeartbeatCallResponse)(nil),            // 16: call.v1.HeartbeatCallResponse
+	(*LeaveCallRequest)(nil),                 // 17: call.v1.LeaveCallRequest
+	(*LeaveCallResponse)(nil),                // 18: call.v1.LeaveCallResponse
+	(*v1.User)(nil),                          // 19: user.v1.User
+	(*timestamppb.Timestamp)(nil),            // 20: google.protobuf.Timestamp
+	(*fieldmaskpb.FieldMask)(nil),            // 21: google.protobuf.FieldMask
 }
 var file_call_v1_call_proto_depIdxs = []int32{
-	2, // 0: call.v1.JoinCallResponse.expire_time:type_name -> google.protobuf.Timestamp
-	0, // 1: call.v1.CallService.JoinCall:input_type -> call.v1.JoinCallRequest
-	1, // 2: call.v1.CallService.JoinCall:output_type -> call.v1.JoinCallResponse
-	2, // [2:3] is the sub-list for method output_type
-	1, // [1:2] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	19, // 0: call.v1.Call.host:type_name -> user.v1.User
+	0,  // 1: call.v1.Call.visibility:type_name -> call.v1.CallVisibility
+	20, // 2: call.v1.Call.create_time:type_name -> google.protobuf.Timestamp
+	19, // 3: call.v1.CallParticipant.user:type_name -> user.v1.User
+	20, // 4: call.v1.CallParticipant.first_join_time:type_name -> google.protobuf.Timestamp
+	0,  // 5: call.v1.CreateCallRequest.visibility:type_name -> call.v1.CallVisibility
+	1,  // 6: call.v1.CreateCallResponse.call:type_name -> call.v1.Call
+	1,  // 7: call.v1.GetCallResponse.call:type_name -> call.v1.Call
+	2,  // 8: call.v1.GetCallResponse.participants:type_name -> call.v1.CallParticipant
+	1,  // 9: call.v1.UpdateCallRequest.call:type_name -> call.v1.Call
+	21, // 10: call.v1.UpdateCallRequest.update_mask:type_name -> google.protobuf.FieldMask
+	1,  // 11: call.v1.UpdateCallResponse.call:type_name -> call.v1.Call
+	1,  // 12: call.v1.ListPublicCallsResponse.calls:type_name -> call.v1.Call
+	1,  // 13: call.v1.GetUserParticipatingCallResponse.call:type_name -> call.v1.Call
+	20, // 14: call.v1.JoinCallResponse.expire_time:type_name -> google.protobuf.Timestamp
+	3,  // 15: call.v1.CallService.CreateCall:input_type -> call.v1.CreateCallRequest
+	5,  // 16: call.v1.CallService.GetCall:input_type -> call.v1.GetCallRequest
+	7,  // 17: call.v1.CallService.UpdateCall:input_type -> call.v1.UpdateCallRequest
+	9,  // 18: call.v1.CallService.ListPublicCalls:input_type -> call.v1.ListPublicCallsRequest
+	11, // 19: call.v1.CallService.GetUserParticipatingCall:input_type -> call.v1.GetUserParticipatingCallRequest
+	13, // 20: call.v1.CallService.JoinCall:input_type -> call.v1.JoinCallRequest
+	15, // 21: call.v1.CallService.HeartbeatCall:input_type -> call.v1.HeartbeatCallRequest
+	17, // 22: call.v1.CallService.LeaveCall:input_type -> call.v1.LeaveCallRequest
+	4,  // 23: call.v1.CallService.CreateCall:output_type -> call.v1.CreateCallResponse
+	6,  // 24: call.v1.CallService.GetCall:output_type -> call.v1.GetCallResponse
+	8,  // 25: call.v1.CallService.UpdateCall:output_type -> call.v1.UpdateCallResponse
+	10, // 26: call.v1.CallService.ListPublicCalls:output_type -> call.v1.ListPublicCallsResponse
+	12, // 27: call.v1.CallService.GetUserParticipatingCall:output_type -> call.v1.GetUserParticipatingCallResponse
+	14, // 28: call.v1.CallService.JoinCall:output_type -> call.v1.JoinCallResponse
+	16, // 29: call.v1.CallService.HeartbeatCall:output_type -> call.v1.HeartbeatCallResponse
+	18, // 30: call.v1.CallService.LeaveCall:output_type -> call.v1.LeaveCallResponse
+	23, // [23:31] is the sub-list for method output_type
+	15, // [15:23] is the sub-list for method input_type
+	15, // [15:15] is the sub-list for extension type_name
+	15, // [15:15] is the sub-list for extension extendee
+	0,  // [0:15] is the sub-list for field type_name
 }
 
 func init() { file_call_v1_call_proto_init() }
@@ -208,13 +1203,14 @@ func file_call_v1_call_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_call_v1_call_proto_rawDesc), len(file_call_v1_call_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   2,
+			NumEnums:      1,
+			NumMessages:   18,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_call_v1_call_proto_goTypes,
 		DependencyIndexes: file_call_v1_call_proto_depIdxs,
+		EnumInfos:         file_call_v1_call_proto_enumTypes,
 		MessageInfos:      file_call_v1_call_proto_msgTypes,
 	}.Build()
 	File_call_v1_call_proto = out.File

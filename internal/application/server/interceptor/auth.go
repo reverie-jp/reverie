@@ -9,6 +9,7 @@ import (
 
 	"reverie.jp/reverie/internal/gen/pb/account/v1/accountv1connect"
 	"reverie.jp/reverie/internal/gen/pb/call/v1/callv1connect"
+	"reverie.jp/reverie/internal/gen/pb/user/v1/userv1connect"
 	"reverie.jp/reverie/internal/platform/jwt"
 	"reverie.jp/reverie/internal/platform/ulid"
 )
@@ -41,7 +42,13 @@ var publicProcedures = map[string]bool{
 // callers may omit the Authorization header (and will proceed without a user
 // ID in context), but any header that is present must verify successfully.
 var optionalAuthProcedures = map[string]bool{
-	callv1connect.CallServiceJoinCallProcedure: true,
+	callv1connect.CallServiceJoinCallProcedure:                 true,
+	callv1connect.CallServiceGetCallProcedure:                  true,
+	callv1connect.CallServiceListPublicCallsProcedure:          true,
+	callv1connect.CallServiceGetUserParticipatingCallProcedure: true,
+	callv1connect.CallServiceHeartbeatCallProcedure:            true,
+	callv1connect.CallServiceLeaveCallProcedure:                true,
+	userv1connect.UserServiceGetUserProcedure:                  true,
 }
 
 func AuthInterceptor(jwtManager *jwt.Manager) connect.UnaryInterceptorFunc {

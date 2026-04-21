@@ -6,19 +6,33 @@ package sqlc
 
 import (
 	"context"
+
+	"reverie.jp/reverie/internal/platform/ulid"
 )
 
 type Querier interface {
 	CreateAuthProvider(ctx context.Context, arg CreateAuthProviderParams) error
+	CreateCall(ctx context.Context, arg CreateCallParams) error
 	CreateRefreshToken(ctx context.Context, arg CreateRefreshTokenParams) error
 	CreateUser(ctx context.Context, arg CreateUserParams) error
 	DeleteExpiredRefreshTokensByUserID(ctx context.Context, userID string) error
 	DeleteRefreshTokenByHash(ctx context.Context, arg DeleteRefreshTokenByHashParams) error
 	DeleteUser(ctx context.Context, id string) error
+	GetActiveCallByUser(ctx context.Context, arg GetActiveCallByUserParams) (Call, error)
 	GetAuthProviderByProvider(ctx context.Context, arg GetAuthProviderByProviderParams) (UserAuthProvider, error)
+	GetCall(ctx context.Context, id ulid.ULID) (Call, error)
 	GetRefreshTokenByHash(ctx context.Context, tokenHash string) (RefreshToken, error)
 	GetUserByCustomID(ctx context.Context, customID string) (User, error)
+	HeartbeatCallParticipant(ctx context.Context, arg HeartbeatCallParticipantParams) (int64, error)
+	// Returns all active non-hidden calls (OPEN and USERS_ONLY). The usecase
+	// filters further based on the caller's auth state. Keyset paginated by
+	// ULID (monotonic, DESC). cursor_id="" means first page.
+	ListActivePublicCalls(ctx context.Context, arg ListActivePublicCallsParams) ([]Call, error)
+	ListCallParticipants(ctx context.Context, callID ulid.ULID) ([]CallParticipant, error)
 	ListUsersByIDs(ctx context.Context, ids []string) ([]User, error)
+	MarkCallParticipantDisconnected(ctx context.Context, arg MarkCallParticipantDisconnectedParams) (int64, error)
+	UpdateCallVisibility(ctx context.Context, arg UpdateCallVisibilityParams) error
+	UpsertCallParticipant(ctx context.Context, arg UpsertCallParticipantParams) error
 }
 
 var _ Querier = (*Queries)(nil)
