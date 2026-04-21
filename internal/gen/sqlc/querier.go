@@ -20,7 +20,6 @@ type Querier interface {
 	DeleteUser(ctx context.Context, id string) error
 	GetActiveCallByUser(ctx context.Context, arg GetActiveCallByUserParams) (Call, error)
 	GetAuthProviderByProvider(ctx context.Context, arg GetAuthProviderByProviderParams) (UserAuthProvider, error)
-	GetCall(ctx context.Context, id ulid.ULID) (Call, error)
 	GetRefreshTokenByHash(ctx context.Context, tokenHash string) (RefreshToken, error)
 	GetUserByCustomID(ctx context.Context, customID string) (User, error)
 	HeartbeatCallParticipant(ctx context.Context, arg HeartbeatCallParticipantParams) (int64, error)
@@ -29,6 +28,7 @@ type Querier interface {
 	// ULID (monotonic, DESC). cursor_id="" means first page.
 	ListActivePublicCalls(ctx context.Context, arg ListActivePublicCallsParams) ([]Call, error)
 	ListCallParticipants(ctx context.Context, callID ulid.ULID) ([]CallParticipant, error)
+	ListCallsByIDs(ctx context.Context, ids []string) ([]Call, error)
 	ListUsersByIDs(ctx context.Context, ids []string) ([]User, error)
 	MarkCallParticipantDisconnected(ctx context.Context, arg MarkCallParticipantDisconnectedParams) (int64, error)
 	UpdateCallVisibility(ctx context.Context, arg UpdateCallVisibilityParams) error

@@ -55,24 +55,6 @@ func (q *Queries) GetActiveCallByUser(ctx context.Context, arg GetActiveCallByUs
 	return i, err
 }
 
-const getCall = `-- name: GetCall :one
-SELECT id, host_user_id, visibility, create_time, update_time FROM calls
-WHERE id = $1::ulid
-`
-
-func (q *Queries) GetCall(ctx context.Context, id ulid.ULID) (Call, error) {
-	row := q.db.QueryRow(ctx, getCall, id)
-	var i Call
-	err := row.Scan(
-		&i.ID,
-		&i.HostUserID,
-		&i.Visibility,
-		&i.CreateTime,
-		&i.UpdateTime,
-	)
-	return i, err
-}
-
 const heartbeatCallParticipant = `-- name: HeartbeatCallParticipant :execrows
 UPDATE call_participants
 SET last_seen_time = NOW()
@@ -166,6 +148,37 @@ func (q *Queries) ListCallParticipants(ctx context.Context, callID ulid.ULID) ([
 			&i.FirstJoinTime,
 			&i.LastSeenTime,
 			&i.DisconnectedTime,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listCallsByIDs = `-- name: ListCallsByIDs :many
+SELECT id, host_user_id, visibility, create_time, update_time FROM calls
+WHERE id = ANY($1::text[])
+`
+
+func (q *Queries) ListCallsByIDs(ctx context.Context, ids []string) ([]Call, error) {
+	rows, err := q.db.Query(ctx, listCallsByIDs, ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Call{}
+	for rows.Next() {
+		var i Call
+		if err := rows.Scan(
+			&i.ID,
+			&i.HostUserID,
+			&i.Visibility,
+			&i.CreateTime,
+			&i.UpdateTime,
 		); err != nil {
 			return nil, err
 		}

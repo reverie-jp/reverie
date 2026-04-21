@@ -2,9 +2,9 @@
 INSERT INTO calls (id, host_user_id, visibility)
 VALUES ($1, $2, $3);
 
--- name: GetCall :one
+-- name: ListCallsByIDs :many
 SELECT * FROM calls
-WHERE id = sqlc.arg(id)::ulid;
+WHERE id = ANY(sqlc.arg(ids)::text[]);
 
 -- name: UpdateCallVisibility :exec
 UPDATE calls
