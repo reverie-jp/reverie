@@ -17,6 +17,7 @@ type Config struct {
 	Auth     AuthConfig
 	Database DatabaseConfig
 	Google   GoogleConfig
+	LiveKit  LiveKitConfig
 	Log      LogConfig
 	Server   ServerConfig
 }
@@ -36,6 +37,9 @@ func (c *Config) LoadFromEnv() error {
 		return err
 	}
 	if err := env.Parse(&c.Google); err != nil {
+		return err
+	}
+	if err := env.Parse(&c.LiveKit); err != nil {
 		return err
 	}
 	if err := env.Parse(&c.Log); err != nil {

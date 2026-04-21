@@ -6,6 +6,7 @@ import {
 } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-web";
 import { AccountService } from "./gen/account/v1/account_connect";
+import { CallService } from "./gen/call/v1/call_connect";
 import { UserService } from "./gen/user/v1/user_connect";
 
 const ACCESS_TOKEN_KEY = "reverie.access_token";
@@ -115,3 +116,4 @@ const transport = createConnectTransport({
 
 export const accountClient = createPromiseClient(AccountService, transport);
 export const userClient = createPromiseClient(UserService, transport);
+export const callClient = createPromiseClient(CallService, transport);

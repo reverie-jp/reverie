@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package call.v1;
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+service CallService {
+  // Join a call room. Returns a LiveKit access token and server URL.
+  // Authentication is optional. If the caller is authenticated the server
+  // derives the identity and display name from their user profile. Otherwise
+  // the server treats them as a guest and expects guest_display_name.
+  rpc JoinCall(JoinCallRequest) returns (JoinCallResponse) {
+    option (google.api.http) = {
+      post: "/v1/calls:join"
+      body: "*"
+    };
+  }
+}
+
+message JoinCallRequest {
+  // ULID of the call room.
+  string room_id = 1;
+  // Display name shown to other participants. Required for guests. Ignored
+  // for authenticated callers (their profile display_name is used instead).
+  string guest_display_name = 2;
+}
+
+message JoinCallResponse {
+  // JWT used to connect to the LiveKit server.
+  string access_token = 1;
+  // WebSocket URL of the LiveKit server.
+  string url = 2;
+  // The identity granted by the server. Format is "user:<ulid>" for
+  // authenticated callers and "guest:<ulid>" for guests.
+  string identity = 3;
+  // Expiry of access_token. Clients should refresh before this time.
+  google.protobuf.Timestamp expire_time = 4;
+}
