@@ -16,6 +16,12 @@ type Querier interface {
 	CreateAuthProvider(ctx context.Context, arg CreateAuthProviderParams) error
 	CreateCall(ctx context.Context, arg CreateCallParams) error
 	CreateCallBan(ctx context.Context, arg CreateCallBanParams) error
+	// Batched insert for "same actor/type/resource, many recipients" fan-out
+	// (e.g. call_started broadcast to followers). Row IDs are client-generated
+	// ULIDs passed via parallel arrays. ON CONFLICT DO NOTHING: conflicted rows
+	// (already notified) are silently skipped and omitted from RETURNING, so
+	// callers only publish events for genuinely new notifications.
+	CreateFanOutNotifications(ctx context.Context, arg CreateFanOutNotificationsParams) ([]Notification, error)
 	// Inserts a notification if the dedup key is free. Returns the existing row
 	// on conflict, so callers always get the canonical record to publish downstream.
 	CreateNotification(ctx context.Context, arg CreateNotificationParams) (Notification, error)
@@ -48,6 +54,11 @@ type Querier interface {
 	// everyone; USERS_ONLY is included when include_users_only is true
 	// (authenticated caller). Keyset paginated by ULID (monotonic, DESC).
 	ListActivePublicCallIDs(ctx context.Context, arg ListActivePublicCallIDsParams) ([]ulid.ULID, error)
+	// Returns every follower_id for the given followee in one shot. Used by
+	// fan-out writers (e.g. call creation) that need to touch all followers
+	// rather than paginate. At reverie's scale this is cheaper than multiple
+	// paginated round-trips.
+	ListAllFollowerIDs(ctx context.Context, followeeID ulid.ULID) ([]ulid.ULID, error)
 	ListCallBans(ctx context.Context, arg ListCallBansParams) ([]CallBan, error)
 	ListCallParticipants(ctx context.Context, callID ulid.ULID) ([]CallParticipant, error)
 	ListCallsByIDs(ctx context.Context, ids []string) ([]Call, error)

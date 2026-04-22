@@ -63,7 +63,7 @@ func initServices(cfg *config.Config, db *pgxpool.Pool, jwtManager *jwt.Manager,
 	notificationGateway := notificationgw.New(notificationrepo.New(q), userGateway, eventBus)
 	accountService := account.InitModule(q, userGateway, tx, googleAuth, jwtManager)
 	userService := user.InitModule(userGateway)
-	callService := call.InitModule(q, userGateway, livekitClient, cfg.LiveKit.TokenTTL)
+	callService := call.InitModule(q, userGateway, followGateway, notificationGateway, livekitClient, cfg.LiveKit.TokenTTL)
 	followService := follow.InitModule(followGateway, userGateway, notificationGateway)
 	notificationService := notification.InitModule(notificationGateway)
 	presenceService := presence.InitModule(userGateway)

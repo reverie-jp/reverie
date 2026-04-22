@@ -18,6 +18,10 @@ type CreateNotificationParams struct {
 
 type Repository interface {
 	CreateNotification(ctx context.Context, params CreateNotificationParams) (*entity.Notification, error)
+	// CreateFanOutNotifications inserts many notifications that share actor /
+	// type / resource_name in a single statement. Returns only newly-inserted
+	// rows (dedup-conflicted ones are omitted).
+	CreateFanOutNotifications(ctx context.Context, params CreateFanOutNotificationsParams) ([]*entity.Notification, error)
 	ListNotificationsByRecipient(ctx context.Context, recipientID ulid.ULID, cursorID string, pageSize int32) ([]*entity.Notification, error)
 	MarkNotificationsRead(ctx context.Context, recipientID ulid.ULID, ids []ulid.ULID) (int64, error)
 	MarkAllNotificationsRead(ctx context.Context, recipientID ulid.ULID) (int64, error)

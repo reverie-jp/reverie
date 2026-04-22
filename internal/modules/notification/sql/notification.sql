@@ -44,6 +44,24 @@ WHERE recipient_user_id = sqlc.arg(recipient_user_id)::ulid
 SELECT * FROM notifications
 WHERE id = sqlc.arg(id)::ulid;
 
+-- name: CreateFanOutNotifications :many
+-- Batched insert for "same actor/type/resource, many recipients" fan-out
+-- (e.g. call_started broadcast to followers). Row IDs are client-generated
+-- ULIDs passed via parallel arrays. ON CONFLICT DO NOTHING: conflicted rows
+-- (already notified) are silently skipped and omitted from RETURNING, so
+-- callers only publish events for genuinely new notifications.
+INSERT INTO notifications (id, recipient_user_id, type, actor_user_id, resource_name)
+SELECT
+    x.id::ulid,
+    x.recipient_id::ulid,
+    sqlc.arg(type)::notification_type,
+    sqlc.narg(actor_user_id)::ulid,
+    sqlc.arg(resource_name)::text
+FROM unnest(sqlc.arg(ids)::text[], sqlc.arg(recipient_ids)::text[]) AS x(id, recipient_id)
+ON CONFLICT (recipient_user_id, type, COALESCE(actor_user_id::text, ''), resource_name)
+DO NOTHING
+RETURNING *;
+
 -- name: DeleteNotificationsByTypeActor :execrows
 -- Removes notifications matching (recipient, type, actor). Used to clear
 -- user_followed notifications when the follow relationship is undone, so a

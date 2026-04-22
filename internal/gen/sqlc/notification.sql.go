@@ -25,6 +25,67 @@ func (q *Queries) CountUnreadNotifications(ctx context.Context, recipientUserID 
 	return count, err
 }
 
+const createFanOutNotifications = `-- name: CreateFanOutNotifications :many
+INSERT INTO notifications (id, recipient_user_id, type, actor_user_id, resource_name)
+SELECT
+    x.id::ulid,
+    x.recipient_id::ulid,
+    $1::notification_type,
+    $2::ulid,
+    $3::text
+FROM unnest($4::text[], $5::text[]) AS x(id, recipient_id)
+ON CONFLICT (recipient_user_id, type, COALESCE(actor_user_id::text, ''), resource_name)
+DO NOTHING
+RETURNING id, recipient_user_id, type, actor_user_id, resource_name, read_time, create_time
+`
+
+type CreateFanOutNotificationsParams struct {
+	Type         NotificationType `json:"type"`
+	ActorUserID  *ulid.ULID       `json:"actor_user_id"`
+	ResourceName string           `json:"resource_name"`
+	Ids          []string         `json:"ids"`
+	RecipientIds []string         `json:"recipient_ids"`
+}
+
+// Batched insert for "same actor/type/resource, many recipients" fan-out
+// (e.g. call_started broadcast to followers). Row IDs are client-generated
+// ULIDs passed via parallel arrays. ON CONFLICT DO NOTHING: conflicted rows
+// (already notified) are silently skipped and omitted from RETURNING, so
+// callers only publish events for genuinely new notifications.
+func (q *Queries) CreateFanOutNotifications(ctx context.Context, arg CreateFanOutNotificationsParams) ([]Notification, error) {
+	rows, err := q.db.Query(ctx, createFanOutNotifications,
+		arg.Type,
+		arg.ActorUserID,
+		arg.ResourceName,
+		arg.Ids,
+		arg.RecipientIds,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Notification{}
+	for rows.Next() {
+		var i Notification
+		if err := rows.Scan(
+			&i.ID,
+			&i.RecipientUserID,
+			&i.Type,
+			&i.ActorUserID,
+			&i.ResourceName,
+			&i.ReadTime,
+			&i.CreateTime,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const createNotification = `-- name: CreateNotification :one
 INSERT INTO notifications (id, recipient_user_id, type, actor_user_id, resource_name)
 VALUES (

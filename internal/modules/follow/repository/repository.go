@@ -13,6 +13,7 @@ type Repository interface {
 	IsFollowing(ctx context.Context, followerID, followeeID ulid.ULID) (bool, error)
 	ListFollowingIDs(ctx context.Context, followerID ulid.ULID, cursorID string, pageSize int32) ([]ulid.ULID, error)
 	ListFollowerIDs(ctx context.Context, followeeID ulid.ULID, cursorID string, pageSize int32) ([]ulid.ULID, error)
+	ListAllFollowerIDs(ctx context.Context, followeeID ulid.ULID) ([]ulid.ULID, error)
 	ListFollowingEdges(ctx context.Context, followerID ulid.ULID, targetIDs []ulid.ULID) ([]ulid.ULID, error)
 	ListFollowerEdges(ctx context.Context, followeeID ulid.ULID, targetIDs []ulid.ULID) ([]ulid.ULID, error)
 }

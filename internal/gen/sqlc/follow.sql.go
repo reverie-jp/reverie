@@ -63,6 +63,35 @@ func (q *Queries) IsFollowing(ctx context.Context, arg IsFollowingParams) (bool,
 	return following, err
 }
 
+const listAllFollowerIDs = `-- name: ListAllFollowerIDs :many
+SELECT follower_id FROM user_follows
+WHERE followee_id = $1::ulid
+`
+
+// Returns every follower_id for the given followee in one shot. Used by
+// fan-out writers (e.g. call creation) that need to touch all followers
+// rather than paginate. At reverie's scale this is cheaper than multiple
+// paginated round-trips.
+func (q *Queries) ListAllFollowerIDs(ctx context.Context, followeeID ulid.ULID) ([]ulid.ULID, error) {
+	rows, err := q.db.Query(ctx, listAllFollowerIDs, followeeID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ulid.ULID{}
+	for rows.Next() {
+		var follower_id ulid.ULID
+		if err := rows.Scan(&follower_id); err != nil {
+			return nil, err
+		}
+		items = append(items, follower_id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listFollowerEdgesForRequester = `-- name: ListFollowerEdgesForRequester :many
 SELECT follower_id FROM user_follows
 WHERE followee_id = $1::ulid

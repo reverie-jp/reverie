@@ -30,6 +30,14 @@ WHERE followee_id = sqlc.arg(followee_id)::ulid
 ORDER BY follower_id DESC
 LIMIT sqlc.arg(page_size)::int;
 
+-- name: ListAllFollowerIDs :many
+-- Returns every follower_id for the given followee in one shot. Used by
+-- fan-out writers (e.g. call creation) that need to touch all followers
+-- rather than paginate. At reverie's scale this is cheaper than multiple
+-- paginated round-trips.
+SELECT follower_id FROM user_follows
+WHERE followee_id = sqlc.arg(followee_id)::ulid;
+
 -- name: ListFollowingEdgesForRequester :many
 -- IDs from target set that the requester follows. Used for batched
 -- is_following computation.
