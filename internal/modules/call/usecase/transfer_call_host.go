@@ -3,6 +3,8 @@ package usecase
 import (
 	"context"
 
+	"reverie.jp/reverie/internal/domain/entity"
+	callgw "reverie.jp/reverie/internal/modules/call/gateway"
 	callrepo "reverie.jp/reverie/internal/modules/call/repository"
 	usergw "reverie.jp/reverie/internal/modules/user/gateway"
 	"reverie.jp/reverie/internal/platform/xerrors"
@@ -11,10 +13,11 @@ import (
 type TransferCallHost struct {
 	callRepo    callrepo.Repository
 	userGateway usergw.Gateway
+	callGateway callgw.Gateway
 }
 
-func NewTransferCallHost(callRepo callrepo.Repository, userGateway usergw.Gateway) *TransferCallHost {
-	return &TransferCallHost{callRepo: callRepo, userGateway: userGateway}
+func NewTransferCallHost(callRepo callrepo.Repository, userGateway usergw.Gateway, callGateway callgw.Gateway) *TransferCallHost {
+	return &TransferCallHost{callRepo: callRepo, userGateway: userGateway, callGateway: callGateway}
 }
 
 func (uc *TransferCallHost) Execute(ctx context.Context, input TransferCallHostInput) (*TransferCallHostOutput, error) {
@@ -44,7 +47,7 @@ func (uc *TransferCallHost) Execute(ctx context.Context, input TransferCallHostI
 		return nil, xerrors.ErrInvalidArgument.WithMessage("new host is already the host")
 	}
 
-	active, err := uc.callRepo.GetActiveCallByUser(ctx, newHost.ID, participantStaleSeconds)
+	active, err := uc.callRepo.GetActiveCallByUser(ctx, newHost.ID, entity.ParticipantStaleSeconds)
 	if err != nil {
 		return nil, xerrors.ErrInternal.WithCause(err)
 	}
@@ -55,12 +58,14 @@ func (uc *TransferCallHost) Execute(ctx context.Context, input TransferCallHostI
 	if err := uc.callRepo.UpdateCallHost(ctx, call.ID, newHost.ID); err != nil {
 		return nil, xerrors.ErrInternal.WithCause(err)
 	}
-	call.HostUserID = newHost.ID
 
-	hostView, err := uc.userGateway.BuildView(ctx, input.RequesterID, newHost.ID)
+	view, err := uc.callGateway.BuildCallView(ctx, input.RequesterID, call.ID)
 	if err != nil {
 		return nil, xerrors.ErrInternal.WithCause(err)
 	}
+	if view == nil {
+		return nil, xerrors.ErrCallNotFound
+	}
 
-	return &TransferCallHostOutput{Call: call, Host: hostView}, nil
+	return &TransferCallHostOutput{View: view}, nil
 }

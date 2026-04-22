@@ -17,12 +17,12 @@ func InitModule(q *sqlc.Queries, userGateway usergw.Gateway, lk *livekit.Client,
 	callRepo := callrepo.New(q)
 	callGateway := callgw.New(callRepo, userGateway)
 
-	createCall := usecase.NewCreateCall(callRepo, userGateway)
-	getCall := usecase.NewGetCall(callRepo, userGateway)
-	updateCall := usecase.NewUpdateCall(callRepo, userGateway)
+	createCall := usecase.NewCreateCall(callRepo, callGateway)
+	getCall := usecase.NewGetCall(callRepo, callGateway)
+	updateCall := usecase.NewUpdateCall(callRepo, callGateway)
 	listPublicCalls := usecase.NewListPublicCalls(callRepo, callGateway)
 	listFollowingCalls := usecase.NewListFollowingCalls(callRepo, callGateway)
-	getUserParticipatingCall := usecase.NewGetUserParticipatingCall(callRepo, userGateway)
+	getUserParticipatingCall := usecase.NewGetUserParticipatingCall(callRepo, userGateway, callGateway)
 	joinCall := usecase.NewJoinCall(callRepo, userGateway, lk, tokenTTL)
 	heartbeatCall := usecase.NewHeartbeatCall(callRepo)
 	leaveCall := usecase.NewLeaveCall(callRepo, lk)
@@ -30,9 +30,9 @@ func InitModule(q *sqlc.Queries, userGateway usergw.Gateway, lk *livekit.Client,
 	unmuteCallParticipant := usecase.NewUnmuteCallParticipant(callRepo, lk)
 	kickCallParticipant := usecase.NewKickCallParticipant(callRepo, lk)
 	banCallParticipant := usecase.NewBanCallParticipant(callRepo, lk)
-	transferCallHost := usecase.NewTransferCallHost(callRepo, userGateway)
+	transferCallHost := usecase.NewTransferCallHost(callRepo, userGateway, callGateway)
 	endCall := usecase.NewEndCall(callRepo, lk)
-	listCallBans := usecase.NewListCallBans(callRepo, userGateway)
+	listCallBans := usecase.NewListCallBans(callRepo, callGateway)
 	unbanCallParticipant := usecase.NewUnbanCallParticipant(callRepo)
 
 	return handler.New(

@@ -24,7 +24,7 @@ func FromListPublicCallsRequest(ctx context.Context, req *connect.Request[callv1
 func ToListPublicCallsResponse(output *usecase.ListPublicCallsOutput) *connect.Response[callv1.ListPublicCallsResponse] {
 	calls := make([]*callv1.Call, 0, len(output.Views))
 	for _, v := range output.Views {
-		calls = append(calls, ToCall(v.Call, v.Host))
+		calls = append(calls, ToCall(v))
 	}
 	return connect.NewResponse(&callv1.ListPublicCallsResponse{
 		Calls:         calls,

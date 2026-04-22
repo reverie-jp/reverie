@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 
+	"reverie.jp/reverie/internal/domain/entity"
 	callgw "reverie.jp/reverie/internal/modules/call/gateway"
 	callrepo "reverie.jp/reverie/internal/modules/call/repository"
 	"reverie.jp/reverie/internal/platform/xerrors"
@@ -32,7 +33,7 @@ func (uc *ListFollowingCalls) Execute(ctx context.Context, input ListFollowingCa
 		pageSize = maxListPageSize
 	}
 
-	callIDs, err := uc.callRepo.ListActiveCallIDsForFollower(ctx, input.RequesterID, participantStaleSeconds, input.PageToken, pageSize)
+	callIDs, err := uc.callRepo.ListActiveCallIDsForFollower(ctx, input.RequesterID, entity.ParticipantStaleSeconds, input.PageToken, pageSize)
 	if err != nil {
 		return nil, xerrors.ErrInternal.WithCause(err)
 	}
@@ -42,7 +43,7 @@ func (uc *ListFollowingCalls) Execute(ctx context.Context, input ListFollowingCa
 		nextPageToken = callIDs[len(callIDs)-1].String()
 	}
 
-	views, err := uc.callGateway.BuildListViews(ctx, input.RequesterID, callIDs)
+	views, err := uc.callGateway.BuildListCallViews(ctx, input.RequesterID, callIDs)
 	if err != nil {
 		return nil, xerrors.ErrInternal.WithCause(err)
 	}

@@ -3,9 +3,8 @@ package usecase
 import (
 	"context"
 
+	callgw "reverie.jp/reverie/internal/modules/call/gateway"
 	callrepo "reverie.jp/reverie/internal/modules/call/repository"
-	usergw "reverie.jp/reverie/internal/modules/user/gateway"
-	"reverie.jp/reverie/internal/platform/ulid"
 	"reverie.jp/reverie/internal/platform/xerrors"
 )
 
@@ -16,11 +15,11 @@ const (
 
 type ListCallBans struct {
 	callRepo    callrepo.Repository
-	userGateway usergw.Gateway
+	callGateway callgw.Gateway
 }
 
-func NewListCallBans(callRepo callrepo.Repository, userGateway usergw.Gateway) *ListCallBans {
-	return &ListCallBans{callRepo: callRepo, userGateway: userGateway}
+func NewListCallBans(callRepo callrepo.Repository, callGateway callgw.Gateway) *ListCallBans {
+	return &ListCallBans{callRepo: callRepo, callGateway: callGateway}
 }
 
 func (uc *ListCallBans) Execute(ctx context.Context, input ListCallBansInput) (*ListCallBansOutput, error) {
@@ -57,25 +56,10 @@ func (uc *ListCallBans) Execute(ctx context.Context, input ListCallBansInput) (*
 		nextPageToken = bans[len(bans)-1].UserID.String()
 	}
 
-	userIDs := make([]ulid.ULID, 0, len(bans))
-	for _, b := range bans {
-		userIDs = append(userIDs, b.UserID)
-	}
-	views, err := uc.userGateway.BuildListViews(ctx, input.RequesterID, userIDs)
+	views, err := uc.callGateway.BuildListCallBanViews(ctx, input.RequesterID, bans)
 	if err != nil {
 		return nil, xerrors.ErrInternal.WithCause(err)
 	}
-	viewByID := make(map[ulid.ULID]*usergw.UserView, len(views))
-	for _, v := range views {
-		if v != nil && v.User != nil {
-			viewByID[v.User.ID] = v
-		}
-	}
 
-	result := make([]*CallBanView, len(bans))
-	for i, b := range bans {
-		result[i] = &CallBanView{Ban: b, User: viewByID[b.UserID]}
-	}
-
-	return &ListCallBansOutput{Bans: result, NextPageToken: nextPageToken}, nil
+	return &ListCallBansOutput{Bans: views, NextPageToken: nextPageToken}, nil
 }

@@ -32,7 +32,7 @@ func ToGetCallResponse(output *usecase.GetCallOutput) *connect.Response[callv1.G
 		participants[i] = ToCallParticipant(p)
 	}
 	return connect.NewResponse(&callv1.GetCallResponse{
-		Call:         ToCall(output.Call, output.Host),
+		Call:         ToCall(output.View),
 		Participants: participants,
 	})
 }

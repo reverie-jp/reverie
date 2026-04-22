@@ -34,6 +34,6 @@ func FromTransferCallHostRequest(ctx context.Context, req *connect.Request[callv
 
 func ToTransferCallHostResponse(output *usecase.TransferCallHostOutput) *connect.Response[callv1.TransferCallHostResponse] {
 	return connect.NewResponse(&callv1.TransferCallHostResponse{
-		Call: ToCall(output.Call, output.Host),
+		Call: ToCall(output.View),
 	})
 }

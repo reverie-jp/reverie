@@ -24,6 +24,6 @@ func FromCreateCallRequest(ctx context.Context, req *connect.Request[callv1.Crea
 
 func ToCreateCallResponse(output *usecase.CreateCallOutput) *connect.Response[callv1.CreateCallResponse] {
 	return connect.NewResponse(&callv1.CreateCallResponse{
-		Call: ToCall(output.Call, output.Host),
+		Call: ToCall(output.View),
 	})
 }

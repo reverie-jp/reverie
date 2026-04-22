@@ -27,6 +27,6 @@ func FromGetUserParticipatingCallRequest(ctx context.Context, req *connect.Reque
 
 func ToGetUserParticipatingCallResponse(output *usecase.GetUserParticipatingCallOutput) *connect.Response[callv1.GetUserParticipatingCallResponse] {
 	return connect.NewResponse(&callv1.GetUserParticipatingCallResponse{
-		Call: ToCall(output.Call, output.Host),
+		Call: ToCall(output.View),
 	})
 }

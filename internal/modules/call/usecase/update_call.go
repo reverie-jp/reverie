@@ -3,20 +3,20 @@ package usecase
 import (
 	"context"
 
+	callgw "reverie.jp/reverie/internal/modules/call/gateway"
 	callrepo "reverie.jp/reverie/internal/modules/call/repository"
-	usergw "reverie.jp/reverie/internal/modules/user/gateway"
 	"reverie.jp/reverie/internal/platform/xerrors"
 )
 
 type UpdateCall struct {
 	callRepo    callrepo.Repository
-	userGateway usergw.Gateway
+	callGateway callgw.Gateway
 }
 
-func NewUpdateCall(callRepo callrepo.Repository, userGateway usergw.Gateway) *UpdateCall {
+func NewUpdateCall(callRepo callrepo.Repository, callGateway callgw.Gateway) *UpdateCall {
 	return &UpdateCall{
 		callRepo:    callRepo,
-		userGateway: userGateway,
+		callGateway: callGateway,
 	}
 }
 
@@ -40,11 +40,13 @@ func (uc *UpdateCall) Execute(ctx context.Context, input UpdateCallInput) (*Upda
 		return nil, xerrors.ErrInternal.WithCause(err)
 	}
 
-	host, err := uc.userGateway.BuildView(ctx, input.RequesterID, call.HostUserID)
+	view, err := uc.callGateway.BuildCallView(ctx, input.RequesterID, input.CallID)
 	if err != nil {
 		return nil, xerrors.ErrInternal.WithCause(err)
 	}
+	if view == nil {
+		return nil, xerrors.ErrCallNotFound
+	}
 
-	call.Visibility = input.Visibility
-	return &UpdateCallOutput{Call: call, Host: host}, nil
+	return &UpdateCallOutput{View: view}, nil
 }

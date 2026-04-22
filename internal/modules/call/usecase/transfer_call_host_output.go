@@ -1,11 +1,9 @@
 package usecase
 
 import (
-	"reverie.jp/reverie/internal/domain/entity"
-	usergw "reverie.jp/reverie/internal/modules/user/gateway"
+	callgw "reverie.jp/reverie/internal/modules/call/gateway"
 )
 
 type TransferCallHostOutput struct {
-	Call *entity.Call
-	Host *usergw.UserView
+	View *callgw.CallView
 }

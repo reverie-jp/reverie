@@ -119,7 +119,7 @@ func (uc *JoinCall) resolveParticipant(ctx context.Context, input JoinCallInput)
 		return "guest:" + ulid.New().String(), input.GuestDisplayName, nil, nil
 	}
 
-	view, err := uc.userGateway.BuildView(ctx, input.RequesterID, input.RequesterID)
+	view, err := uc.userGateway.BuildUserView(ctx, input.RequesterID, input.RequesterID)
 	if err != nil {
 		return "", "", nil, xerrors.ErrInternal.WithCause(err)
 	}
@@ -134,7 +134,7 @@ func (uc *JoinCall) enforceSingleCall(ctx context.Context, requesterID, targetCa
 	if requesterID.IsZero() {
 		return nil
 	}
-	active, err := uc.callRepo.GetActiveCallByUser(ctx, requesterID, participantStaleSeconds)
+	active, err := uc.callRepo.GetActiveCallByUser(ctx, requesterID, entity.ParticipantStaleSeconds)
 	if err != nil {
 		return xerrors.ErrInternal.WithCause(err)
 	}

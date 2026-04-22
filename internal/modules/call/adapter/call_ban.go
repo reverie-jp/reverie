@@ -4,12 +4,12 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	callv1 "reverie.jp/reverie/internal/gen/pb/call/v1"
-	"reverie.jp/reverie/internal/modules/call/usecase"
+	callgw "reverie.jp/reverie/internal/modules/call/gateway"
 	useradapter "reverie.jp/reverie/internal/modules/user/adapter"
 	"reverie.jp/reverie/internal/platform/resourcename"
 )
 
-func ToCallBan(view *usecase.CallBanView) *callv1.CallBan {
+func ToCallBan(view *callgw.CallBanView) *callv1.CallBan {
 	if view == nil || view.Ban == nil {
 		return nil
 	}

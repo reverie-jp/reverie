@@ -1,16 +1,10 @@
 package usecase
 
 import (
-	"reverie.jp/reverie/internal/domain/entity"
-	usergw "reverie.jp/reverie/internal/modules/user/gateway"
+	callgw "reverie.jp/reverie/internal/modules/call/gateway"
 )
 
-type CallBanView struct {
-	Ban  *entity.CallBan
-	User *usergw.UserView
-}
-
 type ListCallBansOutput struct {
-	Bans          []*CallBanView
+	Bans          []*callgw.CallBanView
 	NextPageToken string
 }

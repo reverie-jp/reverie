@@ -2,24 +2,23 @@ package usecase
 
 import (
 	"context"
-	"time"
 
 	"reverie.jp/reverie/internal/domain/entity"
+	callgw "reverie.jp/reverie/internal/modules/call/gateway"
 	callrepo "reverie.jp/reverie/internal/modules/call/repository"
-	usergw "reverie.jp/reverie/internal/modules/user/gateway"
 	"reverie.jp/reverie/internal/platform/ulid"
 	"reverie.jp/reverie/internal/platform/xerrors"
 )
 
 type GetCall struct {
 	callRepo    callrepo.Repository
-	userGateway usergw.Gateway
+	callGateway callgw.Gateway
 }
 
-func NewGetCall(callRepo callrepo.Repository, userGateway usergw.Gateway) *GetCall {
+func NewGetCall(callRepo callrepo.Repository, callGateway callgw.Gateway) *GetCall {
 	return &GetCall{
 		callRepo:    callRepo,
-		userGateway: userGateway,
+		callGateway: callGateway,
 	}
 }
 
@@ -36,86 +35,59 @@ func (uc *GetCall) Execute(ctx context.Context, input GetCallInput) (*GetCallOut
 		return nil, xerrors.ErrCallNotFound
 	}
 
-	rows, err := uc.callRepo.ListCallParticipants(ctx, call.ID)
+	participants, err := uc.callRepo.ListCallParticipants(ctx, call.ID)
 	if err != nil {
 		return nil, xerrors.ErrInternal.WithCause(err)
 	}
 
-	activeSet := buildActiveIdentitySet(rows)
-	if err := checkViewVisibility(call, input.RequesterID, input.ViewerIdentity, activeSet); err != nil {
+	if err := checkViewVisibility(call, input.RequesterID, input.ViewerIdentity, participants); err != nil {
 		return nil, err
 	}
 
-	userIDs := make([]ulid.ULID, 0, len(rows)+1)
-	userIDs = append(userIDs, call.HostUserID)
-	for _, p := range rows {
-		if p.UserID != nil {
-			userIDs = append(userIDs, *p.UserID)
-		}
-	}
-	views, err := uc.userGateway.BuildListViews(ctx, input.RequesterID, userIDs)
+	view, err := uc.callGateway.BuildCallView(ctx, input.RequesterID, call.ID)
 	if err != nil {
 		return nil, xerrors.ErrInternal.WithCause(err)
 	}
-	viewByID := make(map[ulid.ULID]*usergw.UserView, len(views))
-	for _, v := range views {
-		if v != nil && v.User != nil {
-			viewByID[v.User.ID] = v
-		}
+	if view == nil {
+		return nil, xerrors.ErrCallNotFound
 	}
 
-	participants := make([]*CallParticipantView, len(rows))
-	for i, p := range rows {
-		var view *usergw.UserView
-		if p.UserID != nil {
-			view = viewByID[*p.UserID]
-		}
-		participants[i] = &CallParticipantView{
-			Participant:          p,
-			UserView:             view,
-			IsCurrentlyConnected: activeSet[p.ParticipantIdentity],
-		}
+	participantViews, err := uc.callGateway.BuildListParticipantViews(ctx, input.RequesterID, participants)
+	if err != nil {
+		return nil, xerrors.ErrInternal.WithCause(err)
 	}
 
 	return &GetCallOutput{
-		Call:         call,
-		Host:         viewByID[call.HostUserID],
-		Participants: participants,
+		View:         view,
+		Participants: participantViews,
 	}, nil
 }
 
-func buildActiveIdentitySet(rows []*entity.CallParticipant) map[string]bool {
-	cutoff := time.Now().Add(-participantStaleSeconds * time.Second)
-	set := make(map[string]bool, len(rows))
-	for _, p := range rows {
-		if p.DisconnectedTime == nil && p.LastSeenTime.After(cutoff) {
-			set[p.ParticipantIdentity] = true
-		}
-	}
-	return set
-}
-
-// checkViewVisibility permits a caller to read call metadata.
-// viewerIdentity is the LiveKit identity of the caller if they are currently
-// participating; used so that in-progress guests still see LOCKED calls.
-func checkViewVisibility(call *entity.Call, requesterID ulid.ULID, viewerIdentity string, activeIdentities map[string]bool) error {
+// checkViewVisibility permits a caller to read call metadata. viewerIdentity
+// is the LiveKit identity of the caller if they are currently participating;
+// used so that in-progress guests still see LOCKED calls.
+func checkViewVisibility(call *entity.Call, requesterID ulid.ULID, viewerIdentity string, participants []*entity.CallParticipant) error {
 	switch call.Visibility {
-	case entity.CallVisibilityOpen:
-		return nil
-	case entity.CallVisibilityUsersOnly:
-		// Anyone (including guests) may view USERS_ONLY call detail so the
-		// landing page can show an inline login CTA. Join is still
-		// restricted to authenticated users by checkJoinVisibility.
+	case entity.CallVisibilityOpen, entity.CallVisibilityUsersOnly:
 		return nil
 	case entity.CallVisibilityLocked:
 		if !requesterID.IsZero() && call.HostUserID == requesterID {
 			return nil
 		}
-		if !requesterID.IsZero() && activeIdentities["user:"+requesterID.String()] {
-			return nil
+		userIdentity := ""
+		if !requesterID.IsZero() {
+			userIdentity = "user:" + requesterID.String()
 		}
-		if viewerIdentity != "" && activeIdentities[viewerIdentity] {
-			return nil
+		for _, p := range participants {
+			if !p.IsCurrentlyConnected() {
+				continue
+			}
+			if userIdentity != "" && p.ParticipantIdentity == userIdentity {
+				return nil
+			}
+			if viewerIdentity != "" && p.ParticipantIdentity == viewerIdentity {
+				return nil
+			}
 		}
 		return xerrors.ErrCallNotFound
 	default:

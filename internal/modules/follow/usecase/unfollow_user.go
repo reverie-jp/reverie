@@ -31,7 +31,7 @@ func (uc *UnfollowUser) Execute(ctx context.Context, input UnfollowUserInput) (*
 	if err := uc.followGateway.DeleteFollow(ctx, input.RequesterID, target.ID); err != nil {
 		return nil, xerrors.ErrInternal.WithCause(err)
 	}
-	view, err := uc.userGateway.BuildView(ctx, input.RequesterID, target.ID)
+	view, err := uc.userGateway.BuildUserView(ctx, input.RequesterID, target.ID)
 	if err != nil {
 		return nil, xerrors.ErrInternal.WithCause(err)
 	}

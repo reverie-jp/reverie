@@ -3,6 +3,8 @@ package usecase
 import (
 	"context"
 
+	"reverie.jp/reverie/internal/domain/entity"
+	callgw "reverie.jp/reverie/internal/modules/call/gateway"
 	callrepo "reverie.jp/reverie/internal/modules/call/repository"
 	usergw "reverie.jp/reverie/internal/modules/user/gateway"
 	"reverie.jp/reverie/internal/platform/xerrors"
@@ -11,12 +13,14 @@ import (
 type GetUserParticipatingCall struct {
 	callRepo    callrepo.Repository
 	userGateway usergw.Gateway
+	callGateway callgw.Gateway
 }
 
-func NewGetUserParticipatingCall(callRepo callrepo.Repository, userGateway usergw.Gateway) *GetUserParticipatingCall {
+func NewGetUserParticipatingCall(callRepo callrepo.Repository, userGateway usergw.Gateway, callGateway callgw.Gateway) *GetUserParticipatingCall {
 	return &GetUserParticipatingCall{
 		callRepo:    callRepo,
 		userGateway: userGateway,
+		callGateway: callGateway,
 	}
 }
 
@@ -33,7 +37,7 @@ func (uc *GetUserParticipatingCall) Execute(ctx context.Context, input GetUserPa
 		return nil, xerrors.ErrUserNotFound
 	}
 
-	call, err := uc.callRepo.GetActiveCallByUser(ctx, user.ID, participantStaleSeconds)
+	call, err := uc.callRepo.GetActiveCallByUser(ctx, user.ID, entity.ParticipantStaleSeconds)
 	if err != nil {
 		return nil, xerrors.ErrInternal.WithCause(err)
 	}
@@ -41,20 +45,19 @@ func (uc *GetUserParticipatingCall) Execute(ctx context.Context, input GetUserPa
 		return &GetUserParticipatingCallOutput{}, nil
 	}
 
-	rows, err := uc.callRepo.ListCallParticipants(ctx, call.ID)
+	participants, err := uc.callRepo.ListCallParticipants(ctx, call.ID)
 	if err != nil {
 		return nil, xerrors.ErrInternal.WithCause(err)
 	}
-	activeSet := buildActiveIdentitySet(rows)
 	// Profile viewer has no guest identity context, so pass empty string.
-	if err := checkViewVisibility(call, input.RequesterID, "", activeSet); err != nil {
+	if err := checkViewVisibility(call, input.RequesterID, "", participants); err != nil {
 		return &GetUserParticipatingCallOutput{}, nil
 	}
 
-	host, err := uc.userGateway.BuildView(ctx, input.RequesterID, call.HostUserID)
+	view, err := uc.callGateway.BuildCallView(ctx, input.RequesterID, call.ID)
 	if err != nil {
 		return nil, xerrors.ErrInternal.WithCause(err)
 	}
 
-	return &GetUserParticipatingCallOutput{Call: call, Host: host}, nil
+	return &GetUserParticipatingCallOutput{View: view}, nil
 }

@@ -38,6 +38,6 @@ func FromUpdateCallRequest(ctx context.Context, req *connect.Request[callv1.Upda
 
 func ToUpdateCallResponse(output *usecase.UpdateCallOutput) *connect.Response[callv1.UpdateCallResponse] {
 	return connect.NewResponse(&callv1.UpdateCallResponse{
-		Call: ToCall(output.Call, output.Host),
+		Call: ToCall(output.View),
 	})
 }

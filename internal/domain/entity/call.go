@@ -23,6 +23,12 @@ type Call struct {
 	UpdateTime time.Time
 }
 
+// ParticipantStaleSeconds is the heartbeat grace window. A participant whose
+// last_seen_time is older than this many seconds (and has no explicit
+// disconnected_time) is considered disconnected. Clients heartbeat every 30s,
+// so 60s leaves room for one missed heartbeat.
+const ParticipantStaleSeconds = 60
+
 type CallParticipant struct {
 	CallID              ulid.ULID
 	ParticipantIdentity string
@@ -32,6 +38,13 @@ type CallParticipant struct {
 	LastSeenTime        time.Time
 	DisconnectedTime    *time.Time
 	MutedByHost         bool
+}
+
+func (p *CallParticipant) IsCurrentlyConnected() bool {
+	if p == nil || p.DisconnectedTime != nil {
+		return false
+	}
+	return time.Since(p.LastSeenTime) < ParticipantStaleSeconds*time.Second
 }
 
 type CallBan struct {

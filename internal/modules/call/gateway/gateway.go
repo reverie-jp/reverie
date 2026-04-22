@@ -14,9 +14,22 @@ type CallView struct {
 	Host *usergw.UserView
 }
 
+type CallParticipantView struct {
+	Participant          *entity.CallParticipant
+	User                 *usergw.UserView
+	IsCurrentlyConnected bool
+}
+
+type CallBanView struct {
+	Ban  *entity.CallBan
+	User *usergw.UserView
+}
+
 type Gateway interface {
-	BuildView(ctx context.Context, requesterID, callID ulid.ULID) (*CallView, error)
-	BuildListViews(ctx context.Context, requesterID ulid.ULID, callIDs []ulid.ULID) ([]*CallView, error)
+	BuildCallView(ctx context.Context, requesterID, callID ulid.ULID) (*CallView, error)
+	BuildListCallViews(ctx context.Context, requesterID ulid.ULID, callIDs []ulid.ULID) ([]*CallView, error)
+	BuildListParticipantViews(ctx context.Context, requesterID ulid.ULID, participants []*entity.CallParticipant) ([]*CallParticipantView, error)
+	BuildListCallBanViews(ctx context.Context, requesterID ulid.ULID, bans []*entity.CallBan) ([]*CallBanView, error)
 }
 
 type gatewayImpl struct {

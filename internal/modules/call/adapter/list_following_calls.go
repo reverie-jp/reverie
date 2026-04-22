@@ -26,7 +26,7 @@ func FromListFollowingCallsRequest(ctx context.Context, req *connect.Request[cal
 func ToListFollowingCallsResponse(output *usecase.ListFollowingCallsOutput) *connect.Response[callv1.ListFollowingCallsResponse] {
 	calls := make([]*callv1.Call, 0, len(output.Views))
 	for _, v := range output.Views {
-		calls = append(calls, ToCall(v.Call, v.Host))
+		calls = append(calls, ToCall(v))
 	}
 	return connect.NewResponse(&callv1.ListFollowingCallsResponse{
 		Calls:         calls,

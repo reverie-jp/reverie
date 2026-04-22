@@ -3,20 +3,20 @@ package adapter
 import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"reverie.jp/reverie/internal/domain/entity"
 	callv1 "reverie.jp/reverie/internal/gen/pb/call/v1"
-	usergw "reverie.jp/reverie/internal/modules/user/gateway"
+	callgw "reverie.jp/reverie/internal/modules/call/gateway"
 	useradapter "reverie.jp/reverie/internal/modules/user/adapter"
 	"reverie.jp/reverie/internal/platform/resourcename"
 )
 
-func ToCall(c *entity.Call, host *usergw.UserView) *callv1.Call {
-	if c == nil {
+func ToCall(view *callgw.CallView) *callv1.Call {
+	if view == nil || view.Call == nil {
 		return nil
 	}
+	c := view.Call
 	out := &callv1.Call{
 		Name:       resourcename.FormatCall(c.ID),
-		Host:       useradapter.ToUser(host),
+		Host:       useradapter.ToUser(view.Host),
 		Visibility: toProtoVisibility(c.Visibility),
 		CreateTime: timestamppb.New(c.CreateTime),
 	}

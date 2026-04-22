@@ -3,36 +3,27 @@ package usecase
 import (
 	"context"
 
-	"reverie.jp/reverie/internal/domain/entity"
+	callgw "reverie.jp/reverie/internal/modules/call/gateway"
 	callrepo "reverie.jp/reverie/internal/modules/call/repository"
-	usergw "reverie.jp/reverie/internal/modules/user/gateway"
 	"reverie.jp/reverie/internal/platform/ulid"
 	"reverie.jp/reverie/internal/platform/xerrors"
 )
 
 type CreateCall struct {
 	callRepo    callrepo.Repository
-	userGateway usergw.Gateway
+	callGateway callgw.Gateway
 }
 
-func NewCreateCall(callRepo callrepo.Repository, userGateway usergw.Gateway) *CreateCall {
+func NewCreateCall(callRepo callrepo.Repository, callGateway callgw.Gateway) *CreateCall {
 	return &CreateCall{
 		callRepo:    callRepo,
-		userGateway: userGateway,
+		callGateway: callGateway,
 	}
 }
 
 func (uc *CreateCall) Execute(ctx context.Context, input CreateCallInput) (*CreateCallOutput, error) {
 	if err := input.Validate(); err != nil {
 		return nil, err
-	}
-
-	view, err := uc.userGateway.BuildView(ctx, input.RequesterID, input.RequesterID)
-	if err != nil {
-		return nil, xerrors.ErrInternal.WithCause(err)
-	}
-	if view == nil {
-		return nil, xerrors.ErrUnauthenticated.WithMessage("session is stale, please log in again")
 	}
 
 	callID := ulid.New()
@@ -44,12 +35,13 @@ func (uc *CreateCall) Execute(ctx context.Context, input CreateCallInput) (*Crea
 		return nil, xerrors.ErrInternal.WithCause(err)
 	}
 
-	return &CreateCallOutput{
-		Call: &entity.Call{
-			ID:         callID,
-			HostUserID: input.RequesterID,
-			Visibility: input.Visibility,
-		},
-		Host: view,
-	}, nil
+	view, err := uc.callGateway.BuildCallView(ctx, input.RequesterID, callID)
+	if err != nil {
+		return nil, xerrors.ErrInternal.WithCause(err)
+	}
+	if view == nil {
+		return nil, xerrors.ErrInternal.WithMessage("call disappeared after creation")
+	}
+
+	return &CreateCallOutput{View: view}, nil
 }

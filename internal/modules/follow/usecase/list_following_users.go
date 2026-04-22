@@ -48,7 +48,7 @@ func (uc *ListFollowingUsers) Execute(ctx context.Context, input ListFollowingUs
 		nextPageToken = ids[len(ids)-1].String()
 	}
 
-	views, err := uc.userGateway.BuildListViews(ctx, input.RequesterID, ids)
+	views, err := uc.userGateway.BuildListUserViews(ctx, input.RequesterID, ids)
 	if err != nil {
 		return nil, xerrors.ErrInternal.WithCause(err)
 	}

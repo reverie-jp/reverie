@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 
+	"reverie.jp/reverie/internal/domain/entity"
 	callgw "reverie.jp/reverie/internal/modules/call/gateway"
 	callrepo "reverie.jp/reverie/internal/modules/call/repository"
 	"reverie.jp/reverie/internal/platform/xerrors"
@@ -37,7 +38,7 @@ func (uc *ListPublicCalls) Execute(ctx context.Context, input ListPublicCallsInp
 	// Guests see OPEN only; authenticated callers additionally see USERS_ONLY.
 	includeUsersOnly := !input.RequesterID.IsZero()
 
-	callIDs, err := uc.callRepo.ListActivePublicCallIDs(ctx, includeUsersOnly, participantStaleSeconds, input.PageToken, pageSize)
+	callIDs, err := uc.callRepo.ListActivePublicCallIDs(ctx, includeUsersOnly, entity.ParticipantStaleSeconds, input.PageToken, pageSize)
 	if err != nil {
 		return nil, xerrors.ErrInternal.WithCause(err)
 	}
@@ -47,7 +48,7 @@ func (uc *ListPublicCalls) Execute(ctx context.Context, input ListPublicCallsInp
 		nextPageToken = callIDs[len(callIDs)-1].String()
 	}
 
-	views, err := uc.callGateway.BuildListViews(ctx, input.RequesterID, callIDs)
+	views, err := uc.callGateway.BuildListCallViews(ctx, input.RequesterID, callIDs)
 	if err != nil {
 		return nil, xerrors.ErrInternal.WithCause(err)
 	}

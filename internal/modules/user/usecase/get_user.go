@@ -26,7 +26,7 @@ func (uc *GetUser) Execute(ctx context.Context, input GetUserInput) (*GetUserOut
 		return nil, err
 	}
 
-	view, err := uc.userGateway.BuildView(ctx, input.RequesterID, targetID)
+	view, err := uc.userGateway.BuildUserView(ctx, input.RequesterID, targetID)
 	if err != nil {
 		return nil, err
 	}
