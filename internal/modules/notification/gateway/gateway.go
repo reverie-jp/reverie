@@ -7,6 +7,7 @@ import (
 	"reverie.jp/reverie/internal/modules/notification/repository"
 	usergw "reverie.jp/reverie/internal/modules/user/gateway"
 	"reverie.jp/reverie/internal/platform/events"
+	"reverie.jp/reverie/internal/platform/ratelimit"
 	"reverie.jp/reverie/internal/platform/ulid"
 )
 
@@ -37,7 +38,10 @@ type FanOutParams struct {
 type Gateway interface {
 	// Create inserts a notification and publishes it on the recipient's user
 	// topic. DB write is authoritative; publish failures are logged and
-	// swallowed so event bus outages don't block the caller.
+	// swallowed so event bus outages don't block the caller. A per-(recipient,
+	// type, actor, resource) cooldown (see cooldown.go) silently suppresses
+	// rapid re-notifications from the same actor — prevents follow/unfollow
+	// toggle spam.
 	Create(ctx context.Context, params CreateParams) (*NotificationView, error)
 
 	// FanOutCreate batches the "same actor/type/resource to many recipients"
@@ -51,12 +55,6 @@ type Gateway interface {
 	MarkAllRead(ctx context.Context, recipientID ulid.ULID) (int32, error)
 	CountUnread(ctx context.Context, recipientID ulid.ULID) (int32, error)
 
-	// DeleteByTypeActor removes notifications of a given type from a single
-	// actor. Used by the follow usecase to clear "user_followed" notifications
-	// on unfollow so a subsequent re-follow produces a fresh notification
-	// instead of hitting the dedup index and returning the stale row.
-	DeleteByTypeActor(ctx context.Context, recipientID ulid.ULID, notifType entity.NotificationType, actorID ulid.ULID) error
-
 	BuildListNotificationViews(ctx context.Context, recipientID ulid.ULID, notifications []*entity.Notification) ([]*NotificationView, error)
 	BuildNotificationView(ctx context.Context, recipientID ulid.ULID, n *entity.Notification) (*NotificationView, error)
 }
@@ -65,8 +63,14 @@ type gatewayImpl struct {
 	repo        repository.Repository
 	userGateway usergw.Gateway
 	publisher   events.Publisher
+	limiter     ratelimit.Limiter
 }
 
-func New(repo repository.Repository, userGateway usergw.Gateway, publisher events.Publisher) Gateway {
-	return &gatewayImpl{repo: repo, userGateway: userGateway, publisher: publisher}
+func New(repo repository.Repository, userGateway usergw.Gateway, publisher events.Publisher, limiter ratelimit.Limiter) Gateway {
+	return &gatewayImpl{
+		repo:        repo,
+		userGateway: userGateway,
+		publisher:   publisher,
+		limiter:     limiter,
+	}
 }

@@ -21,6 +21,8 @@ docker compose -p reverie_devcontainer -f /path/to/reverie/.devcontainer/compose
 
 compose project `reverie_devcontainer`, service `reverie-api`, DB コンテナ `reverie-db`, Redis コンテナ `reverie-redis`。代表的コマンドは `Makefile` (`make proto` / `make sqlc` / `make migrate-up` / `make dev-up`)。env 変更時は `up -d --force-recreate` が必要。
 
+**API サーバーは `make dev-up` (= `air`) で起動**。Go ファイル変更を air が自動 rebuild + 再起動してくれるので、`go build` → `kill` → `run` の手動ループは不要。手動でバイナリを起動しないこと (ポート衝突 / 挙動の不一致を招く)。
+
 ## 命名規約 (Google AIP)
 
 将来公開 API なので新規 proto は AIP 準拠:
@@ -169,8 +171,12 @@ LiveKit の管理 API (ListRooms / ListParticipants) を**使わない**。`call
 
 - 専用モジュール `internal/modules/notification/`、`notifications` テーブル
 - 通知作成は **発火元 usecase から notification gateway の `Create()` を呼ぶ** (例: follow usecase が `user_followed` 通知を作成)。gateway 内で DB insert + stream publish が 1 箇所に集約
-- dedup: `(recipient_user_id, type, COALESCE(actor_user_id::text, ''), resource_name)` の unique 制約。重複挿入は既存行を返す (`ON CONFLICT DO UPDATE SET id = notifications.id`)
-- **逆操作時は削除**: unfollow 時に `DeleteByTypeActor` で `user_followed` 通知を消すこと。消さないと再 follow で dedup に当たり、client の event_id dedup で toast が出ない
+- dedup: `(recipient_user_id, type, COALESCE(actor_user_id::text, ''), resource_name)` の unique 制約
+- **`CreateNotification` の upsert は ON CONFLICT で行を "refresh"** (新 id + `create_time = NOW()` + `read_time = NULL`)。cooldown が通った後に到達する UPDATE パスは「新イベント」として扱う意味なので、client には新しい event_id が届き toast が再発火する
+- 大量配信 (call 作成 → フォロワー全員) は `FanOutCreate` で 1 回の `INSERT ... unnest(...)` と concurrency 20 の並列 publish (detached goroutine で caller をブロックしない)
+- **トグルスパム対策は cooldown** (`internal/platform/ratelimit` + `gateway/cooldown.go`): Redis SETNX で `(recipient, type, actor, resource)` の再通知を抑止。`user_followed` は 1h、`following_user_call_started` は 0 (resource_name が毎回 unique なので不要)。Redis 障害時は fail open (通知を止めない)
+- **逆操作 (unfollow 等) で通知を削除しない**: 歴史的事実として残す。cooldown 期限内の再 follow は silently skip、期限切れ後は行が refresh されて新イベント扱いになる
+- **client の論理 dedup**: サーバーの refresh で同じ (type, actor, resource) に新 id が飛んでくるので、`NotificationProvider` は stream 受信時に既存の論理重複を除去してから先頭挿入する
 - フロントは `NotificationProvider` が state と stream を管理。`ListNotifications` で初期化 → stream で差分適用 → sonner toast
 
 ## ULID / sqlc の細かい話

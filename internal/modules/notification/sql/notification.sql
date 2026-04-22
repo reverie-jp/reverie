@@ -1,6 +1,9 @@
 -- name: CreateNotification :one
--- Inserts a notification if the dedup key is free. Returns the existing row
--- on conflict, so callers always get the canonical record to publish downstream.
+-- Upserts a notification. New insert paths are obvious; on conflict the row
+-- is "refreshed" (new id, create_time = NOW(), read_time cleared). Callers
+-- gate this via the notification gateway's cooldown, so reaching the UPDATE
+-- path means "the recipient hasn't been notified about this tuple recently —
+-- treat it as a fresh event" (e.g. re-follow after cooldown expires).
 INSERT INTO notifications (id, recipient_user_id, type, actor_user_id, resource_name)
 VALUES (
     sqlc.arg(id)::ulid,
@@ -10,7 +13,10 @@ VALUES (
     sqlc.arg(resource_name)::text
 )
 ON CONFLICT (recipient_user_id, type, COALESCE(actor_user_id::text, ''), resource_name)
-DO UPDATE SET id = notifications.id
+DO UPDATE SET
+    id = EXCLUDED.id,
+    create_time = NOW(),
+    read_time = NULL
 RETURNING *;
 
 -- name: ListNotificationsByRecipient :many
@@ -62,11 +68,3 @@ ON CONFLICT (recipient_user_id, type, COALESCE(actor_user_id::text, ''), resourc
 DO NOTHING
 RETURNING *;
 
--- name: DeleteNotificationsByTypeActor :execrows
--- Removes notifications matching (recipient, type, actor). Used to clear
--- user_followed notifications when the follow relationship is undone, so a
--- re-follow creates a fresh notification instead of hitting the dedup index.
-DELETE FROM notifications
-WHERE recipient_user_id = sqlc.arg(recipient_user_id)::ulid
-  AND type = sqlc.arg(type)::notification_type
-  AND actor_user_id = sqlc.arg(actor_user_id)::ulid;

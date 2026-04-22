@@ -17,6 +17,14 @@ func (g *gatewayImpl) Create(ctx context.Context, params CreateParams) (*Notific
 		return nil, nil
 	}
 
+	// Cooldown check: silently skip if an identical (recipient, type, actor,
+	// resource) notification was issued within the configured window. Prevents
+	// follow/unfollow toggle spam. Different actors get different keys, so
+	// independent users' notifications are unaffected.
+	if !g.acquireCooldown(ctx, params.RecipientUserID, params.Type, params.ActorUserID, params.ResourceName) {
+		return nil, nil
+	}
+
 	notif, err := g.repo.CreateNotification(ctx, repository.CreateNotificationParams{
 		ID:              ulid.New(),
 		RecipientUserID: params.RecipientUserID,

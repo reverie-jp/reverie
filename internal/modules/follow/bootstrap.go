@@ -11,7 +11,7 @@ import (
 
 func InitModule(followGateway followgw.Gateway, userGateway usergw.Gateway, notificationGateway notificationgw.Gateway) followv1connect.FollowServiceHandler {
 	followUser := usecase.NewFollowUser(followGateway, userGateway, notificationGateway)
-	unfollowUser := usecase.NewUnfollowUser(followGateway, userGateway, notificationGateway)
+	unfollowUser := usecase.NewUnfollowUser(followGateway, userGateway)
 	listFollowingUsers := usecase.NewListFollowingUsers(followGateway, userGateway)
 	listUserFollowers := usecase.NewListUserFollowers(followGateway, userGateway)
 

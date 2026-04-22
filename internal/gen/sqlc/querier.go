@@ -22,18 +22,17 @@ type Querier interface {
 	// (already notified) are silently skipped and omitted from RETURNING, so
 	// callers only publish events for genuinely new notifications.
 	CreateFanOutNotifications(ctx context.Context, arg CreateFanOutNotificationsParams) ([]Notification, error)
-	// Inserts a notification if the dedup key is free. Returns the existing row
-	// on conflict, so callers always get the canonical record to publish downstream.
+	// Upserts a notification. New insert paths are obvious; on conflict the row
+	// is "refreshed" (new id, create_time = NOW(), read_time cleared). Callers
+	// gate this via the notification gateway's cooldown, so reaching the UPDATE
+	// path means "the recipient hasn't been notified about this tuple recently —
+	// treat it as a fresh event" (e.g. re-follow after cooldown expires).
 	CreateNotification(ctx context.Context, arg CreateNotificationParams) (Notification, error)
 	CreateRefreshToken(ctx context.Context, arg CreateRefreshTokenParams) error
 	CreateUser(ctx context.Context, arg CreateUserParams) error
 	CreateUserFollow(ctx context.Context, arg CreateUserFollowParams) error
 	DeleteCallBan(ctx context.Context, arg DeleteCallBanParams) error
 	DeleteExpiredRefreshTokensByUserID(ctx context.Context, userID string) error
-	// Removes notifications matching (recipient, type, actor). Used to clear
-	// user_followed notifications when the follow relationship is undone, so a
-	// re-follow creates a fresh notification instead of hitting the dedup index.
-	DeleteNotificationsByTypeActor(ctx context.Context, arg DeleteNotificationsByTypeActorParams) (int64, error)
 	DeleteRefreshTokenByHash(ctx context.Context, arg DeleteRefreshTokenByHashParams) error
 	DeleteUser(ctx context.Context, id string) error
 	DeleteUserFollow(ctx context.Context, arg DeleteUserFollowParams) error

@@ -41,6 +41,7 @@ import (
 	"reverie.jp/reverie/internal/platform/google"
 	"reverie.jp/reverie/internal/platform/jwt"
 	"reverie.jp/reverie/internal/platform/livekit"
+	"reverie.jp/reverie/internal/platform/ratelimit"
 )
 
 type Service struct {
@@ -51,7 +52,7 @@ type Service struct {
 	RegisterGatewayHandler func(ctx context.Context, mux *runtime.ServeMux, addr string, opts []grpc.DialOption) error
 }
 
-func initServices(cfg *config.Config, db *pgxpool.Pool, jwtManager *jwt.Manager, eventBus events.Bus) []Service {
+func initServices(cfg *config.Config, db *pgxpool.Pool, jwtManager *jwt.Manager, eventBus events.Bus, limiter ratelimit.Limiter) []Service {
 	q := sqlc.New(db)
 	tx := transaction.NewRunner(db)
 	googleAuth := google.NewAuthClient(cfg.Google.ClientID, cfg.Google.ClientSecret, cfg.Google.RedirectURL)
@@ -60,7 +61,7 @@ func initServices(cfg *config.Config, db *pgxpool.Pool, jwtManager *jwt.Manager,
 	authInterceptor := interceptor.AuthInterceptor(jwtManager)
 	followGateway := followgw.New(q)
 	userGateway := usergw.New(q, followGateway)
-	notificationGateway := notificationgw.New(notificationrepo.New(q), userGateway, eventBus)
+	notificationGateway := notificationgw.New(notificationrepo.New(q), userGateway, eventBus, limiter)
 	accountService := account.InitModule(q, userGateway, tx, googleAuth, jwtManager)
 	userService := user.InitModule(userGateway)
 	callService := call.InitModule(q, userGateway, followGateway, notificationGateway, livekitClient, cfg.LiveKit.TokenTTL)

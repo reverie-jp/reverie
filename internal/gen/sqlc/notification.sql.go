@@ -96,7 +96,10 @@ VALUES (
     $5::text
 )
 ON CONFLICT (recipient_user_id, type, COALESCE(actor_user_id::text, ''), resource_name)
-DO UPDATE SET id = notifications.id
+DO UPDATE SET
+    id = EXCLUDED.id,
+    create_time = NOW(),
+    read_time = NULL
 RETURNING id, recipient_user_id, type, actor_user_id, resource_name, read_time, create_time
 `
 
@@ -108,8 +111,11 @@ type CreateNotificationParams struct {
 	ResourceName    string           `json:"resource_name"`
 }
 
-// Inserts a notification if the dedup key is free. Returns the existing row
-// on conflict, so callers always get the canonical record to publish downstream.
+// Upserts a notification. New insert paths are obvious; on conflict the row
+// is "refreshed" (new id, create_time = NOW(), read_time cleared). Callers
+// gate this via the notification gateway's cooldown, so reaching the UPDATE
+// path means "the recipient hasn't been notified about this tuple recently —
+// treat it as a fresh event" (e.g. re-follow after cooldown expires).
 func (q *Queries) CreateNotification(ctx context.Context, arg CreateNotificationParams) (Notification, error) {
 	row := q.db.QueryRow(ctx, createNotification,
 		arg.ID,
@@ -129,30 +135,6 @@ func (q *Queries) CreateNotification(ctx context.Context, arg CreateNotification
 		&i.CreateTime,
 	)
 	return i, err
-}
-
-const deleteNotificationsByTypeActor = `-- name: DeleteNotificationsByTypeActor :execrows
-DELETE FROM notifications
-WHERE recipient_user_id = $1::ulid
-  AND type = $2::notification_type
-  AND actor_user_id = $3::ulid
-`
-
-type DeleteNotificationsByTypeActorParams struct {
-	RecipientUserID ulid.ULID        `json:"recipient_user_id"`
-	Type            NotificationType `json:"type"`
-	ActorUserID     ulid.ULID        `json:"actor_user_id"`
-}
-
-// Removes notifications matching (recipient, type, actor). Used to clear
-// user_followed notifications when the follow relationship is undone, so a
-// re-follow creates a fresh notification instead of hitting the dedup index.
-func (q *Queries) DeleteNotificationsByTypeActor(ctx context.Context, arg DeleteNotificationsByTypeActorParams) (int64, error) {
-	result, err := q.db.Exec(ctx, deleteNotificationsByTypeActor, arg.RecipientUserID, arg.Type, arg.ActorUserID)
-	if err != nil {
-		return 0, err
-	}
-	return result.RowsAffected(), nil
 }
 
 const getNotification = `-- name: GetNotification :one

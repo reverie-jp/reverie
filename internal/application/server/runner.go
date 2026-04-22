@@ -24,6 +24,7 @@ import (
 	"reverie.jp/reverie/internal/platform/events"
 	"reverie.jp/reverie/internal/platform/jwt"
 	"reverie.jp/reverie/internal/platform/logger"
+	"reverie.jp/reverie/internal/platform/ratelimit"
 	redisclient "reverie.jp/reverie/internal/platform/redis"
 )
 
@@ -73,10 +74,11 @@ func Run() error {
 	defer redisClient.Close()
 
 	eventBus := events.NewRedisBus(redisClient)
+	limiter := ratelimit.NewRedisLimiter(redisClient)
 
 	jwtManager := jwt.NewManager(cfg.Auth.JWTSecretKey, cfg.Auth.AccessExpiration, cfg.Auth.RefreshExpiration)
 
-	services := initServices(cfg, db, jwtManager, eventBus)
+	services := initServices(cfg, db, jwtManager, eventBus, limiter)
 
 	// initialize server mux
 

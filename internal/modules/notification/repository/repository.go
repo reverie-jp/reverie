@@ -26,7 +26,6 @@ type Repository interface {
 	MarkNotificationsRead(ctx context.Context, recipientID ulid.ULID, ids []ulid.ULID) (int64, error)
 	MarkAllNotificationsRead(ctx context.Context, recipientID ulid.ULID) (int64, error)
 	CountUnreadNotifications(ctx context.Context, recipientID ulid.ULID) (int32, error)
-	DeleteNotificationsByTypeActor(ctx context.Context, recipientID ulid.ULID, notifType entity.NotificationType, actorID ulid.ULID) (int64, error)
 }
 
 type RepositoryImpl struct {

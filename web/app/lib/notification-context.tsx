@@ -149,7 +149,21 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     if (seenEventIdsRef.current.has(id)) return;
     seenEventIdsRef.current.add(id);
 
-    setNotifications((prev) => [n, ...prev].slice(0, 50));
+    setNotifications((prev) => {
+      // Server refreshes notifications (new id, create_time reset) when the
+      // same actor re-triggers after cooldown — drop the stale logical
+      // duplicate so the bell doesn't show both.
+      const actorName = n.actor?.name ?? "";
+      const filtered = prev.filter(
+        (p) =>
+          !(
+            p.type === n.type &&
+            (p.actor?.name ?? "") === actorName &&
+            p.resourceName === n.resourceName
+          ),
+      );
+      return [n, ...filtered].slice(0, 50);
+    });
     setUnreadCount((c) => c + 1);
     toast(notificationMessage(n));
   }, []);
