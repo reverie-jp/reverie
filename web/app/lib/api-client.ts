@@ -1,5 +1,5 @@
 import {
-  createPromiseClient,
+  createClient,
   ConnectError,
   Code,
   type Interceptor,
@@ -7,11 +7,23 @@ import {
 import { createConnectTransport } from "@connectrpc/connect-web";
 import { AccountService } from "./gen/account/v1/account_connect";
 import { CallService } from "./gen/call/v1/call_connect";
+import { EventService } from "./gen/event/v1/event_connect";
 import { FollowService } from "./gen/follow/v1/follow_connect";
+import { NotificationService } from "./gen/notification/v1/notification_connect";
+import { PresenceService } from "./gen/presence/v1/presence_connect";
 import { UserService } from "./gen/user/v1/user_connect";
 
 const ACCESS_TOKEN_KEY = "reverie.access_token";
 const REFRESH_TOKEN_KEY = "reverie.refresh_token";
+
+// AUTH_CHANGED_EVENT lets components outside React's tree (NotificationProvider,
+// AppHeader) react to login/logout without threading a full auth context.
+export const AUTH_CHANGED_EVENT = "reverie:auth_changed";
+
+function fireAuthChanged() {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent(AUTH_CHANGED_EVENT));
+}
 
 export const tokenStore = {
   getAccessToken(): string | null {
@@ -23,12 +35,18 @@ export const tokenStore = {
     return localStorage.getItem(REFRESH_TOKEN_KEY);
   },
   setTokens(accessToken: string, refreshToken: string) {
+    const wasAuthed = Boolean(localStorage.getItem(ACCESS_TOKEN_KEY));
     localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
     localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+    // Only fire on login transitions, not silent refresh — otherwise the
+    // stream would reconnect on every token rotation.
+    if (!wasAuthed) fireAuthChanged();
   },
   clear() {
+    const wasAuthed = Boolean(localStorage.getItem(ACCESS_TOKEN_KEY));
     localStorage.removeItem(ACCESS_TOKEN_KEY);
     localStorage.removeItem(REFRESH_TOKEN_KEY);
+    if (wasAuthed) fireAuthChanged();
   },
 };
 
@@ -46,7 +64,7 @@ const PUBLIC_PROCEDURES = new Set<string>([
 // Bare transport (no interceptors) used inside the auth interceptor for the
 // refresh call, so the refresh itself can never re-enter the interceptor.
 const bareTransport = createConnectTransport({ baseUrl: API_BASE_URL });
-const bareAccountClient = createPromiseClient(AccountService, bareTransport);
+const bareAccountClient = createClient(AccountService, bareTransport);
 
 // In-flight refresh promise — concurrent 401s share a single refresh call.
 let refreshInFlight: Promise<boolean> | null = null;
@@ -117,7 +135,13 @@ const transport = createConnectTransport({
   interceptors: [authInterceptor],
 });
 
-export const accountClient = createPromiseClient(AccountService, transport);
-export const userClient = createPromiseClient(UserService, transport);
-export const callClient = createPromiseClient(CallService, transport);
-export const followClient = createPromiseClient(FollowService, transport);
+export const accountClient = createClient(AccountService, transport);
+export const userClient = createClient(UserService, transport);
+export const callClient = createClient(CallService, transport);
+export const followClient = createClient(FollowService, transport);
+export const notificationClient = createClient(
+  NotificationService,
+  transport,
+);
+export const presenceClient = createClient(PresenceService, transport);
+export const eventClient = createClient(EventService, transport);

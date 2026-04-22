@@ -1,0 +1,74 @@
+syntax = "proto3";
+
+package notification.v1;
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+import "user/v1/user.proto";
+
+service NotificationService {
+  // List notifications for the authenticated user.
+  rpc ListNotifications(ListNotificationsRequest) returns (ListNotificationsResponse) {
+    option (google.api.http) = {
+      get: "/v1/users/me/notifications"
+    };
+  }
+
+  // Mark notifications as read. Omit names to mark all unread as read.
+  rpc MarkNotificationsRead(MarkNotificationsReadRequest) returns (MarkNotificationsReadResponse) {
+    option (google.api.http) = {
+      post: "/v1/users/me/notifications:markRead"
+      body: "*"
+    };
+  }
+
+  // Unread count for the notification bell.
+  rpc GetUnreadNotificationCount(GetUnreadNotificationCountRequest) returns (GetUnreadNotificationCountResponse) {
+    option (google.api.http) = {
+      get: "/v1/users/me/notifications:unreadCount"
+    };
+  }
+}
+
+enum NotificationType {
+  NOTIFICATION_TYPE_UNSPECIFIED = 0;
+  NOTIFICATION_TYPE_USER_FOLLOWED = 1;
+  NOTIFICATION_TYPE_FOLLOWING_USER_CALL_STARTED = 2;
+}
+
+message Notification {
+  // Resource name: "users/{custom_id}/notifications/{id}".
+  string name = 1;
+  NotificationType type = 2;
+  // Who triggered the notification (nullable for system notifications).
+  user.v1.User actor = 3;
+  // Related resource, e.g. "calls/{id}". Empty when not applicable.
+  string resource_name = 4;
+  google.protobuf.Timestamp read_time = 5;
+  google.protobuf.Timestamp create_time = 6;
+}
+
+message ListNotificationsRequest {
+  int32 page_size = 1;
+  string page_token = 2;
+}
+
+message ListNotificationsResponse {
+  repeated Notification notifications = 1;
+  string next_page_token = 2;
+}
+
+message MarkNotificationsReadRequest {
+  // Notification resource names. Empty = mark all unread as read.
+  repeated string names = 1;
+}
+
+message MarkNotificationsReadResponse {
+  int32 marked_count = 1;
+}
+
+message GetUnreadNotificationCountRequest {}
+
+message GetUnreadNotificationCountResponse {
+  int32 count = 1;
+}

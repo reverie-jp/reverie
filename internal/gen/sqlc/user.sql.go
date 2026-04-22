@@ -43,7 +43,7 @@ func (q *Queries) DeleteUser(ctx context.Context, id string) error {
 }
 
 const getUserByCustomID = `-- name: GetUserByCustomID :one
-SELECT id, custom_id, custom_id_change_time, display_name, biography, location, website, avatar_url, banner_url, is_private, following_count, follower_count, create_time, update_time FROM users
+SELECT id, custom_id, custom_id_change_time, display_name, biography, location, website, avatar_url, banner_url, is_private, following_count, follower_count, last_seen_time, create_time, update_time FROM users
 WHERE custom_id = $1
 `
 
@@ -63,6 +63,7 @@ func (q *Queries) GetUserByCustomID(ctx context.Context, customID string) (User,
 		&i.IsPrivate,
 		&i.FollowingCount,
 		&i.FollowerCount,
+		&i.LastSeenTime,
 		&i.CreateTime,
 		&i.UpdateTime,
 	)
@@ -70,7 +71,7 @@ func (q *Queries) GetUserByCustomID(ctx context.Context, customID string) (User,
 }
 
 const listUsersByIDs = `-- name: ListUsersByIDs :many
-SELECT id, custom_id, custom_id_change_time, display_name, biography, location, website, avatar_url, banner_url, is_private, following_count, follower_count, create_time, update_time FROM users
+SELECT id, custom_id, custom_id_change_time, display_name, biography, location, website, avatar_url, banner_url, is_private, following_count, follower_count, last_seen_time, create_time, update_time FROM users
 WHERE id = ANY($1::text[])
 `
 
@@ -96,6 +97,7 @@ func (q *Queries) ListUsersByIDs(ctx context.Context, ids []string) ([]User, err
 			&i.IsPrivate,
 			&i.FollowingCount,
 			&i.FollowerCount,
+			&i.LastSeenTime,
 			&i.CreateTime,
 			&i.UpdateTime,
 		); err != nil {
@@ -107,4 +109,16 @@ func (q *Queries) ListUsersByIDs(ctx context.Context, ids []string) ([]User, err
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateUserLastSeen = `-- name: UpdateUserLastSeen :exec
+UPDATE users SET last_seen_time = NOW() WHERE id = $1::ulid
+`
+
+// Called by the PresenceService.Heartbeat RPC every ~30s. `last_seen_time`
+// is not indexed, so Postgres can apply this as a HOT update and avoid
+// touching users' other indexes.
+func (q *Queries) UpdateUserLastSeen(ctx context.Context, id ulid.ULID) error {
+	_, err := q.db.Exec(ctx, updateUserLastSeen, id)
+	return err
 }

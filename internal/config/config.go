@@ -19,6 +19,7 @@ type Config struct {
 	Google   GoogleConfig
 	LiveKit  LiveKitConfig
 	Log      LogConfig
+	Redis    RedisConfig
 	Server   ServerConfig
 }
 
@@ -43,6 +44,9 @@ func (c *Config) LoadFromEnv() error {
 		return err
 	}
 	if err := env.Parse(&c.Log); err != nil {
+		return err
+	}
+	if err := env.Parse(&c.Redis); err != nil {
 		return err
 	}
 	if err := env.Parse(&c.Server); err != nil {

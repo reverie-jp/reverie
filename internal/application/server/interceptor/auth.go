@@ -3,6 +3,8 @@ package interceptor
 import (
 	"context"
 	"errors"
+	"log/slog"
+	"net/http"
 	"strings"
 
 	"connectrpc.com/connect"
@@ -54,41 +56,79 @@ var optionalAuthProcedures = map[string]bool{
 	followv1connect.FollowServiceListUserFollowersProcedure:    true,
 }
 
-func AuthInterceptor(jwtManager *jwt.Manager) connect.UnaryInterceptorFunc {
-	return func(next connect.UnaryFunc) connect.UnaryFunc {
-		return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
-			if publicProcedures[req.Spec().Procedure] {
-				return next(ctx, req)
-			}
+type authInterceptor struct {
+	jwtManager *jwt.Manager
+}
 
-			header := req.Header().Get("Authorization")
-			optional := optionalAuthProcedures[req.Spec().Procedure]
-			if header == "" && optional {
-				return next(ctx, req)
-			}
+// AuthInterceptor verifies JWT and injects the user ID into context for both
+// unary and streaming procedures. Streaming handlers (e.g. EventService) rely
+// on this for the subscriber's identity.
+func AuthInterceptor(jwtManager *jwt.Manager) connect.Interceptor {
+	return &authInterceptor{jwtManager: jwtManager}
+}
 
-			token, err := extractBearerToken(header)
-			if err != nil {
-				return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("missing or invalid authorization header"))
-			}
+func (a *authInterceptor) authenticate(ctx context.Context, procedure string, header http.Header) (context.Context, error) {
+	if publicProcedures[procedure] {
+		return ctx, nil
+	}
 
-			claims, err := jwtManager.VerifyToken(token)
-			if err != nil {
-				return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("invalid or expired token"))
-			}
+	rawHeader := header.Get("Authorization")
+	optional := optionalAuthProcedures[procedure]
+	if rawHeader == "" && optional {
+		return ctx, nil
+	}
 
-			if claims.TokenType != jwt.TokenTypeAccess {
-				return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("invalid token type"))
-			}
+	token, err := extractBearerToken(rawHeader)
+	if err != nil {
+		return ctx, connect.NewError(connect.CodeUnauthenticated, errors.New("missing or invalid authorization header"))
+	}
 
-			userID, err := ulid.Parse(claims.Subject)
-			if err != nil {
-				return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("invalid token"))
-			}
+	claims, err := a.jwtManager.VerifyToken(token)
+	if err != nil {
+		return ctx, connect.NewError(connect.CodeUnauthenticated, errors.New("invalid or expired token"))
+	}
 
-			ctx = ContextWithUserID(ctx, userID)
-			return next(ctx, req)
+	if claims.TokenType != jwt.TokenTypeAccess {
+		return ctx, connect.NewError(connect.CodeUnauthenticated, errors.New("invalid token type"))
+	}
+
+	userID, err := ulid.Parse(claims.Subject)
+	if err != nil {
+		return ctx, connect.NewError(connect.CodeUnauthenticated, errors.New("invalid token"))
+	}
+
+	return ContextWithUserID(ctx, userID), nil
+}
+
+func (a *authInterceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
+	return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
+		ctx, err := a.authenticate(ctx, req.Spec().Procedure, req.Header())
+		if err != nil {
+			return nil, err
 		}
+		return next(ctx, req)
+	}
+}
+
+func (a *authInterceptor) WrapStreamingClient(next connect.StreamingClientFunc) connect.StreamingClientFunc {
+	return next
+}
+
+func (a *authInterceptor) WrapStreamingHandler(next connect.StreamingHandlerFunc) connect.StreamingHandlerFunc {
+	return func(ctx context.Context, conn connect.StreamingHandlerConn) error {
+		slog.Info("streaming request received",
+			slog.String("procedure", conn.Spec().Procedure),
+			slog.Bool("has_auth_header", conn.RequestHeader().Get("Authorization") != ""),
+		)
+		ctx, err := a.authenticate(ctx, conn.Spec().Procedure, conn.RequestHeader())
+		if err != nil {
+			slog.Warn("streaming auth failed",
+				slog.String("procedure", conn.Spec().Procedure),
+				slog.String("err", err.Error()),
+			)
+			return err
+		}
+		return next(ctx, conn)
 	}
 }
 

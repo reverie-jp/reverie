@@ -25,8 +25,8 @@ type Call struct {
 
 // ParticipantStaleSeconds is the heartbeat grace window. A participant whose
 // last_seen_time is older than this many seconds (and has no explicit
-// disconnected_time) is considered disconnected. Clients heartbeat every 30s,
-// so 60s leaves room for one missed heartbeat.
+// disconnected_time) is considered disconnected. Clients heartbeat every 20s
+// (see web/app/lib/call-context.tsx), so 60s tolerates two missed beats.
 const ParticipantStaleSeconds = 60
 
 type CallParticipant struct {

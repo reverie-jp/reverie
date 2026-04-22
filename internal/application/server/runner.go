@@ -21,8 +21,10 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	"reverie.jp/reverie/internal/config"
+	"reverie.jp/reverie/internal/platform/events"
 	"reverie.jp/reverie/internal/platform/jwt"
 	"reverie.jp/reverie/internal/platform/logger"
+	redisclient "reverie.jp/reverie/internal/platform/redis"
 )
 
 func getDialOptions(cfg *config.Config) []grpc.DialOption {
@@ -64,9 +66,17 @@ func Run() error {
 	}
 	defer db.Close()
 
+	redisClient, err := redisclient.New(ctx, cfg.Redis)
+	if err != nil {
+		return fmt.Errorf("failed to connect to redis: %w", err)
+	}
+	defer redisClient.Close()
+
+	eventBus := events.NewRedisBus(redisClient)
+
 	jwtManager := jwt.NewManager(cfg.Auth.JWTSecretKey, cfg.Auth.AccessExpiration, cfg.Auth.RefreshExpiration)
 
-	services := initServices(cfg, db, jwtManager)
+	services := initServices(cfg, db, jwtManager, eventBus)
 
 	// initialize server mux
 
@@ -77,6 +87,9 @@ func Run() error {
 
 	for _, service := range services {
 		service.RegisterConnectHandler(mux)
+		if service.RegisterGatewayHandler == nil {
+			continue
+		}
 		if err := service.RegisterGatewayHandler(ctx, gwMux, addr, getDialOptions(cfg)); err != nil {
 			return fmt.Errorf("failed to register gateway handler for service %s: %w", service.Name, err)
 		}
@@ -107,15 +120,24 @@ func Run() error {
 		},
 	})
 
-	handler := c.Handler(h2c.NewHandler(mux, &http2.Server{}))
+	handler := c.Handler(h2c.NewHandler(mux, &http2.Server{
+		// HTTP/2 side: send a PING if we've seen no frames for 30s and close
+		// the conn if the client doesn't respond within 15s. Keeps idle
+		// streams healthy through LB idle timeouts without app-level heartbeats.
+		ReadIdleTimeout: 30 * time.Second,
+		PingTimeout:     15 * time.Second,
+	}))
 
 	server := &http.Server{
 		Addr:              addr,
 		Handler:           handler,
 		ReadHeaderTimeout: 5 * time.Second,
-		ReadTimeout:       15 * time.Second,
-		WriteTimeout:      30 * time.Second,
-		IdleTimeout:       60 * time.Second,
+		// ReadTimeout / WriteTimeout are intentionally 0 (disabled) because
+		// EventService.StreamEvents is long-lived server streaming — a 30s
+		// WriteTimeout would truncate the chunked response and surface as
+		// ERR_INCOMPLETE_CHUNKED_ENCODING. Unary RPCs rely on client-side
+		// deadlines and Connect's per-handler context cancellation instead.
+		IdleTimeout: 120 * time.Second,
 	}
 
 	slog.Info("api server is running",

@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package presence.v1;
+
+import "google/api/annotations.proto";
+
+service PresenceService {
+  // Heartbeat refreshes the caller's last_seen_time. Clients send this every
+  // ~30s while authenticated. Server treats users with last_seen_time within
+  // the last 60s as online (matching the call participant stale window).
+  rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse) {
+    option (google.api.http) = {
+      post: "/v1/users/me:heartbeat"
+      body: "*"
+    };
+  }
+}
+
+message HeartbeatRequest {}
+message HeartbeatResponse {}

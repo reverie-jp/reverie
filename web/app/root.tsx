@@ -10,7 +10,11 @@ import {
 import type { Route } from "./+types/root";
 import "./app.css";
 import { CallProvider } from "~/lib/call-context";
+import { NotificationProvider } from "~/lib/notification-context";
+import { usePresenceHeartbeat } from "~/lib/use-presence-heartbeat";
 import { CallHeader } from "~/components/call-header";
+import { AppHeader } from "~/components/app-header";
+import { Toaster } from "~/components/ui/sonner";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -45,14 +49,24 @@ export function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
+function GlobalEffects() {
+  usePresenceHeartbeat();
+  return null;
+}
+
 export default function App() {
   return (
-    <CallProvider>
-      <CallHeader />
-      <div className="flex-1 overflow-x-hidden overflow-y-auto">
-        <Outlet />
-      </div>
-    </CallProvider>
+    <NotificationProvider>
+      <CallProvider>
+        <GlobalEffects />
+        <AppHeader />
+        <CallHeader />
+        <div className="flex-1 overflow-x-hidden overflow-y-auto">
+          <Outlet />
+        </div>
+        <Toaster position="top-right" />
+      </CallProvider>
+    </NotificationProvider>
   );
 }
 

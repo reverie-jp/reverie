@@ -15,6 +15,7 @@ type UserView struct {
 	IsMe         bool
 	IsFollowing  bool
 	IsFollowedBy bool
+	IsOnline     bool
 }
 
 type CreateUserParams struct {
@@ -29,6 +30,9 @@ type Gateway interface {
 	GetUserByCustomID(ctx context.Context, customID string) (*entity.User, error)
 	CreateUser(ctx context.Context, params CreateUserParams) error
 	DeleteUser(ctx context.Context, id ulid.ULID) error
+	// UpdateLastSeen bumps users.last_seen_time to NOW(). Called by the
+	// PresenceService.Heartbeat RPC every ~30s while the user is active.
+	UpdateLastSeen(ctx context.Context, id ulid.ULID) error
 	BuildUserView(ctx context.Context, requesterID, id ulid.ULID) (*UserView, error)
 	BuildListUserViews(ctx context.Context, requesterID ulid.ULID, ids []ulid.ULID) ([]*UserView, error)
 }

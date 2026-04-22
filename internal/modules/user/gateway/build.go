@@ -17,9 +17,10 @@ func (g *gatewayImpl) BuildUserView(ctx context.Context, requesterID, id ulid.UL
 	return views[0], nil
 }
 
-// BuildListUserViews composes UserView from pure user entities and the requester's
-// follow relationship flags. Follow counts live on entity.User itself
-// (denormalized columns maintained by the user_follows trigger).
+// BuildListUserViews composes UserView from pure user entities and the
+// requester's follow relationship flags. Online state is derived in Go from
+// entity.User.LastSeenTime so we don't need a second query (heartbeat writes
+// go directly to the users row).
 func (g *gatewayImpl) BuildListUserViews(ctx context.Context, requesterID ulid.ULID, ids []ulid.ULID) ([]*UserView, error) {
 	if len(ids) == 0 {
 		return []*UserView{}, nil
@@ -40,6 +41,7 @@ func (g *gatewayImpl) BuildListUserViews(ctx context.Context, requesterID ulid.U
 			IsMe:         !requesterID.IsZero() && u.ID == requesterID,
 			IsFollowing:  r.IsFollowing,
 			IsFollowedBy: r.IsFollowedBy,
+			IsOnline:     u.IsCurrentlyOnline(),
 		}
 	}
 	return views, nil

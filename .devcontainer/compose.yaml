@@ -9,6 +9,15 @@ services:
     ports:
       - 5432:5432
 
+  reverie-redis:
+    container_name: reverie-redis
+    image: redis:7-alpine
+    ports:
+      - 6379:6379
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - reverie-redis-data:/data
+
   reverie-api:
     build:
       context: .
@@ -22,6 +31,7 @@ services:
     command: sleep infinity
     depends_on:
       - reverie-db
+      - reverie-redis
 
   reverie-pgadmin:
     container_name: reverie-pgadmin
@@ -37,3 +47,6 @@ services:
       - PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED=False
     depends_on:
       - reverie-db
+
+volumes:
+  reverie-redis-data:

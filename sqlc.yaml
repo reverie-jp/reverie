@@ -6,6 +6,7 @@ sql:
       - "./internal/modules/account/sql"
       - "./internal/modules/call/sql"
       - "./internal/modules/follow/sql"
+      - "./internal/modules/notification/sql"
       - "./internal/modules/user/sql"
     gen:
       go:

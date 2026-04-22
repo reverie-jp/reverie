@@ -13,7 +13,7 @@ func ToUser(view *gateway.UserView) *userv1.User {
 		return nil
 	}
 	u := view.User
-	return &userv1.User{
+	pb := &userv1.User{
 		Name:           resourcename.FormatUser(u.CustomID),
 		CustomId:       u.CustomID,
 		DisplayName:    u.DisplayName,
@@ -23,7 +23,7 @@ func ToUser(view *gateway.UserView) *userv1.User {
 		AvatarUrl:      u.AvatarURL,
 		BannerUrl:      u.BannerURL,
 		IsPrivate:      u.IsPrivate,
-		OnlineStatus:   userv1.OnlineStatus_ONLINE_STATUS_UNSPECIFIED,
+		OnlineStatus:   toOnlineStatus(view.IsOnline),
 		FollowingCount: u.FollowingCount,
 		FollowerCount:  u.FollowerCount,
 		IsFollowing:    view.IsFollowing,
@@ -31,4 +31,15 @@ func ToUser(view *gateway.UserView) *userv1.User {
 		IsMe:           view.IsMe,
 		CreateTime:     timestamppb.New(u.CreateTime),
 	}
+	if u.LastSeenTime != nil {
+		pb.LastSeenTime = timestamppb.New(*u.LastSeenTime)
+	}
+	return pb
+}
+
+func toOnlineStatus(isOnline bool) userv1.OnlineStatus {
+	if isOnline {
+		return userv1.OnlineStatus_ONLINE_STATUS_ONLINE
+	}
+	return userv1.OnlineStatus_ONLINE_STATUS_OFFLINE
 }

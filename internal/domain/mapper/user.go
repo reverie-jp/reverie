@@ -23,6 +23,7 @@ func ToUser(row *sqlc.User) *entity.User {
 		IsPrivate:          row.IsPrivate,
 		FollowingCount:     row.FollowingCount,
 		FollowerCount:      row.FollowerCount,
+		LastSeenTime:       row.LastSeenTime,
 		CreateTime:         row.CreateTime,
 		UpdateTime:         row.UpdateTime,
 	}

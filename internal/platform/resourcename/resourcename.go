@@ -10,10 +10,11 @@ import (
 )
 
 const (
-	usersCollection        = "users"
-	callsCollection        = "calls"
-	participantsCollection = "participants"
-	bansCollection         = "bans"
+	usersCollection         = "users"
+	callsCollection         = "calls"
+	participantsCollection  = "participants"
+	bansCollection          = "bans"
+	notificationsCollection = "notifications"
 )
 
 // User
@@ -100,6 +101,34 @@ func ParseCallBan(name string) (callID, userID ulid.ULID, err error) {
 		return ulid.ULID{}, ulid.ULID{}, err
 	}
 	return callID, userID, nil
+}
+
+// Notification
+
+// FormatNotification builds the resource name for a notification scoped to a
+// user: "users/{custom_id}/notifications/{id}".
+func FormatNotification(userCustomID string, notificationID ulid.ULID) string {
+	return FormatUser(userCustomID) + "/" + notificationsCollection + "/" + notificationID.String()
+}
+
+// ParseNotification extracts the owning user's custom_id and the notification
+// ULID from a resource name.
+func ParseNotification(name string) (userCustomID string, notificationID ulid.ULID, err error) {
+	segments, err := split(name)
+	if err != nil {
+		return "", ulid.ULID{}, err
+	}
+	if len(segments) != 4 ||
+		segments[0] != usersCollection ||
+		segments[2] != notificationsCollection ||
+		segments[1] == "" || segments[3] == "" {
+		return "", ulid.ULID{}, errors.New("invalid notification resource name: " + name)
+	}
+	notificationID, err = ulid.Parse(segments[3])
+	if err != nil {
+		return "", ulid.ULID{}, err
+	}
+	return segments[1], notificationID, nil
 }
 
 func split(name string) ([]string, error) {

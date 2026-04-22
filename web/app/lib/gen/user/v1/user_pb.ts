@@ -159,6 +159,14 @@ export class User extends Message<User> {
    */
   createTime?: Timestamp;
 
+  /**
+   * Timestamp of the user's most recent heartbeat. Unset until the user has
+   * ever been seen online. Clients can show "最終アクティブ N 分前".
+   *
+   * @generated from field: google.protobuf.Timestamp last_seen_time = 18;
+   */
+  lastSeenTime?: Timestamp;
+
   constructor(data?: PartialMessage<User>) {
     super();
     proto3.util.initPartial(data, this);
@@ -184,6 +192,7 @@ export class User extends Message<User> {
     { no: 15, name: "is_blocked_by", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 16, name: "is_me", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 17, name: "create_time", kind: "message", T: Timestamp },
+    { no: 18, name: "last_seen_time", kind: "message", T: Timestamp },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): User {

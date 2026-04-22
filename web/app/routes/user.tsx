@@ -135,16 +135,13 @@ export default function UserRoute() {
               {user.displayName.slice(0, 2)}
             </AvatarFallback>
           </Avatar>
-          {user.onlineStatus !== OnlineStatus.UNSPECIFIED &&
-            user.onlineStatus !== OnlineStatus.OFFLINE && (
-              <span
-                className={`absolute bottom-0.5 right-0.5 size-4 rounded-full ring-[3px] ring-background ${
-                  user.onlineStatus === OnlineStatus.ONLINE
-                    ? "bg-green-500"
-                    : "bg-yellow-500"
-                }`}
-              />
-            )}
+          <span
+            className={`absolute bottom-0.5 right-0.5 size-4 rounded-full ring-[3px] ring-background ${
+              user.onlineStatus === OnlineStatus.ONLINE
+                ? "bg-green-500"
+                : "bg-muted-foreground"
+            }`}
+          />
         </div>
 
         <div className="mt-3">

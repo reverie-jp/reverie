@@ -83,6 +83,9 @@ message User {
   bool is_blocked_by = 15;
   bool is_me = 16;
   google.protobuf.Timestamp create_time = 17;
+  // Timestamp of the user's most recent heartbeat. Unset until the user has
+  // ever been seen online. Clients can show "最終アクティブ N 分前".
+  google.protobuf.Timestamp last_seen_time = 18;
 }
 
 message UserSettings {

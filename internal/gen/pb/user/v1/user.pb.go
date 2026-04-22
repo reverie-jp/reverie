@@ -142,11 +142,14 @@ type User struct {
 	FollowingCount int32        `protobuf:"varint,11,opt,name=following_count,json=followingCount,proto3" json:"following_count,omitempty"`
 	FollowerCount  int32        `protobuf:"varint,12,opt,name=follower_count,json=followerCount,proto3" json:"follower_count,omitempty"`
 	// Relationship to the requesting user.
-	IsFollowing   bool                   `protobuf:"varint,13,opt,name=is_following,json=isFollowing,proto3" json:"is_following,omitempty"`
-	IsFollowedBy  bool                   `protobuf:"varint,14,opt,name=is_followed_by,json=isFollowedBy,proto3" json:"is_followed_by,omitempty"`
-	IsBlockedBy   bool                   `protobuf:"varint,15,opt,name=is_blocked_by,json=isBlockedBy,proto3" json:"is_blocked_by,omitempty"`
-	IsMe          bool                   `protobuf:"varint,16,opt,name=is_me,json=isMe,proto3" json:"is_me,omitempty"`
-	CreateTime    *timestamppb.Timestamp `protobuf:"bytes,17,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
+	IsFollowing  bool                   `protobuf:"varint,13,opt,name=is_following,json=isFollowing,proto3" json:"is_following,omitempty"`
+	IsFollowedBy bool                   `protobuf:"varint,14,opt,name=is_followed_by,json=isFollowedBy,proto3" json:"is_followed_by,omitempty"`
+	IsBlockedBy  bool                   `protobuf:"varint,15,opt,name=is_blocked_by,json=isBlockedBy,proto3" json:"is_blocked_by,omitempty"`
+	IsMe         bool                   `protobuf:"varint,16,opt,name=is_me,json=isMe,proto3" json:"is_me,omitempty"`
+	CreateTime   *timestamppb.Timestamp `protobuf:"bytes,17,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
+	// Timestamp of the user's most recent heartbeat. Unset until the user has
+	// ever been seen online. Clients can show "最終アクティブ N 分前".
+	LastSeenTime  *timestamppb.Timestamp `protobuf:"bytes,18,opt,name=last_seen_time,json=lastSeenTime,proto3" json:"last_seen_time,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -296,6 +299,13 @@ func (x *User) GetIsMe() bool {
 func (x *User) GetCreateTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.CreateTime
+	}
+	return nil
+}
+
+func (x *User) GetLastSeenTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.LastSeenTime
 	}
 	return nil
 }
@@ -821,7 +831,7 @@ var File_user_v1_user_proto protoreflect.FileDescriptor
 
 const file_user_v1_user_proto_rawDesc = "" +
 	"\n" +
-	"\x12user/v1/user.proto\x12\auser.v1\x1a\x1cgoogle/api/annotations.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xb4\x05\n" +
+	"\x12user/v1/user.proto\x12\auser.v1\x1a\x1cgoogle/api/annotations.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xf6\x05\n" +
 	"\x04User\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1b\n" +
 	"\tcustom_id\x18\x02 \x01(\tR\bcustomId\x12!\n" +
@@ -844,7 +854,8 @@ const file_user_v1_user_proto_rawDesc = "" +
 	"\ris_blocked_by\x18\x0f \x01(\bR\visBlockedBy\x12\x13\n" +
 	"\x05is_me\x18\x10 \x01(\bR\x04isMe\x12;\n" +
 	"\vcreate_time\x18\x11 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"createTimeB\f\n" +
+	"createTime\x12@\n" +
+	"\x0elast_seen_time\x18\x12 \x01(\v2\x1a.google.protobuf.TimestampR\flastSeenTimeB\f\n" +
 	"\n" +
 	"_biographyB\v\n" +
 	"\t_locationB\n" +
@@ -934,31 +945,32 @@ var file_user_v1_user_proto_goTypes = []any{
 var file_user_v1_user_proto_depIdxs = []int32{
 	0,  // 0: user.v1.User.online_status:type_name -> user.v1.OnlineStatus
 	14, // 1: user.v1.User.create_time:type_name -> google.protobuf.Timestamp
-	1,  // 2: user.v1.UserSettings.default_visibility:type_name -> user.v1.PostVisibility
-	2,  // 3: user.v1.GetMyUserResponse.user:type_name -> user.v1.User
-	2,  // 4: user.v1.GetUserResponse.user:type_name -> user.v1.User
-	2,  // 5: user.v1.UpdateUserRequest.user:type_name -> user.v1.User
-	15, // 6: user.v1.UpdateUserRequest.update_mask:type_name -> google.protobuf.FieldMask
-	2,  // 7: user.v1.UpdateUserResponse.user:type_name -> user.v1.User
-	3,  // 8: user.v1.GetUserSettingsResponse.settings:type_name -> user.v1.UserSettings
-	3,  // 9: user.v1.UpdateUserSettingsRequest.settings:type_name -> user.v1.UserSettings
-	15, // 10: user.v1.UpdateUserSettingsRequest.update_mask:type_name -> google.protobuf.FieldMask
-	3,  // 11: user.v1.UpdateUserSettingsResponse.settings:type_name -> user.v1.UserSettings
-	4,  // 12: user.v1.UserService.GetMyUser:input_type -> user.v1.GetMyUserRequest
-	6,  // 13: user.v1.UserService.GetUser:input_type -> user.v1.GetUserRequest
-	8,  // 14: user.v1.UserService.UpdateUser:input_type -> user.v1.UpdateUserRequest
-	10, // 15: user.v1.UserService.GetUserSettings:input_type -> user.v1.GetUserSettingsRequest
-	12, // 16: user.v1.UserService.UpdateUserSettings:input_type -> user.v1.UpdateUserSettingsRequest
-	5,  // 17: user.v1.UserService.GetMyUser:output_type -> user.v1.GetMyUserResponse
-	7,  // 18: user.v1.UserService.GetUser:output_type -> user.v1.GetUserResponse
-	9,  // 19: user.v1.UserService.UpdateUser:output_type -> user.v1.UpdateUserResponse
-	11, // 20: user.v1.UserService.GetUserSettings:output_type -> user.v1.GetUserSettingsResponse
-	13, // 21: user.v1.UserService.UpdateUserSettings:output_type -> user.v1.UpdateUserSettingsResponse
-	17, // [17:22] is the sub-list for method output_type
-	12, // [12:17] is the sub-list for method input_type
-	12, // [12:12] is the sub-list for extension type_name
-	12, // [12:12] is the sub-list for extension extendee
-	0,  // [0:12] is the sub-list for field type_name
+	14, // 2: user.v1.User.last_seen_time:type_name -> google.protobuf.Timestamp
+	1,  // 3: user.v1.UserSettings.default_visibility:type_name -> user.v1.PostVisibility
+	2,  // 4: user.v1.GetMyUserResponse.user:type_name -> user.v1.User
+	2,  // 5: user.v1.GetUserResponse.user:type_name -> user.v1.User
+	2,  // 6: user.v1.UpdateUserRequest.user:type_name -> user.v1.User
+	15, // 7: user.v1.UpdateUserRequest.update_mask:type_name -> google.protobuf.FieldMask
+	2,  // 8: user.v1.UpdateUserResponse.user:type_name -> user.v1.User
+	3,  // 9: user.v1.GetUserSettingsResponse.settings:type_name -> user.v1.UserSettings
+	3,  // 10: user.v1.UpdateUserSettingsRequest.settings:type_name -> user.v1.UserSettings
+	15, // 11: user.v1.UpdateUserSettingsRequest.update_mask:type_name -> google.protobuf.FieldMask
+	3,  // 12: user.v1.UpdateUserSettingsResponse.settings:type_name -> user.v1.UserSettings
+	4,  // 13: user.v1.UserService.GetMyUser:input_type -> user.v1.GetMyUserRequest
+	6,  // 14: user.v1.UserService.GetUser:input_type -> user.v1.GetUserRequest
+	8,  // 15: user.v1.UserService.UpdateUser:input_type -> user.v1.UpdateUserRequest
+	10, // 16: user.v1.UserService.GetUserSettings:input_type -> user.v1.GetUserSettingsRequest
+	12, // 17: user.v1.UserService.UpdateUserSettings:input_type -> user.v1.UpdateUserSettingsRequest
+	5,  // 18: user.v1.UserService.GetMyUser:output_type -> user.v1.GetMyUserResponse
+	7,  // 19: user.v1.UserService.GetUser:output_type -> user.v1.GetUserResponse
+	9,  // 20: user.v1.UserService.UpdateUser:output_type -> user.v1.UpdateUserResponse
+	11, // 21: user.v1.UserService.GetUserSettings:output_type -> user.v1.GetUserSettingsResponse
+	13, // 22: user.v1.UserService.UpdateUserSettings:output_type -> user.v1.UpdateUserSettingsResponse
+	18, // [18:23] is the sub-list for method output_type
+	13, // [13:18] is the sub-list for method input_type
+	13, // [13:13] is the sub-list for extension type_name
+	13, // [13:13] is the sub-list for extension extendee
+	0,  // [0:13] is the sub-list for field type_name
 }
 
 func init() { file_user_v1_user_proto_init() }

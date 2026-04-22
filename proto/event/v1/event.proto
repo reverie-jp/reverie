@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package event.v1;
+
+import "google/protobuf/timestamp.proto";
+import "notification/v1/notification.proto";
+
+service EventService {
+  // Stream real-time events for the authenticated user. The server keeps the
+  // connection open and pushes EventEnvelope messages as they occur.
+  //
+  // "DB as truth, stream as hint" — clients should fetch state via the
+  // canonical Get/List RPCs on connect, and use stream events only to know
+  // when to refresh or to receive short-lived signals (presence, typing).
+  rpc StreamEvents(StreamEventsRequest) returns (stream StreamEventsResponse);
+}
+
+message StreamEventsRequest {}
+
+// EventEnvelope multiplexes all real-time event types over a single stream.
+// Adding a new event type = new oneof branch, no new RPC.
+message StreamEventsResponse {
+  // Idempotency key. Clients dedupe by this across reconnects.
+  string event_id = 1;
+  google.protobuf.Timestamp create_time = 2;
+
+  oneof payload {
+    KeepAliveEvent keep_alive = 9;
+    NotificationCreatedEvent notification_created = 10;
+  }
+}
+
+// Periodic no-op frame that keeps the underlying chunked HTTP response alive
+// through idle LB / browser throttles. Clients treat absence of *any* frame
+// for ~2x the server interval as a dead connection and reconnect.
+message KeepAliveEvent {}
+
+// Signals a new notification was created for the subscriber. Clients may
+// either render from the embedded payload or refetch via ListNotifications.
+message NotificationCreatedEvent {
+  notification.v1.Notification notification = 1;
+}

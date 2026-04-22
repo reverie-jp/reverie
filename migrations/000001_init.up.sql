@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS users (
     is_private BOOLEAN NOT NULL DEFAULT FALSE,
     following_count INT NOT NULL DEFAULT 0,
     follower_count INT NOT NULL DEFAULT 0,
+    last_seen_time TIMESTAMPTZ,
     create_time TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     update_time TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -106,3 +107,27 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER trg_user_follows_counts
 AFTER INSERT OR DELETE ON user_follows
 FOR EACH ROW EXECUTE FUNCTION user_follow_counts_sync();
+
+CREATE TYPE notification_type AS ENUM (
+    'user_followed',
+    'following_user_call_started'
+);
+
+CREATE TABLE IF NOT EXISTS notifications (
+    id ulid PRIMARY KEY,
+    recipient_user_id ulid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    type notification_type NOT NULL,
+    actor_user_id ulid REFERENCES users(id) ON DELETE CASCADE,
+    resource_name TEXT NOT NULL DEFAULT '',
+    read_time TIMESTAMPTZ,
+    create_time TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_notifications_recipient_created ON notifications (recipient_user_id, create_time DESC);
+CREATE INDEX idx_notifications_recipient_unread ON notifications (recipient_user_id) WHERE read_time IS NULL;
+
+-- Idempotency: same (recipient, type, actor, resource) is not duplicated. Rely
+-- on partial unique index so multiple system notifications with NULL actor can
+-- still coexist via different resource_name.
+CREATE UNIQUE INDEX idx_notifications_dedup
+    ON notifications (recipient_user_id, type, COALESCE(actor_user_id::text, ''), resource_name);

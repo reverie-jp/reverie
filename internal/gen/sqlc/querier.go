@@ -12,19 +12,28 @@ import (
 
 type Querier interface {
 	ClearCallParticipantMutedByHost(ctx context.Context, arg ClearCallParticipantMutedByHostParams) (int64, error)
+	CountUnreadNotifications(ctx context.Context, recipientUserID ulid.ULID) (int32, error)
 	CreateAuthProvider(ctx context.Context, arg CreateAuthProviderParams) error
 	CreateCall(ctx context.Context, arg CreateCallParams) error
 	CreateCallBan(ctx context.Context, arg CreateCallBanParams) error
+	// Inserts a notification if the dedup key is free. Returns the existing row
+	// on conflict, so callers always get the canonical record to publish downstream.
+	CreateNotification(ctx context.Context, arg CreateNotificationParams) (Notification, error)
 	CreateRefreshToken(ctx context.Context, arg CreateRefreshTokenParams) error
 	CreateUser(ctx context.Context, arg CreateUserParams) error
 	CreateUserFollow(ctx context.Context, arg CreateUserFollowParams) error
 	DeleteCallBan(ctx context.Context, arg DeleteCallBanParams) error
 	DeleteExpiredRefreshTokensByUserID(ctx context.Context, userID string) error
+	// Removes notifications matching (recipient, type, actor). Used to clear
+	// user_followed notifications when the follow relationship is undone, so a
+	// re-follow creates a fresh notification instead of hitting the dedup index.
+	DeleteNotificationsByTypeActor(ctx context.Context, arg DeleteNotificationsByTypeActorParams) (int64, error)
 	DeleteRefreshTokenByHash(ctx context.Context, arg DeleteRefreshTokenByHashParams) error
 	DeleteUser(ctx context.Context, id string) error
 	DeleteUserFollow(ctx context.Context, arg DeleteUserFollowParams) error
 	GetActiveCallByUser(ctx context.Context, arg GetActiveCallByUserParams) (Call, error)
 	GetAuthProviderByProvider(ctx context.Context, arg GetAuthProviderByProviderParams) (UserAuthProvider, error)
+	GetNotification(ctx context.Context, id ulid.ULID) (Notification, error)
 	GetRefreshTokenByHash(ctx context.Context, tokenHash string) (RefreshToken, error)
 	GetUserByCustomID(ctx context.Context, customID string) (User, error)
 	HeartbeatCallParticipant(ctx context.Context, arg HeartbeatCallParticipantParams) (int64, error)
@@ -51,13 +60,21 @@ type Querier interface {
 	ListFollowingEdgesForRequester(ctx context.Context, arg ListFollowingEdgesForRequesterParams) ([]ulid.ULID, error)
 	// Keyset pagination by followee_id DESC (ULID). cursor_id="" => first page.
 	ListFollowingIDs(ctx context.Context, arg ListFollowingIDsParams) ([]ulid.ULID, error)
+	// Keyset pagination by id DESC (ULID).
+	ListNotificationsByRecipient(ctx context.Context, arg ListNotificationsByRecipientParams) ([]Notification, error)
 	ListUsersByIDs(ctx context.Context, ids []string) ([]User, error)
 	MarkAllCallParticipantsDisconnected(ctx context.Context, callID ulid.ULID) error
+	MarkAllNotificationsRead(ctx context.Context, recipientUserID ulid.ULID) (int64, error)
 	MarkCallEnded(ctx context.Context, id ulid.ULID) error
 	MarkCallParticipantDisconnected(ctx context.Context, arg MarkCallParticipantDisconnectedParams) (int64, error)
+	MarkNotificationsRead(ctx context.Context, arg MarkNotificationsReadParams) (int64, error)
 	SetCallParticipantMutedByHost(ctx context.Context, arg SetCallParticipantMutedByHostParams) error
 	UpdateCallHost(ctx context.Context, arg UpdateCallHostParams) error
 	UpdateCallVisibility(ctx context.Context, arg UpdateCallVisibilityParams) error
+	// Called by the PresenceService.Heartbeat RPC every ~30s. `last_seen_time`
+	// is not indexed, so Postgres can apply this as a HOT update and avoid
+	// touching users' other indexes.
+	UpdateUserLastSeen(ctx context.Context, id ulid.ULID) error
 	UpsertCallParticipant(ctx context.Context, arg UpsertCallParticipantParams) error
 }
 

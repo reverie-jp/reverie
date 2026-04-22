@@ -13,6 +13,7 @@ type Repository interface {
 	GetUserByCustomID(ctx context.Context, customID string) (*entity.User, error)
 	CreateUser(ctx context.Context, params CreateUserParams) error
 	DeleteUser(ctx context.Context, id ulid.ULID) error
+	UpdateUserLastSeen(ctx context.Context, id ulid.ULID) error
 }
 
 type RepositoryImpl struct {

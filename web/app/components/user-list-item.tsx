@@ -2,6 +2,7 @@ import { useNavigate } from "react-router";
 import type { User } from "~/lib/gen/user/v1/user_pb";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { FollowButton } from "~/components/follow-button";
+import { OnlineDot } from "~/components/online-dot";
 
 export function UserListItem({ user }: { user: User }) {
   const navigate = useNavigate();
@@ -13,6 +14,7 @@ export function UserListItem({ user }: { user: User }) {
       <Avatar className="size-10 shrink-0">
         <AvatarImage src={user.avatarUrl} alt={user.displayName} />
         <AvatarFallback>{user.displayName.slice(0, 2)}</AvatarFallback>
+        <OnlineDot status={user.onlineStatus} />
       </Avatar>
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2">

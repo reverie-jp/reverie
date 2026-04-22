@@ -96,6 +96,48 @@ func (ns NullCallVisibility) Value() (driver.Value, error) {
 	return string(ns.CallVisibility), nil
 }
 
+type NotificationType string
+
+const (
+	NotificationTypeUserFollowed             NotificationType = "user_followed"
+	NotificationTypeFollowingUserCallStarted NotificationType = "following_user_call_started"
+)
+
+func (e *NotificationType) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = NotificationType(s)
+	case string:
+		*e = NotificationType(s)
+	default:
+		return fmt.Errorf("unsupported scan type for NotificationType: %T", src)
+	}
+	return nil
+}
+
+type NullNotificationType struct {
+	NotificationType NotificationType `json:"notification_type"`
+	Valid            bool             `json:"valid"` // Valid is true if NotificationType is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullNotificationType) Scan(value interface{}) error {
+	if value == nil {
+		ns.NotificationType, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.NotificationType.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullNotificationType) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.NotificationType), nil
+}
+
 type Call struct {
 	ID         ulid.ULID      `json:"id"`
 	HostUserID ulid.ULID      `json:"host_user_id"`
@@ -122,6 +164,16 @@ type CallParticipant struct {
 	MutedByHost         bool       `json:"muted_by_host"`
 }
 
+type Notification struct {
+	ID              ulid.ULID        `json:"id"`
+	RecipientUserID ulid.ULID        `json:"recipient_user_id"`
+	Type            NotificationType `json:"type"`
+	ActorUserID     *ulid.ULID       `json:"actor_user_id"`
+	ResourceName    string           `json:"resource_name"`
+	ReadTime        *time.Time       `json:"read_time"`
+	CreateTime      time.Time        `json:"create_time"`
+}
+
 type RefreshToken struct {
 	ID         ulid.ULID `json:"id"`
 	UserID     ulid.ULID `json:"user_id"`
@@ -143,6 +195,7 @@ type User struct {
 	IsPrivate          bool       `json:"is_private"`
 	FollowingCount     int32      `json:"following_count"`
 	FollowerCount      int32      `json:"follower_count"`
+	LastSeenTime       *time.Time `json:"last_seen_time"`
 	CreateTime         time.Time  `json:"create_time"`
 	UpdateTime         time.Time  `json:"update_time"`
 }

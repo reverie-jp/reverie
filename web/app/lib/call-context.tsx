@@ -28,7 +28,10 @@ import { formatCall } from "./resource-name";
 
 const GUEST_DISPLAY_NAME_KEY = "reverie.guest_display_name";
 const REFRESH_MARGIN_MS = 60_000;
-const HEARTBEAT_INTERVAL_MS = 30_000;
+// 20s interval aligned with presence heartbeat. Server stale window is 60s
+// (entity.ParticipantStaleSeconds), so two missed beats still keep the
+// participant connected.
+const HEARTBEAT_INTERVAL_MS = 20_000;
 export const CALL_DEFAULT_VOLUME = 0.7;
 export const CALL_UPDATED_EVENT = "reverie:call_updated";
 
