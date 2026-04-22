@@ -150,8 +150,8 @@ func (q *Queries) IsUserBannedFromCall(ctx context.Context, arg IsUserBannedFrom
 	return banned, err
 }
 
-const listActivePublicCalls = `-- name: ListActivePublicCalls :many
-SELECT DISTINCT c.id, c.host_user_id, c.visibility, c.end_time, c.create_time, c.update_time FROM calls c
+const listActiveCallIDsForFollower = `-- name: ListActiveCallIDsForFollower :many
+SELECT c.id FROM calls c
 WHERE c.visibility IN ('open', 'users_only')
   AND c.end_time IS NULL
   AND EXISTS (
@@ -160,40 +160,109 @@ WHERE c.visibility IN ('open', 'users_only')
       AND p.last_seen_time > NOW() - ($1::int || ' seconds')::interval
       AND p.disconnected_time IS NULL
   )
-  AND ($2::text = '' OR c.id < $2::ulid)
+  AND (
+    EXISTS (
+      SELECT 1 FROM user_follows uf
+      WHERE uf.follower_id = $2::ulid
+        AND uf.followee_id = c.host_user_id
+    )
+    OR EXISTS (
+      SELECT 1 FROM call_participants cp
+      JOIN user_follows uf ON uf.followee_id = cp.user_id
+      WHERE cp.call_id = c.id
+        AND cp.user_id IS NOT NULL
+        AND uf.follower_id = $2::ulid
+        AND cp.last_seen_time > NOW() - ($1::int || ' seconds')::interval
+        AND cp.disconnected_time IS NULL
+    )
+  )
+  AND ($3::text = '' OR c.id < $3::ulid)
 ORDER BY c.id DESC
-LIMIT $3::int
+LIMIT $4::int
 `
 
-type ListActivePublicCallsParams struct {
-	StaleSeconds int32  `json:"stale_seconds"`
-	CursorID     string `json:"cursor_id"`
-	PageSize     int32  `json:"page_size"`
+type ListActiveCallIDsForFollowerParams struct {
+	StaleSeconds int32     `json:"stale_seconds"`
+	FollowerID   ulid.ULID `json:"follower_id"`
+	CursorID     string    `json:"cursor_id"`
+	PageSize     int32     `json:"page_size"`
 }
 
-// Returns all active non-hidden calls (OPEN and USERS_ONLY). The usecase
-// filters further based on the caller's auth state. Keyset paginated by
-// ULID (monotonic, DESC). cursor_id="" means first page.
-func (q *Queries) ListActivePublicCalls(ctx context.Context, arg ListActivePublicCallsParams) ([]Call, error) {
-	rows, err := q.db.Query(ctx, listActivePublicCalls, arg.StaleSeconds, arg.CursorID, arg.PageSize)
+// Paginated call IDs visible on the caller's following-only timeline:
+// active OPEN or USERS_ONLY calls where a followed user is either the host
+// or a currently-connected participant. The follow filter is pushed into SQL
+// so we never materialize the full follow set in the application layer.
+func (q *Queries) ListActiveCallIDsForFollower(ctx context.Context, arg ListActiveCallIDsForFollowerParams) ([]ulid.ULID, error) {
+	rows, err := q.db.Query(ctx, listActiveCallIDsForFollower,
+		arg.StaleSeconds,
+		arg.FollowerID,
+		arg.CursorID,
+		arg.PageSize,
+	)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Call{}
+	items := []ulid.ULID{}
 	for rows.Next() {
-		var i Call
-		if err := rows.Scan(
-			&i.ID,
-			&i.HostUserID,
-			&i.Visibility,
-			&i.EndTime,
-			&i.CreateTime,
-			&i.UpdateTime,
-		); err != nil {
+		var id ulid.ULID
+		if err := rows.Scan(&id); err != nil {
 			return nil, err
 		}
-		items = append(items, i)
+		items = append(items, id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listActivePublicCallIDs = `-- name: ListActivePublicCallIDs :many
+SELECT c.id FROM calls c
+WHERE (
+    c.visibility = 'open'
+    OR ($1::bool AND c.visibility = 'users_only')
+  )
+  AND c.end_time IS NULL
+  AND EXISTS (
+    SELECT 1 FROM call_participants p
+    WHERE p.call_id = c.id
+      AND p.last_seen_time > NOW() - ($2::int || ' seconds')::interval
+      AND p.disconnected_time IS NULL
+  )
+  AND ($3::text = '' OR c.id < $3::ulid)
+ORDER BY c.id DESC
+LIMIT $4::int
+`
+
+type ListActivePublicCallIDsParams struct {
+	IncludeUsersOnly bool   `json:"include_users_only"`
+	StaleSeconds     int32  `json:"stale_seconds"`
+	CursorID         string `json:"cursor_id"`
+	PageSize         int32  `json:"page_size"`
+}
+
+// Paginated call IDs for the home screen. Returns active OPEN calls for
+// everyone; USERS_ONLY is included when include_users_only is true
+// (authenticated caller). Keyset paginated by ULID (monotonic, DESC).
+func (q *Queries) ListActivePublicCallIDs(ctx context.Context, arg ListActivePublicCallIDsParams) ([]ulid.ULID, error) {
+	rows, err := q.db.Query(ctx, listActivePublicCallIDs,
+		arg.IncludeUsersOnly,
+		arg.StaleSeconds,
+		arg.CursorID,
+		arg.PageSize,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ulid.ULID{}
+	for rows.Next() {
+		var id ulid.ULID
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err

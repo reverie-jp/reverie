@@ -5,6 +5,7 @@ import (
 
 	"reverie.jp/reverie/internal/gen/pb/call/v1/callv1connect"
 	"reverie.jp/reverie/internal/gen/sqlc"
+	callgw "reverie.jp/reverie/internal/modules/call/gateway"
 	"reverie.jp/reverie/internal/modules/call/handler"
 	callrepo "reverie.jp/reverie/internal/modules/call/repository"
 	"reverie.jp/reverie/internal/modules/call/usecase"
@@ -14,11 +15,13 @@ import (
 
 func InitModule(q *sqlc.Queries, userGateway usergw.Gateway, lk *livekit.Client, tokenTTL time.Duration) callv1connect.CallServiceHandler {
 	callRepo := callrepo.New(q)
+	callGateway := callgw.New(callRepo, userGateway)
 
 	createCall := usecase.NewCreateCall(callRepo, userGateway)
 	getCall := usecase.NewGetCall(callRepo, userGateway)
 	updateCall := usecase.NewUpdateCall(callRepo, userGateway)
-	listPublicCalls := usecase.NewListPublicCalls(callRepo, userGateway)
+	listPublicCalls := usecase.NewListPublicCalls(callRepo, callGateway)
+	listFollowingCalls := usecase.NewListFollowingCalls(callRepo, callGateway)
 	getUserParticipatingCall := usecase.NewGetUserParticipatingCall(callRepo, userGateway)
 	joinCall := usecase.NewJoinCall(callRepo, userGateway, lk, tokenTTL)
 	heartbeatCall := usecase.NewHeartbeatCall(callRepo)
@@ -37,6 +40,7 @@ func InitModule(q *sqlc.Queries, userGateway usergw.Gateway, lk *livekit.Client,
 		getCall,
 		updateCall,
 		listPublicCalls,
+		listFollowingCalls,
 		getUserParticipatingCall,
 		joinCall,
 		heartbeatCall,

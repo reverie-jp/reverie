@@ -526,6 +526,92 @@ export class ListPublicCallsResponse extends Message<ListPublicCallsResponse> {
 }
 
 /**
+ * @generated from message call.v1.ListFollowingCallsRequest
+ */
+export class ListFollowingCallsRequest extends Message<ListFollowingCallsRequest> {
+  /**
+   * @generated from field: int32 page_size = 1;
+   */
+  pageSize = 0;
+
+  /**
+   * @generated from field: string page_token = 2;
+   */
+  pageToken = "";
+
+  constructor(data?: PartialMessage<ListFollowingCallsRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "call.v1.ListFollowingCallsRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "page_size", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 2, name: "page_token", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListFollowingCallsRequest {
+    return new ListFollowingCallsRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ListFollowingCallsRequest {
+    return new ListFollowingCallsRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ListFollowingCallsRequest {
+    return new ListFollowingCallsRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ListFollowingCallsRequest | PlainMessage<ListFollowingCallsRequest> | undefined, b: ListFollowingCallsRequest | PlainMessage<ListFollowingCallsRequest> | undefined): boolean {
+    return proto3.util.equals(ListFollowingCallsRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message call.v1.ListFollowingCallsResponse
+ */
+export class ListFollowingCallsResponse extends Message<ListFollowingCallsResponse> {
+  /**
+   * @generated from field: repeated call.v1.Call calls = 1;
+   */
+  calls: Call[] = [];
+
+  /**
+   * @generated from field: string next_page_token = 2;
+   */
+  nextPageToken = "";
+
+  constructor(data?: PartialMessage<ListFollowingCallsResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "call.v1.ListFollowingCallsResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "calls", kind: "message", T: Call, repeated: true },
+    { no: 2, name: "next_page_token", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ListFollowingCallsResponse {
+    return new ListFollowingCallsResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ListFollowingCallsResponse {
+    return new ListFollowingCallsResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ListFollowingCallsResponse {
+    return new ListFollowingCallsResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ListFollowingCallsResponse | PlainMessage<ListFollowingCallsResponse> | undefined, b: ListFollowingCallsResponse | PlainMessage<ListFollowingCallsResponse> | undefined): boolean {
+    return proto3.util.equals(ListFollowingCallsResponse, a, b);
+  }
+}
+
+/**
  * @generated from message call.v1.GetUserParticipatingCallRequest
  */
 export class GetUserParticipatingCallRequest extends Message<GetUserParticipatingCallRequest> {

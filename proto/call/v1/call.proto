@@ -40,6 +40,14 @@ service CallService {
     };
   }
 
+  // List active calls hosted by users the authenticated caller follows.
+  // Returns OPEN + USERS_ONLY calls in create_time descending order.
+  rpc ListFollowingCalls(ListFollowingCallsRequest) returns (ListFollowingCallsResponse) {
+    option (google.api.http) = {
+      get: "/v1/calls:listFollowing"
+    };
+  }
+
   // Get the call the given user is currently participating in (if any and
   // if visible to the caller). Null means the user is not in any visible
   // call.
@@ -227,6 +235,16 @@ message ListPublicCallsResponse {
   repeated Call calls = 1;
   // Opaque cursor to pass as page_token to fetch the next page. Empty means
   // there are no further pages.
+  string next_page_token = 2;
+}
+
+message ListFollowingCallsRequest {
+  int32 page_size = 1;
+  string page_token = 2;
+}
+
+message ListFollowingCallsResponse {
+  repeated Call calls = 1;
   string next_page_token = 2;
 }
 

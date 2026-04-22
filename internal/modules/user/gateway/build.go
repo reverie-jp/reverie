@@ -17,23 +17,30 @@ func (g *gatewayImpl) BuildView(ctx context.Context, requesterID, id ulid.ULID) 
 	return views[0], nil
 }
 
+// BuildListViews composes UserView from pure user entities and the requester's
+// follow relationship flags. Follow counts live on entity.User itself
+// (denormalized columns maintained by the user_follows trigger).
 func (g *gatewayImpl) BuildListViews(ctx context.Context, requesterID ulid.ULID, ids []ulid.ULID) ([]*UserView, error) {
 	if len(ids) == 0 {
 		return []*UserView{}, nil
 	}
-
 	users, err := g.repo.ListUsersByIDs(ctx, ids)
 	if err != nil {
 		return nil, err
 	}
-
+	rels, err := g.followGateway.RelationshipsByUserIDs(ctx, requesterID, ids)
+	if err != nil {
+		return nil, err
+	}
 	views := make([]*UserView, len(users))
 	for i, u := range users {
+		r := rels[u.ID]
 		views[i] = &UserView{
-			User: u,
-			IsMe: u.ID == requesterID,
+			User:         u,
+			IsMe:         !requesterID.IsZero() && u.ID == requesterID,
+			IsFollowing:  r.IsFollowing,
+			IsFollowedBy: r.IsFollowedBy,
 		}
 	}
-
 	return views, nil
 }

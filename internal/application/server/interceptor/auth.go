@@ -9,6 +9,7 @@ import (
 
 	"reverie.jp/reverie/internal/gen/pb/account/v1/accountv1connect"
 	"reverie.jp/reverie/internal/gen/pb/call/v1/callv1connect"
+	"reverie.jp/reverie/internal/gen/pb/follow/v1/followv1connect"
 	"reverie.jp/reverie/internal/gen/pb/user/v1/userv1connect"
 	"reverie.jp/reverie/internal/platform/jwt"
 	"reverie.jp/reverie/internal/platform/ulid"
@@ -49,6 +50,8 @@ var optionalAuthProcedures = map[string]bool{
 	callv1connect.CallServiceHeartbeatCallProcedure:            true,
 	callv1connect.CallServiceLeaveCallProcedure:                true,
 	userv1connect.UserServiceGetUserProcedure:                  true,
+	followv1connect.FollowServiceListFollowingUsersProcedure:   true,
+	followv1connect.FollowServiceListUserFollowersProcedure:    true,
 }
 
 func AuthInterceptor(jwtManager *jwt.Manager) connect.UnaryInterceptorFunc {

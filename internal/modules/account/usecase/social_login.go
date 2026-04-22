@@ -8,6 +8,7 @@ import (
 	"reverie.jp/reverie/internal/application/transaction"
 	"reverie.jp/reverie/internal/gen/sqlc"
 	accountrepo "reverie.jp/reverie/internal/modules/account/repository"
+	followgw "reverie.jp/reverie/internal/modules/follow/gateway"
 	usergw "reverie.jp/reverie/internal/modules/user/gateway"
 	"reverie.jp/reverie/internal/platform/google"
 	"reverie.jp/reverie/internal/platform/jwt"
@@ -104,7 +105,7 @@ func (uc *SocialLogin) createNewUser(ctx context.Context, userInfo *google.UserI
 	}
 
 	err = uc.tx.WithTx(ctx, func(q sqlc.Querier) error {
-		txUserGw := usergw.New(q)
+		txUserGw := usergw.New(q, followgw.New(q))
 		txAccountRepo := accountrepo.New(q)
 
 		if err := txUserGw.CreateUser(ctx, usergw.CreateUserParams{

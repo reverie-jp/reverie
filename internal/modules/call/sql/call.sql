@@ -11,11 +11,32 @@ UPDATE calls
 SET visibility = sqlc.arg(visibility), update_time = NOW()
 WHERE id = sqlc.arg(id)::ulid;
 
--- name: ListActivePublicCalls :many
--- Returns all active non-hidden calls (OPEN and USERS_ONLY). The usecase
--- filters further based on the caller's auth state. Keyset paginated by
--- ULID (monotonic, DESC). cursor_id="" means first page.
-SELECT DISTINCT c.* FROM calls c
+-- name: ListActivePublicCallIDs :many
+-- Paginated call IDs for the home screen. Returns active OPEN calls for
+-- everyone; USERS_ONLY is included when include_users_only is true
+-- (authenticated caller). Keyset paginated by ULID (monotonic, DESC).
+SELECT c.id FROM calls c
+WHERE (
+    c.visibility = 'open'
+    OR (sqlc.arg(include_users_only)::bool AND c.visibility = 'users_only')
+  )
+  AND c.end_time IS NULL
+  AND EXISTS (
+    SELECT 1 FROM call_participants p
+    WHERE p.call_id = c.id
+      AND p.last_seen_time > NOW() - (sqlc.arg(stale_seconds)::int || ' seconds')::interval
+      AND p.disconnected_time IS NULL
+  )
+  AND (sqlc.arg(cursor_id)::text = '' OR c.id < sqlc.arg(cursor_id)::ulid)
+ORDER BY c.id DESC
+LIMIT sqlc.arg(page_size)::int;
+
+-- name: ListActiveCallIDsForFollower :many
+-- Paginated call IDs visible on the caller's following-only timeline:
+-- active OPEN or USERS_ONLY calls where a followed user is either the host
+-- or a currently-connected participant. The follow filter is pushed into SQL
+-- so we never materialize the full follow set in the application layer.
+SELECT c.id FROM calls c
 WHERE c.visibility IN ('open', 'users_only')
   AND c.end_time IS NULL
   AND EXISTS (
@@ -23,6 +44,22 @@ WHERE c.visibility IN ('open', 'users_only')
     WHERE p.call_id = c.id
       AND p.last_seen_time > NOW() - (sqlc.arg(stale_seconds)::int || ' seconds')::interval
       AND p.disconnected_time IS NULL
+  )
+  AND (
+    EXISTS (
+      SELECT 1 FROM user_follows uf
+      WHERE uf.follower_id = sqlc.arg(follower_id)::ulid
+        AND uf.followee_id = c.host_user_id
+    )
+    OR EXISTS (
+      SELECT 1 FROM call_participants cp
+      JOIN user_follows uf ON uf.followee_id = cp.user_id
+      WHERE cp.call_id = c.id
+        AND cp.user_id IS NOT NULL
+        AND uf.follower_id = sqlc.arg(follower_id)::ulid
+        AND cp.last_seen_time > NOW() - (sqlc.arg(stale_seconds)::int || ' seconds')::interval
+        AND cp.disconnected_time IS NULL
+    )
   )
   AND (sqlc.arg(cursor_id)::text = '' OR c.id < sqlc.arg(cursor_id)::ulid)
 ORDER BY c.id DESC

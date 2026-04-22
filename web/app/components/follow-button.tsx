@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "~/components/ui/button";
+import { followClient, tokenStore } from "~/lib/api-client";
+import { formatUser } from "~/lib/resource-name";
 import {
   ConfirmActionDialog,
   type ConfirmActionType,
@@ -44,13 +46,43 @@ export function FollowButton({
   const [isMuted, setIsMuted] = useState(false);
   const [isRepostMuted, setIsRepostMuted] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
+  const [pending, setPending] = useState(false);
   const [confirmAction, setConfirmAction] = useState<ConfirmActionType | null>(
     null,
   );
 
+  useEffect(() => {
+    setIsFollowing(initialFollowing);
+  }, [initialFollowing]);
+
   const updateFollowing = (value: boolean) => {
     setIsFollowing(value);
     onFollowChange?.(value);
+  };
+
+  const applyFollow = async (next: boolean) => {
+    if (!tokenStore.getAccessToken()) {
+      window.location.href = `/login?returnTo=${encodeURIComponent(
+        window.location.pathname,
+      )}`;
+      return;
+    }
+    const previous = isFollowing;
+    updateFollowing(next);
+    setPending(true);
+    try {
+      const name = formatUser(customId);
+      if (next) {
+        await followClient.followUser({ name });
+      } else {
+        await followClient.unfollowUser({ name });
+      }
+    } catch (err) {
+      console.error("follow toggle failed:", err);
+      updateFollowing(previous);
+    } finally {
+      setPending(false);
+    }
   };
 
   const updateBlocked = (value: boolean) => {
@@ -83,13 +115,14 @@ export function FollowButton({
       <div className="flex items-center">
         <Button
           variant={isFollowing ? "outline" : "default"}
+          disabled={pending}
           className={`rounded-r-none rounded-l-full ${btnHeight} ${btnPx}`}
           onClick={(e) => {
             e.preventDefault();
             if (isFollowing) {
               setConfirmAction("unfollow");
             } else {
-              updateFollowing(true);
+              void applyFollow(true);
             }
           }}
         >
@@ -188,12 +221,12 @@ export function FollowButton({
         action={confirmAction}
         customId={customId}
         onConfirm={() => {
-          if (confirmAction === "unfollow") updateFollowing(false);
+          if (confirmAction === "unfollow") void applyFollow(false);
           if (confirmAction === "mute") setIsMuted(true);
           if (confirmAction === "repost-mute") setIsRepostMuted(true);
           if (confirmAction === "block") {
             updateBlocked(true);
-            updateFollowing(false);
+            void applyFollow(false);
           }
           setConfirmAction(null);
         }}

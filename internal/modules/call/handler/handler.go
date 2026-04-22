@@ -11,6 +11,7 @@ type Handler struct {
 	getCall                  *usecase.GetCall
 	updateCall               *usecase.UpdateCall
 	listPublicCalls          *usecase.ListPublicCalls
+	listFollowingCalls       *usecase.ListFollowingCalls
 	getUserParticipatingCall *usecase.GetUserParticipatingCall
 	joinCall                 *usecase.JoinCall
 	heartbeatCall            *usecase.HeartbeatCall
@@ -30,6 +31,7 @@ func New(
 	getCall *usecase.GetCall,
 	updateCall *usecase.UpdateCall,
 	listPublicCalls *usecase.ListPublicCalls,
+	listFollowingCalls *usecase.ListFollowingCalls,
 	getUserParticipatingCall *usecase.GetUserParticipatingCall,
 	joinCall *usecase.JoinCall,
 	heartbeatCall *usecase.HeartbeatCall,
@@ -48,6 +50,7 @@ func New(
 		getCall:                  getCall,
 		updateCall:               updateCall,
 		listPublicCalls:          listPublicCalls,
+		listFollowingCalls:       listFollowingCalls,
 		getUserParticipatingCall: getUserParticipatingCall,
 		joinCall:                 joinCall,
 		heartbeatCall:            heartbeatCall,

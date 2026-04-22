@@ -5,13 +5,16 @@ import (
 
 	"reverie.jp/reverie/internal/domain/entity"
 	"reverie.jp/reverie/internal/gen/sqlc"
+	followgw "reverie.jp/reverie/internal/modules/follow/gateway"
 	"reverie.jp/reverie/internal/modules/user/repository"
 	"reverie.jp/reverie/internal/platform/ulid"
 )
 
 type UserView struct {
-	User *entity.User
-	IsMe bool
+	User         *entity.User
+	IsMe         bool
+	IsFollowing  bool
+	IsFollowedBy bool
 }
 
 type CreateUserParams struct {
@@ -31,9 +34,13 @@ type Gateway interface {
 }
 
 type gatewayImpl struct {
-	repo repository.Repository
+	repo          repository.Repository
+	followGateway followgw.Gateway
 }
 
-func New(q sqlc.Querier) Gateway {
-	return &gatewayImpl{repo: repository.New(q)}
+func New(q sqlc.Querier, followGateway followgw.Gateway) Gateway {
+	return &gatewayImpl{
+		repo:          repository.New(q),
+		followGateway: followGateway,
+	}
 }

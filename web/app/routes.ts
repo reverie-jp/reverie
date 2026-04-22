@@ -10,4 +10,6 @@ export default [
   // (the param must follow `/`), so we catch any top-level handle and
   // validate the `@` prefix inside the component.
   route(":handle", "routes/user.tsx"),
+  route(":handle/following", "routes/user.connections.tsx", { id: "user-following" }),
+  route(":handle/followers", "routes/user.connections.tsx", { id: "user-followers" }),
 ] satisfies RouteConfig;

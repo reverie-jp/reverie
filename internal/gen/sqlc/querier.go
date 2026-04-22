@@ -17,23 +17,40 @@ type Querier interface {
 	CreateCallBan(ctx context.Context, arg CreateCallBanParams) error
 	CreateRefreshToken(ctx context.Context, arg CreateRefreshTokenParams) error
 	CreateUser(ctx context.Context, arg CreateUserParams) error
+	CreateUserFollow(ctx context.Context, arg CreateUserFollowParams) error
 	DeleteCallBan(ctx context.Context, arg DeleteCallBanParams) error
 	DeleteExpiredRefreshTokensByUserID(ctx context.Context, userID string) error
 	DeleteRefreshTokenByHash(ctx context.Context, arg DeleteRefreshTokenByHashParams) error
 	DeleteUser(ctx context.Context, id string) error
+	DeleteUserFollow(ctx context.Context, arg DeleteUserFollowParams) error
 	GetActiveCallByUser(ctx context.Context, arg GetActiveCallByUserParams) (Call, error)
 	GetAuthProviderByProvider(ctx context.Context, arg GetAuthProviderByProviderParams) (UserAuthProvider, error)
 	GetRefreshTokenByHash(ctx context.Context, tokenHash string) (RefreshToken, error)
 	GetUserByCustomID(ctx context.Context, customID string) (User, error)
 	HeartbeatCallParticipant(ctx context.Context, arg HeartbeatCallParticipantParams) (int64, error)
+	IsFollowing(ctx context.Context, arg IsFollowingParams) (bool, error)
 	IsUserBannedFromCall(ctx context.Context, arg IsUserBannedFromCallParams) (bool, error)
-	// Returns all active non-hidden calls (OPEN and USERS_ONLY). The usecase
-	// filters further based on the caller's auth state. Keyset paginated by
-	// ULID (monotonic, DESC). cursor_id="" means first page.
-	ListActivePublicCalls(ctx context.Context, arg ListActivePublicCallsParams) ([]Call, error)
+	// Paginated call IDs visible on the caller's following-only timeline:
+	// active OPEN or USERS_ONLY calls where a followed user is either the host
+	// or a currently-connected participant. The follow filter is pushed into SQL
+	// so we never materialize the full follow set in the application layer.
+	ListActiveCallIDsForFollower(ctx context.Context, arg ListActiveCallIDsForFollowerParams) ([]ulid.ULID, error)
+	// Paginated call IDs for the home screen. Returns active OPEN calls for
+	// everyone; USERS_ONLY is included when include_users_only is true
+	// (authenticated caller). Keyset paginated by ULID (monotonic, DESC).
+	ListActivePublicCallIDs(ctx context.Context, arg ListActivePublicCallIDsParams) ([]ulid.ULID, error)
 	ListCallBans(ctx context.Context, arg ListCallBansParams) ([]CallBan, error)
 	ListCallParticipants(ctx context.Context, callID ulid.ULID) ([]CallParticipant, error)
 	ListCallsByIDs(ctx context.Context, ids []string) ([]Call, error)
+	// IDs from target set that follow the requester. Used for batched
+	// is_followed_by computation.
+	ListFollowerEdgesForRequester(ctx context.Context, arg ListFollowerEdgesForRequesterParams) ([]ulid.ULID, error)
+	ListFollowerIDs(ctx context.Context, arg ListFollowerIDsParams) ([]ulid.ULID, error)
+	// IDs from target set that the requester follows. Used for batched
+	// is_following computation.
+	ListFollowingEdgesForRequester(ctx context.Context, arg ListFollowingEdgesForRequesterParams) ([]ulid.ULID, error)
+	// Keyset pagination by followee_id DESC (ULID). cursor_id="" => first page.
+	ListFollowingIDs(ctx context.Context, arg ListFollowingIDsParams) ([]ulid.ULID, error)
 	ListUsersByIDs(ctx context.Context, ids []string) ([]User, error)
 	MarkAllCallParticipantsDisconnected(ctx context.Context, callID ulid.ULID) error
 	MarkCallEnded(ctx context.Context, id ulid.ULID) error

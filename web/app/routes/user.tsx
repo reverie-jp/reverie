@@ -214,14 +214,22 @@ export default function UserRoute() {
             </div>
 
             <div className="flex gap-4 mt-3 text-sm">
-              <span>
+              <button
+                type="button"
+                onClick={() => navigate(`/@${user.customId}/following`)}
+                className="hover:underline"
+              >
                 <span className="font-bold">{user.followingCount}</span>{" "}
                 <span className="text-muted-foreground">フォロー中</span>
-              </span>
-              <span>
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate(`/@${user.customId}/followers`)}
+                className="hover:underline"
+              >
                 <span className="font-bold">{user.followerCount}</span>{" "}
                 <span className="text-muted-foreground">フォロワー</span>
-              </span>
+              </button>
             </div>
           </>
         )}

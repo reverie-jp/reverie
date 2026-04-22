@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { BanCallParticipantRequest, BanCallParticipantResponse, CreateCallRequest, CreateCallResponse, EndCallRequest, EndCallResponse, GetCallRequest, GetCallResponse, GetUserParticipatingCallRequest, GetUserParticipatingCallResponse, HeartbeatCallRequest, HeartbeatCallResponse, JoinCallRequest, JoinCallResponse, KickCallParticipantRequest, KickCallParticipantResponse, LeaveCallRequest, LeaveCallResponse, ListCallBansRequest, ListCallBansResponse, ListPublicCallsRequest, ListPublicCallsResponse, MuteCallParticipantRequest, MuteCallParticipantResponse, TransferCallHostRequest, TransferCallHostResponse, UnbanCallParticipantRequest, UnbanCallParticipantResponse, UnmuteCallParticipantRequest, UnmuteCallParticipantResponse, UpdateCallRequest, UpdateCallResponse } from "./call_pb.js";
+import { BanCallParticipantRequest, BanCallParticipantResponse, CreateCallRequest, CreateCallResponse, EndCallRequest, EndCallResponse, GetCallRequest, GetCallResponse, GetUserParticipatingCallRequest, GetUserParticipatingCallResponse, HeartbeatCallRequest, HeartbeatCallResponse, JoinCallRequest, JoinCallResponse, KickCallParticipantRequest, KickCallParticipantResponse, LeaveCallRequest, LeaveCallResponse, ListCallBansRequest, ListCallBansResponse, ListFollowingCallsRequest, ListFollowingCallsResponse, ListPublicCallsRequest, ListPublicCallsResponse, MuteCallParticipantRequest, MuteCallParticipantResponse, TransferCallHostRequest, TransferCallHostResponse, UnbanCallParticipantRequest, UnbanCallParticipantResponse, UnmuteCallParticipantRequest, UnmuteCallParticipantResponse, UpdateCallRequest, UpdateCallResponse } from "./call_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -56,6 +56,18 @@ export const CallService = {
       name: "ListPublicCalls",
       I: ListPublicCallsRequest,
       O: ListPublicCallsResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * List active calls hosted by users the authenticated caller follows.
+     * Returns OPEN + USERS_ONLY calls in create_time descending order.
+     *
+     * @generated from rpc call.v1.CallService.ListFollowingCalls
+     */
+    listFollowingCalls: {
+      name: "ListFollowingCalls",
+      I: ListFollowingCallsRequest,
+      O: ListFollowingCallsResponse,
       kind: MethodKind.Unary,
     },
     /**

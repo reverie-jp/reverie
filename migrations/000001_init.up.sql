@@ -11,6 +11,8 @@ CREATE TABLE IF NOT EXISTS users (
     avatar_url TEXT,
     banner_url TEXT,
     is_private BOOLEAN NOT NULL DEFAULT FALSE,
+    following_count INT NOT NULL DEFAULT 0,
+    follower_count INT NOT NULL DEFAULT 0,
     create_time TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     update_time TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -75,3 +77,32 @@ CREATE TABLE IF NOT EXISTS call_bans (
     create_time TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     PRIMARY KEY (call_id, user_id)
 );
+
+CREATE TABLE IF NOT EXISTS user_follows (
+    follower_id ulid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    followee_id ulid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    create_time TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (follower_id, followee_id),
+    CHECK (follower_id <> followee_id)
+);
+
+CREATE INDEX idx_user_follows_followee ON user_follows(followee_id, create_time DESC);
+CREATE INDEX idx_user_follows_follower ON user_follows(follower_id, create_time DESC);
+
+-- Maintain denormalized follow counts on users so reads don't scan user_follows.
+CREATE FUNCTION user_follow_counts_sync() RETURNS TRIGGER AS $$
+BEGIN
+    IF TG_OP = 'INSERT' THEN
+        UPDATE users SET following_count = following_count + 1 WHERE id = NEW.follower_id;
+        UPDATE users SET follower_count = follower_count + 1 WHERE id = NEW.followee_id;
+    ELSIF TG_OP = 'DELETE' THEN
+        UPDATE users SET following_count = GREATEST(following_count - 1, 0) WHERE id = OLD.follower_id;
+        UPDATE users SET follower_count = GREATEST(follower_count - 1, 0) WHERE id = OLD.followee_id;
+    END IF;
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_user_follows_counts
+AFTER INSERT OR DELETE ON user_follows
+FOR EACH ROW EXECUTE FUNCTION user_follow_counts_sync();

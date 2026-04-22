@@ -11,17 +11,19 @@ func ToUser(row *sqlc.User) *entity.User {
 	}
 
 	return &entity.User{
-		ID:                row.ID,
-		CustomID:          row.CustomID,
+		ID:                 row.ID,
+		CustomID:           row.CustomID,
 		CustomIDChangeTime: row.CustomIDChangeTime,
-		DisplayName:       row.DisplayName,
-		Biography:         row.Biography,
-		Location:          row.Location,
-		Website:           row.Website,
-		AvatarURL:         row.AvatarUrl,
-		BannerURL:         row.BannerUrl,
-		IsPrivate:         row.IsPrivate,
-		CreateTime:        row.CreateTime,
-		UpdateTime:        row.UpdateTime,
+		DisplayName:        row.DisplayName,
+		Biography:          row.Biography,
+		Location:           row.Location,
+		Website:            row.Website,
+		AvatarURL:          row.AvatarUrl,
+		BannerURL:          row.BannerUrl,
+		IsPrivate:          row.IsPrivate,
+		FollowingCount:     row.FollowingCount,
+		FollowerCount:      row.FollowerCount,
+		CreateTime:         row.CreateTime,
+		UpdateTime:         row.UpdateTime,
 	}
 }

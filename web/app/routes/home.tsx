@@ -1,9 +1,15 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { CallVisibility, type Call } from "~/lib/gen/call/v1/call_pb";
 import { callClient, tokenStore } from "~/lib/api-client";
 import { parseCall } from "~/lib/resource-name";
 import { Button } from "~/components/ui/button";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "~/components/ui/tabs";
 
 type VisibilityChoice = "OPEN" | "USERS_ONLY" | "LOCKED";
 
@@ -24,14 +30,41 @@ function toProtoVisibility(v: VisibilityChoice): CallVisibility {
   }
 }
 
+function CallListItem({
+  call,
+  onJoin,
+}: {
+  call: Call;
+  onJoin: (id: string) => void;
+}) {
+  const callId = parseCall(call.name);
+  return (
+    <li className="rounded-md border p-3 flex items-center justify-between">
+      <div className="min-w-0">
+        <p className="text-xs font-mono truncate">{callId}</p>
+        <p className="text-[10px] text-muted-foreground truncate">
+          host: {call.host?.displayName ?? "unknown"}
+          {call.host?.customId ? ` @${call.host.customId}` : ""}
+        </p>
+      </div>
+      <Button size="sm" variant="outline" onClick={() => onJoin(callId)}>
+        参加
+      </Button>
+    </li>
+  );
+}
+
 export default function Home() {
   const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [visibility, setVisibility] = useState<VisibilityChoice>("OPEN");
   const [creating, setCreating] = useState(false);
   const [joinId, setJoinId] = useState("");
-  const [openCalls, setOpenCalls] = useState<Call[]>([]);
+  const [publicCalls, setPublicCalls] = useState<Call[]>([]);
+  const [followingCalls, setFollowingCalls] = useState<Call[]>([]);
+  const [followingLoading, setFollowingLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [tab, setTab] = useState<"public" | "following">("public");
 
   useEffect(() => {
     setIsAuthenticated(Boolean(tokenStore.getAccessToken()));
@@ -42,7 +75,7 @@ export default function Home() {
     (async () => {
       try {
         const res = await callClient.listPublicCalls({});
-        if (!cancelled) setOpenCalls(res.calls);
+        if (!cancelled) setPublicCalls(res.calls);
       } catch (err) {
         console.error("ListPublicCalls failed:", err);
       }
@@ -51,6 +84,24 @@ export default function Home() {
       cancelled = true;
     };
   }, []);
+
+  const fetchFollowing = useCallback(async () => {
+    setFollowingLoading(true);
+    try {
+      const res = await callClient.listFollowingCalls({});
+      setFollowingCalls(res.calls);
+    } catch (err) {
+      console.error("ListFollowingCalls failed:", err);
+    } finally {
+      setFollowingLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    if (tab !== "following") return;
+    void fetchFollowing();
+  }, [isAuthenticated, tab, fetchFollowing]);
 
   const handleCreate = async () => {
     setCreating(true);
@@ -74,8 +125,10 @@ export default function Home() {
     navigate(`/calls/${joinId.trim()}`);
   };
 
+  const handleJoinCall = (id: string) => navigate(`/calls/${id}`);
+
   return (
-    <div className="w-full min-h-full flex flex-col items-center justify-center px-6 py-8">
+    <div className="w-full min-h-full flex flex-col items-center px-6 py-8">
       <div className="w-full max-w-md flex flex-col gap-8">
         {isAuthenticated && (
           <div className="flex flex-col gap-3">
@@ -127,41 +180,58 @@ export default function Home() {
           </Button>
         </div>
 
-        <div className="flex flex-col gap-2">
-          <p className="text-sm font-medium">公開中の通話</p>
-          {openCalls.length === 0 ? (
-            <p className="text-xs text-muted-foreground">
-              現在公開中の通話はありません
-            </p>
-          ) : (
-            <ul className="flex flex-col gap-2">
-              {openCalls.map((call) => {
-                const callId = parseCall(call.name);
-                return (
-                  <li
+        <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
+          <TabsList className="w-full">
+            <TabsTrigger value="public" className="text-sm">
+              公開中
+            </TabsTrigger>
+            {isAuthenticated && (
+              <TabsTrigger value="following" className="text-sm">
+                フォロー中
+              </TabsTrigger>
+            )}
+          </TabsList>
+
+          <TabsContent value="public" className="mt-3">
+            {publicCalls.length === 0 ? (
+              <p className="text-xs text-muted-foreground">
+                現在公開中の通話はありません
+              </p>
+            ) : (
+              <ul className="flex flex-col gap-2">
+                {publicCalls.map((call) => (
+                  <CallListItem
                     key={call.name}
-                    className="rounded-md border p-3 flex items-center justify-between"
-                  >
-                    <div className="min-w-0">
-                      <p className="text-xs font-mono truncate">{callId}</p>
-                      <p className="text-[10px] text-muted-foreground truncate">
-                        host: {call.host?.displayName ?? "unknown"}
-                        {call.host?.customId ? ` @${call.host.customId}` : ""}
-                      </p>
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => navigate(`/calls/${callId}`)}
-                    >
-                      参加
-                    </Button>
-                  </li>
-                );
-              })}
-            </ul>
+                    call={call}
+                    onJoin={handleJoinCall}
+                  />
+                ))}
+              </ul>
+            )}
+          </TabsContent>
+
+          {isAuthenticated && (
+            <TabsContent value="following" className="mt-3">
+              {followingLoading ? (
+                <p className="text-xs text-muted-foreground">読み込み中...</p>
+              ) : followingCalls.length === 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  フォロー中のユーザーが参加している通話はありません
+                </p>
+              ) : (
+                <ul className="flex flex-col gap-2">
+                  {followingCalls.map((call) => (
+                    <CallListItem
+                      key={call.name}
+                      call={call}
+                      onJoin={handleJoinCall}
+                    />
+                  ))}
+                </ul>
+              )}
+            </TabsContent>
           )}
-        </div>
+        </Tabs>
 
         {error && (
           <p className="text-sm text-destructive text-center">{error}</p>

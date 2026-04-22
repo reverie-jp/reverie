@@ -1,0 +1,81 @@
+syntax = "proto3";
+
+package follow.v1;
+
+import "google/api/annotations.proto";
+import "user/v1/user.proto";
+
+service FollowService {
+  // Follow a user. Requires authentication.
+  rpc FollowUser(FollowUserRequest) returns (FollowUserResponse) {
+    option (google.api.http) = {
+      post: "/v1/{name=users/*}:follow"
+      body: "*"
+    };
+  }
+
+  // Unfollow a user. Requires authentication.
+  rpc UnfollowUser(UnfollowUserRequest) returns (UnfollowUserResponse) {
+    option (google.api.http) = {
+      post: "/v1/{name=users/*}:unfollow"
+      body: "*"
+    };
+  }
+
+  // List users that the given user follows.
+  rpc ListFollowingUsers(ListFollowingUsersRequest) returns (ListFollowingUsersResponse) {
+    option (google.api.http) = {
+      get: "/v1/{name=users/*}/following"
+    };
+  }
+
+  // List users that follow the given user.
+  rpc ListUserFollowers(ListUserFollowersRequest) returns (ListUserFollowersResponse) {
+    option (google.api.http) = {
+      get: "/v1/{name=users/*}/followers"
+    };
+  }
+}
+
+message FollowUserRequest {
+  // "users/{custom_id}"
+  string name = 1;
+}
+
+message FollowUserResponse {
+  // The target user after the follow, with updated relationship flags.
+  user.v1.User user = 1;
+}
+
+message UnfollowUserRequest {
+  // "users/{custom_id}"
+  string name = 1;
+}
+
+message UnfollowUserResponse {
+  user.v1.User user = 1;
+}
+
+message ListFollowingUsersRequest {
+  // "users/{custom_id}"
+  string name = 1;
+  int32 page_size = 2;
+  string page_token = 3;
+}
+
+message ListFollowingUsersResponse {
+  repeated user.v1.User users = 1;
+  string next_page_token = 2;
+}
+
+message ListUserFollowersRequest {
+  // "users/{custom_id}"
+  string name = 1;
+  int32 page_size = 2;
+  string page_token = 3;
+}
+
+message ListUserFollowersResponse {
+  repeated user.v1.User users = 1;
+  string next_page_token = 2;
+}

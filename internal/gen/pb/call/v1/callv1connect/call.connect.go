@@ -42,6 +42,9 @@ const (
 	// CallServiceListPublicCallsProcedure is the fully-qualified name of the CallService's
 	// ListPublicCalls RPC.
 	CallServiceListPublicCallsProcedure = "/call.v1.CallService/ListPublicCalls"
+	// CallServiceListFollowingCallsProcedure is the fully-qualified name of the CallService's
+	// ListFollowingCalls RPC.
+	CallServiceListFollowingCallsProcedure = "/call.v1.CallService/ListFollowingCalls"
 	// CallServiceGetUserParticipatingCallProcedure is the fully-qualified name of the CallService's
 	// GetUserParticipatingCall RPC.
 	CallServiceGetUserParticipatingCallProcedure = "/call.v1.CallService/GetUserParticipatingCall"
@@ -89,6 +92,9 @@ type CallServiceClient interface {
 	// List active, publicly-discoverable calls. Returns OPEN calls for guests
 	// and OPEN + USERS_ONLY for authenticated callers. Used by the home screen.
 	ListPublicCalls(context.Context, *connect.Request[v1.ListPublicCallsRequest]) (*connect.Response[v1.ListPublicCallsResponse], error)
+	// List active calls hosted by users the authenticated caller follows.
+	// Returns OPEN + USERS_ONLY calls in create_time descending order.
+	ListFollowingCalls(context.Context, *connect.Request[v1.ListFollowingCallsRequest]) (*connect.Response[v1.ListFollowingCallsResponse], error)
 	// Get the call the given user is currently participating in (if any and
 	// if visible to the caller). Null means the user is not in any visible
 	// call.
@@ -161,6 +167,12 @@ func NewCallServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			httpClient,
 			baseURL+CallServiceListPublicCallsProcedure,
 			connect.WithSchema(callServiceMethods.ByName("ListPublicCalls")),
+			connect.WithClientOptions(opts...),
+		),
+		listFollowingCalls: connect.NewClient[v1.ListFollowingCallsRequest, v1.ListFollowingCallsResponse](
+			httpClient,
+			baseURL+CallServiceListFollowingCallsProcedure,
+			connect.WithSchema(callServiceMethods.ByName("ListFollowingCalls")),
 			connect.WithClientOptions(opts...),
 		),
 		getUserParticipatingCall: connect.NewClient[v1.GetUserParticipatingCallRequest, v1.GetUserParticipatingCallResponse](
@@ -244,6 +256,7 @@ type callServiceClient struct {
 	getCall                  *connect.Client[v1.GetCallRequest, v1.GetCallResponse]
 	updateCall               *connect.Client[v1.UpdateCallRequest, v1.UpdateCallResponse]
 	listPublicCalls          *connect.Client[v1.ListPublicCallsRequest, v1.ListPublicCallsResponse]
+	listFollowingCalls       *connect.Client[v1.ListFollowingCallsRequest, v1.ListFollowingCallsResponse]
 	getUserParticipatingCall *connect.Client[v1.GetUserParticipatingCallRequest, v1.GetUserParticipatingCallResponse]
 	joinCall                 *connect.Client[v1.JoinCallRequest, v1.JoinCallResponse]
 	heartbeatCall            *connect.Client[v1.HeartbeatCallRequest, v1.HeartbeatCallResponse]
@@ -276,6 +289,11 @@ func (c *callServiceClient) UpdateCall(ctx context.Context, req *connect.Request
 // ListPublicCalls calls call.v1.CallService.ListPublicCalls.
 func (c *callServiceClient) ListPublicCalls(ctx context.Context, req *connect.Request[v1.ListPublicCallsRequest]) (*connect.Response[v1.ListPublicCallsResponse], error) {
 	return c.listPublicCalls.CallUnary(ctx, req)
+}
+
+// ListFollowingCalls calls call.v1.CallService.ListFollowingCalls.
+func (c *callServiceClient) ListFollowingCalls(ctx context.Context, req *connect.Request[v1.ListFollowingCallsRequest]) (*connect.Response[v1.ListFollowingCallsResponse], error) {
+	return c.listFollowingCalls.CallUnary(ctx, req)
 }
 
 // GetUserParticipatingCall calls call.v1.CallService.GetUserParticipatingCall.
@@ -350,6 +368,9 @@ type CallServiceHandler interface {
 	// List active, publicly-discoverable calls. Returns OPEN calls for guests
 	// and OPEN + USERS_ONLY for authenticated callers. Used by the home screen.
 	ListPublicCalls(context.Context, *connect.Request[v1.ListPublicCallsRequest]) (*connect.Response[v1.ListPublicCallsResponse], error)
+	// List active calls hosted by users the authenticated caller follows.
+	// Returns OPEN + USERS_ONLY calls in create_time descending order.
+	ListFollowingCalls(context.Context, *connect.Request[v1.ListFollowingCallsRequest]) (*connect.Response[v1.ListFollowingCallsResponse], error)
 	// Get the call the given user is currently participating in (if any and
 	// if visible to the caller). Null means the user is not in any visible
 	// call.
@@ -418,6 +439,12 @@ func NewCallServiceHandler(svc CallServiceHandler, opts ...connect.HandlerOption
 		CallServiceListPublicCallsProcedure,
 		svc.ListPublicCalls,
 		connect.WithSchema(callServiceMethods.ByName("ListPublicCalls")),
+		connect.WithHandlerOptions(opts...),
+	)
+	callServiceListFollowingCallsHandler := connect.NewUnaryHandler(
+		CallServiceListFollowingCallsProcedure,
+		svc.ListFollowingCalls,
+		connect.WithSchema(callServiceMethods.ByName("ListFollowingCalls")),
 		connect.WithHandlerOptions(opts...),
 	)
 	callServiceGetUserParticipatingCallHandler := connect.NewUnaryHandler(
@@ -502,6 +529,8 @@ func NewCallServiceHandler(svc CallServiceHandler, opts ...connect.HandlerOption
 			callServiceUpdateCallHandler.ServeHTTP(w, r)
 		case CallServiceListPublicCallsProcedure:
 			callServiceListPublicCallsHandler.ServeHTTP(w, r)
+		case CallServiceListFollowingCallsProcedure:
+			callServiceListFollowingCallsHandler.ServeHTTP(w, r)
 		case CallServiceGetUserParticipatingCallProcedure:
 			callServiceGetUserParticipatingCallHandler.ServeHTTP(w, r)
 		case CallServiceJoinCallProcedure:
@@ -549,6 +578,10 @@ func (UnimplementedCallServiceHandler) UpdateCall(context.Context, *connect.Requ
 
 func (UnimplementedCallServiceHandler) ListPublicCalls(context.Context, *connect.Request[v1.ListPublicCallsRequest]) (*connect.Response[v1.ListPublicCallsResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("call.v1.CallService.ListPublicCalls is not implemented"))
+}
+
+func (UnimplementedCallServiceHandler) ListFollowingCalls(context.Context, *connect.Request[v1.ListFollowingCallsRequest]) (*connect.Response[v1.ListFollowingCallsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("call.v1.CallService.ListFollowingCalls is not implemented"))
 }
 
 func (UnimplementedCallServiceHandler) GetUserParticipatingCall(context.Context, *connect.Request[v1.GetUserParticipatingCallRequest]) (*connect.Response[v1.GetUserParticipatingCallResponse], error) {

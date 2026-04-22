@@ -23,6 +23,7 @@ const (
 	CallService_GetCall_FullMethodName                  = "/call.v1.CallService/GetCall"
 	CallService_UpdateCall_FullMethodName               = "/call.v1.CallService/UpdateCall"
 	CallService_ListPublicCalls_FullMethodName          = "/call.v1.CallService/ListPublicCalls"
+	CallService_ListFollowingCalls_FullMethodName       = "/call.v1.CallService/ListFollowingCalls"
 	CallService_GetUserParticipatingCall_FullMethodName = "/call.v1.CallService/GetUserParticipatingCall"
 	CallService_JoinCall_FullMethodName                 = "/call.v1.CallService/JoinCall"
 	CallService_HeartbeatCall_FullMethodName            = "/call.v1.CallService/HeartbeatCall"
@@ -51,6 +52,9 @@ type CallServiceClient interface {
 	// List active, publicly-discoverable calls. Returns OPEN calls for guests
 	// and OPEN + USERS_ONLY for authenticated callers. Used by the home screen.
 	ListPublicCalls(ctx context.Context, in *ListPublicCallsRequest, opts ...grpc.CallOption) (*ListPublicCallsResponse, error)
+	// List active calls hosted by users the authenticated caller follows.
+	// Returns OPEN + USERS_ONLY calls in create_time descending order.
+	ListFollowingCalls(ctx context.Context, in *ListFollowingCallsRequest, opts ...grpc.CallOption) (*ListFollowingCallsResponse, error)
 	// Get the call the given user is currently participating in (if any and
 	// if visible to the caller). Null means the user is not in any visible
 	// call.
@@ -132,6 +136,16 @@ func (c *callServiceClient) ListPublicCalls(ctx context.Context, in *ListPublicC
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListPublicCallsResponse)
 	err := c.cc.Invoke(ctx, CallService_ListPublicCalls_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *callServiceClient) ListFollowingCalls(ctx context.Context, in *ListFollowingCallsRequest, opts ...grpc.CallOption) (*ListFollowingCallsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListFollowingCallsResponse)
+	err := c.cc.Invoke(ctx, CallService_ListFollowingCalls_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -272,6 +286,9 @@ type CallServiceServer interface {
 	// List active, publicly-discoverable calls. Returns OPEN calls for guests
 	// and OPEN + USERS_ONLY for authenticated callers. Used by the home screen.
 	ListPublicCalls(context.Context, *ListPublicCallsRequest) (*ListPublicCallsResponse, error)
+	// List active calls hosted by users the authenticated caller follows.
+	// Returns OPEN + USERS_ONLY calls in create_time descending order.
+	ListFollowingCalls(context.Context, *ListFollowingCallsRequest) (*ListFollowingCallsResponse, error)
 	// Get the call the given user is currently participating in (if any and
 	// if visible to the caller). Null means the user is not in any visible
 	// call.
@@ -330,6 +347,9 @@ func (UnimplementedCallServiceServer) UpdateCall(context.Context, *UpdateCallReq
 }
 func (UnimplementedCallServiceServer) ListPublicCalls(context.Context, *ListPublicCallsRequest) (*ListPublicCallsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListPublicCalls not implemented")
+}
+func (UnimplementedCallServiceServer) ListFollowingCalls(context.Context, *ListFollowingCallsRequest) (*ListFollowingCallsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListFollowingCalls not implemented")
 }
 func (UnimplementedCallServiceServer) GetUserParticipatingCall(context.Context, *GetUserParticipatingCallRequest) (*GetUserParticipatingCallResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUserParticipatingCall not implemented")
@@ -456,6 +476,24 @@ func _CallService_ListPublicCalls_Handler(srv interface{}, ctx context.Context, 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(CallServiceServer).ListPublicCalls(ctx, req.(*ListPublicCallsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CallService_ListFollowingCalls_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListFollowingCallsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CallServiceServer).ListFollowingCalls(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CallService_ListFollowingCalls_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CallServiceServer).ListFollowingCalls(ctx, req.(*ListFollowingCallsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -698,6 +736,10 @@ var CallService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListPublicCalls",
 			Handler:    _CallService_ListPublicCalls_Handler,
+		},
+		{
+			MethodName: "ListFollowingCalls",
+			Handler:    _CallService_ListFollowingCalls_Handler,
 		},
 		{
 			MethodName: "GetUserParticipatingCall",

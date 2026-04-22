@@ -1,4 +1,9 @@
+-- drop triggers and functions
+DROP TRIGGER IF EXISTS trg_user_follows_counts ON user_follows;
+DROP FUNCTION IF EXISTS user_follow_counts_sync();
+
 -- drop tables
+DROP TABLE IF EXISTS user_follows;
 DROP TABLE IF EXISTS call_bans;
 DROP TABLE IF EXISTS call_participants;
 DROP TABLE IF EXISTS calls;

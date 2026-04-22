@@ -16,11 +16,15 @@ import (
 	"reverie.jp/reverie/internal/gen/pb/account/v1/accountv1connect"
 	callv1 "reverie.jp/reverie/internal/gen/pb/call/v1"
 	"reverie.jp/reverie/internal/gen/pb/call/v1/callv1connect"
+	followv1 "reverie.jp/reverie/internal/gen/pb/follow/v1"
+	"reverie.jp/reverie/internal/gen/pb/follow/v1/followv1connect"
 	userv1 "reverie.jp/reverie/internal/gen/pb/user/v1"
 	"reverie.jp/reverie/internal/gen/pb/user/v1/userv1connect"
 	"reverie.jp/reverie/internal/gen/sqlc"
 	"reverie.jp/reverie/internal/modules/account"
 	"reverie.jp/reverie/internal/modules/call"
+	"reverie.jp/reverie/internal/modules/follow"
+	followgw "reverie.jp/reverie/internal/modules/follow/gateway"
 	"reverie.jp/reverie/internal/modules/user"
 	usergw "reverie.jp/reverie/internal/modules/user/gateway"
 	"reverie.jp/reverie/internal/platform/google"
@@ -41,10 +45,12 @@ func initServices(cfg *config.Config, db *pgxpool.Pool, jwtManager *jwt.Manager)
 	livekitClient := livekit.NewClient(cfg.LiveKit.URL, cfg.LiveKit.APIKey, cfg.LiveKit.APISecret)
 	errorInterceptor := interceptor.ErrorInterceptor(cfg.Env)
 	authInterceptor := interceptor.AuthInterceptor(jwtManager)
-	userGateway := usergw.New(q)
+	followGateway := followgw.New(q)
+	userGateway := usergw.New(q, followGateway)
 	accountService := account.InitModule(q, userGateway, tx, googleAuth, jwtManager)
 	userService := user.InitModule(userGateway)
 	callService := call.InitModule(q, userGateway, livekitClient, cfg.LiveKit.TokenTTL)
+	followService := follow.InitModule(followGateway, userGateway)
 
 	return []Service{
 		{
@@ -81,6 +87,18 @@ func initServices(cfg *config.Config, db *pgxpool.Pool, jwtManager *jwt.Manager)
 			},
 			RegisterGatewayHandler: func(ctx context.Context, mux *runtime.ServeMux, addr string, opts []grpc.DialOption) error {
 				return callv1.RegisterCallServiceHandlerFromEndpoint(ctx, mux, addr, opts)
+			},
+		},
+		{
+			Name: followv1connect.FollowServiceName,
+			RegisterConnectHandler: func(mux *http.ServeMux) {
+				mux.Handle(followv1connect.NewFollowServiceHandler(
+					followService,
+					connect.WithInterceptors(errorInterceptor, authInterceptor),
+				))
+			},
+			RegisterGatewayHandler: func(ctx context.Context, mux *runtime.ServeMux, addr string, opts []grpc.DialOption) error {
+				return followv1.RegisterFollowServiceHandlerFromEndpoint(ctx, mux, addr, opts)
 			},
 		},
 	}

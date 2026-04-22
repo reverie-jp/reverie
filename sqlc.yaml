@@ -5,6 +5,7 @@ sql:
     queries:
       - "./internal/modules/account/sql"
       - "./internal/modules/call/sql"
+      - "./internal/modules/follow/sql"
       - "./internal/modules/user/sql"
     gen:
       go:

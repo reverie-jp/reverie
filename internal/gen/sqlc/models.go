@@ -141,6 +141,8 @@ type User struct {
 	AvatarUrl          *string    `json:"avatar_url"`
 	BannerUrl          *string    `json:"banner_url"`
 	IsPrivate          bool       `json:"is_private"`
+	FollowingCount     int32      `json:"following_count"`
+	FollowerCount      int32      `json:"follower_count"`
 	CreateTime         time.Time  `json:"create_time"`
 	UpdateTime         time.Time  `json:"update_time"`
 }
@@ -151,4 +153,10 @@ type UserAuthProvider struct {
 	Provider       AuthProvider `json:"provider"`
 	ProviderUserID string       `json:"provider_user_id"`
 	CreateTime     time.Time    `json:"create_time"`
+}
+
+type UserFollow struct {
+	FollowerID ulid.ULID `json:"follower_id"`
+	FolloweeID ulid.ULID `json:"followee_id"`
+	CreateTime time.Time `json:"create_time"`
 }
