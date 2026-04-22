@@ -90,9 +90,16 @@ type Call struct {
 	CreateTime *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
 	// Non-null once the call has been ended by the host. No new joins allowed
 	// and all participants have been disconnected.
-	EndTime       *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=end_time,json=endTime,proto3" json:"end_time,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	EndTime *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=end_time,json=endTime,proto3" json:"end_time,omitempty"`
+	// Host-provided title. May be empty.
+	Title string `protobuf:"bytes,6,opt,name=title,proto3" json:"title,omitempty"`
+	// Currently-connected participants (both authenticated and guests),
+	// ordered by first_join_time ASC. Populated on list endpoints for
+	// avatar stacks on call cards. Callers derive counts from length.
+	// Empty on writes.
+	ActiveParticipants []*CallParticipant `protobuf:"bytes,7,rep,name=active_participants,json=activeParticipants,proto3" json:"active_participants,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
 func (x *Call) Reset() {
@@ -156,6 +163,20 @@ func (x *Call) GetCreateTime() *timestamppb.Timestamp {
 func (x *Call) GetEndTime() *timestamppb.Timestamp {
 	if x != nil {
 		return x.EndTime
+	}
+	return nil
+}
+
+func (x *Call) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *Call) GetActiveParticipants() []*CallParticipant {
+	if x != nil {
+		return x.ActiveParticipants
 	}
 	return nil
 }
@@ -241,8 +262,10 @@ func (x *CallParticipant) GetIsCurrentlyConnected() bool {
 }
 
 type CreateCallRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Visibility    CallVisibility         `protobuf:"varint,1,opt,name=visibility,proto3,enum=call.v1.CallVisibility" json:"visibility,omitempty"`
+	state      protoimpl.MessageState `protogen:"open.v1"`
+	Visibility CallVisibility         `protobuf:"varint,1,opt,name=visibility,proto3,enum=call.v1.CallVisibility" json:"visibility,omitempty"`
+	// Optional. Max 100 characters. Trimmed server-side.
+	Title         string `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -282,6 +305,13 @@ func (x *CreateCallRequest) GetVisibility() CallVisibility {
 		return x.Visibility
 	}
 	return CallVisibility_CALL_VISIBILITY_UNSPECIFIED
+}
+
+func (x *CreateCallRequest) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
 }
 
 type CreateCallResponse struct {
@@ -1911,7 +1941,7 @@ var File_call_v1_call_proto protoreflect.FileDescriptor
 
 const file_call_v1_call_proto_rawDesc = "" +
 	"\n" +
-	"\x12call/v1/call.proto\x12\acall.v1\x1a\x1cgoogle/api/annotations.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x12user/v1/user.proto\"\xea\x01\n" +
+	"\x12call/v1/call.proto\x12\acall.v1\x1a\x1cgoogle/api/annotations.proto\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x12user/v1/user.proto\"\xcb\x02\n" +
 	"\x04Call\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12!\n" +
 	"\x04host\x18\x02 \x01(\v2\r.user.v1.UserR\x04host\x127\n" +
@@ -1920,17 +1950,20 @@ const file_call_v1_call_proto_rawDesc = "" +
 	"visibility\x12;\n" +
 	"\vcreate_time\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"createTime\x125\n" +
-	"\bend_time\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\aendTime\"\xe5\x01\n" +
+	"\bend_time\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\aendTime\x12\x14\n" +
+	"\x05title\x18\x06 \x01(\tR\x05title\x12I\n" +
+	"\x13active_participants\x18\a \x03(\v2\x18.call.v1.CallParticipantR\x12activeParticipants\"\xe5\x01\n" +
 	"\x0fCallParticipant\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12!\n" +
 	"\x04user\x18\x02 \x01(\v2\r.user.v1.UserR\x04user\x12!\n" +
 	"\fdisplay_name\x18\x03 \x01(\tR\vdisplayName\x12B\n" +
 	"\x0ffirst_join_time\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\rfirstJoinTime\x124\n" +
-	"\x16is_currently_connected\x18\x05 \x01(\bR\x14isCurrentlyConnected\"L\n" +
+	"\x16is_currently_connected\x18\x05 \x01(\bR\x14isCurrentlyConnected\"b\n" +
 	"\x11CreateCallRequest\x127\n" +
 	"\n" +
 	"visibility\x18\x01 \x01(\x0e2\x17.call.v1.CallVisibilityR\n" +
-	"visibility\"7\n" +
+	"visibility\x12\x14\n" +
+	"\x05title\x18\x02 \x01(\tR\x05title\"7\n" +
 	"\x12CreateCallResponse\x12!\n" +
 	"\x04call\x18\x01 \x01(\v2\r.call.v1.CallR\x04call\"K\n" +
 	"\x0eGetCallRequest\x12\x12\n" +
@@ -2105,62 +2138,63 @@ var file_call_v1_call_proto_depIdxs = []int32{
 	0,  // 1: call.v1.Call.visibility:type_name -> call.v1.CallVisibility
 	39, // 2: call.v1.Call.create_time:type_name -> google.protobuf.Timestamp
 	39, // 3: call.v1.Call.end_time:type_name -> google.protobuf.Timestamp
-	38, // 4: call.v1.CallParticipant.user:type_name -> user.v1.User
-	39, // 5: call.v1.CallParticipant.first_join_time:type_name -> google.protobuf.Timestamp
-	0,  // 6: call.v1.CreateCallRequest.visibility:type_name -> call.v1.CallVisibility
-	1,  // 7: call.v1.CreateCallResponse.call:type_name -> call.v1.Call
-	1,  // 8: call.v1.GetCallResponse.call:type_name -> call.v1.Call
-	2,  // 9: call.v1.GetCallResponse.participants:type_name -> call.v1.CallParticipant
-	1,  // 10: call.v1.UpdateCallRequest.call:type_name -> call.v1.Call
-	40, // 11: call.v1.UpdateCallRequest.update_mask:type_name -> google.protobuf.FieldMask
-	1,  // 12: call.v1.UpdateCallResponse.call:type_name -> call.v1.Call
-	1,  // 13: call.v1.ListPublicCallsResponse.calls:type_name -> call.v1.Call
-	1,  // 14: call.v1.ListFollowingCallsResponse.calls:type_name -> call.v1.Call
-	1,  // 15: call.v1.GetUserParticipatingCallResponse.call:type_name -> call.v1.Call
-	39, // 16: call.v1.JoinCallResponse.expire_time:type_name -> google.protobuf.Timestamp
-	1,  // 17: call.v1.TransferCallHostResponse.call:type_name -> call.v1.Call
-	38, // 18: call.v1.CallBan.user:type_name -> user.v1.User
-	39, // 19: call.v1.CallBan.create_time:type_name -> google.protobuf.Timestamp
-	33, // 20: call.v1.ListCallBansResponse.bans:type_name -> call.v1.CallBan
-	3,  // 21: call.v1.CallService.CreateCall:input_type -> call.v1.CreateCallRequest
-	5,  // 22: call.v1.CallService.GetCall:input_type -> call.v1.GetCallRequest
-	7,  // 23: call.v1.CallService.UpdateCall:input_type -> call.v1.UpdateCallRequest
-	9,  // 24: call.v1.CallService.ListPublicCalls:input_type -> call.v1.ListPublicCallsRequest
-	11, // 25: call.v1.CallService.ListFollowingCalls:input_type -> call.v1.ListFollowingCallsRequest
-	13, // 26: call.v1.CallService.GetUserParticipatingCall:input_type -> call.v1.GetUserParticipatingCallRequest
-	15, // 27: call.v1.CallService.JoinCall:input_type -> call.v1.JoinCallRequest
-	17, // 28: call.v1.CallService.HeartbeatCall:input_type -> call.v1.HeartbeatCallRequest
-	19, // 29: call.v1.CallService.LeaveCall:input_type -> call.v1.LeaveCallRequest
-	21, // 30: call.v1.CallService.MuteCallParticipant:input_type -> call.v1.MuteCallParticipantRequest
-	23, // 31: call.v1.CallService.UnmuteCallParticipant:input_type -> call.v1.UnmuteCallParticipantRequest
-	25, // 32: call.v1.CallService.KickCallParticipant:input_type -> call.v1.KickCallParticipantRequest
-	27, // 33: call.v1.CallService.BanCallParticipant:input_type -> call.v1.BanCallParticipantRequest
-	29, // 34: call.v1.CallService.TransferCallHost:input_type -> call.v1.TransferCallHostRequest
-	31, // 35: call.v1.CallService.EndCall:input_type -> call.v1.EndCallRequest
-	34, // 36: call.v1.CallService.ListCallBans:input_type -> call.v1.ListCallBansRequest
-	36, // 37: call.v1.CallService.UnbanCallParticipant:input_type -> call.v1.UnbanCallParticipantRequest
-	4,  // 38: call.v1.CallService.CreateCall:output_type -> call.v1.CreateCallResponse
-	6,  // 39: call.v1.CallService.GetCall:output_type -> call.v1.GetCallResponse
-	8,  // 40: call.v1.CallService.UpdateCall:output_type -> call.v1.UpdateCallResponse
-	10, // 41: call.v1.CallService.ListPublicCalls:output_type -> call.v1.ListPublicCallsResponse
-	12, // 42: call.v1.CallService.ListFollowingCalls:output_type -> call.v1.ListFollowingCallsResponse
-	14, // 43: call.v1.CallService.GetUserParticipatingCall:output_type -> call.v1.GetUserParticipatingCallResponse
-	16, // 44: call.v1.CallService.JoinCall:output_type -> call.v1.JoinCallResponse
-	18, // 45: call.v1.CallService.HeartbeatCall:output_type -> call.v1.HeartbeatCallResponse
-	20, // 46: call.v1.CallService.LeaveCall:output_type -> call.v1.LeaveCallResponse
-	22, // 47: call.v1.CallService.MuteCallParticipant:output_type -> call.v1.MuteCallParticipantResponse
-	24, // 48: call.v1.CallService.UnmuteCallParticipant:output_type -> call.v1.UnmuteCallParticipantResponse
-	26, // 49: call.v1.CallService.KickCallParticipant:output_type -> call.v1.KickCallParticipantResponse
-	28, // 50: call.v1.CallService.BanCallParticipant:output_type -> call.v1.BanCallParticipantResponse
-	30, // 51: call.v1.CallService.TransferCallHost:output_type -> call.v1.TransferCallHostResponse
-	32, // 52: call.v1.CallService.EndCall:output_type -> call.v1.EndCallResponse
-	35, // 53: call.v1.CallService.ListCallBans:output_type -> call.v1.ListCallBansResponse
-	37, // 54: call.v1.CallService.UnbanCallParticipant:output_type -> call.v1.UnbanCallParticipantResponse
-	38, // [38:55] is the sub-list for method output_type
-	21, // [21:38] is the sub-list for method input_type
-	21, // [21:21] is the sub-list for extension type_name
-	21, // [21:21] is the sub-list for extension extendee
-	0,  // [0:21] is the sub-list for field type_name
+	2,  // 4: call.v1.Call.active_participants:type_name -> call.v1.CallParticipant
+	38, // 5: call.v1.CallParticipant.user:type_name -> user.v1.User
+	39, // 6: call.v1.CallParticipant.first_join_time:type_name -> google.protobuf.Timestamp
+	0,  // 7: call.v1.CreateCallRequest.visibility:type_name -> call.v1.CallVisibility
+	1,  // 8: call.v1.CreateCallResponse.call:type_name -> call.v1.Call
+	1,  // 9: call.v1.GetCallResponse.call:type_name -> call.v1.Call
+	2,  // 10: call.v1.GetCallResponse.participants:type_name -> call.v1.CallParticipant
+	1,  // 11: call.v1.UpdateCallRequest.call:type_name -> call.v1.Call
+	40, // 12: call.v1.UpdateCallRequest.update_mask:type_name -> google.protobuf.FieldMask
+	1,  // 13: call.v1.UpdateCallResponse.call:type_name -> call.v1.Call
+	1,  // 14: call.v1.ListPublicCallsResponse.calls:type_name -> call.v1.Call
+	1,  // 15: call.v1.ListFollowingCallsResponse.calls:type_name -> call.v1.Call
+	1,  // 16: call.v1.GetUserParticipatingCallResponse.call:type_name -> call.v1.Call
+	39, // 17: call.v1.JoinCallResponse.expire_time:type_name -> google.protobuf.Timestamp
+	1,  // 18: call.v1.TransferCallHostResponse.call:type_name -> call.v1.Call
+	38, // 19: call.v1.CallBan.user:type_name -> user.v1.User
+	39, // 20: call.v1.CallBan.create_time:type_name -> google.protobuf.Timestamp
+	33, // 21: call.v1.ListCallBansResponse.bans:type_name -> call.v1.CallBan
+	3,  // 22: call.v1.CallService.CreateCall:input_type -> call.v1.CreateCallRequest
+	5,  // 23: call.v1.CallService.GetCall:input_type -> call.v1.GetCallRequest
+	7,  // 24: call.v1.CallService.UpdateCall:input_type -> call.v1.UpdateCallRequest
+	9,  // 25: call.v1.CallService.ListPublicCalls:input_type -> call.v1.ListPublicCallsRequest
+	11, // 26: call.v1.CallService.ListFollowingCalls:input_type -> call.v1.ListFollowingCallsRequest
+	13, // 27: call.v1.CallService.GetUserParticipatingCall:input_type -> call.v1.GetUserParticipatingCallRequest
+	15, // 28: call.v1.CallService.JoinCall:input_type -> call.v1.JoinCallRequest
+	17, // 29: call.v1.CallService.HeartbeatCall:input_type -> call.v1.HeartbeatCallRequest
+	19, // 30: call.v1.CallService.LeaveCall:input_type -> call.v1.LeaveCallRequest
+	21, // 31: call.v1.CallService.MuteCallParticipant:input_type -> call.v1.MuteCallParticipantRequest
+	23, // 32: call.v1.CallService.UnmuteCallParticipant:input_type -> call.v1.UnmuteCallParticipantRequest
+	25, // 33: call.v1.CallService.KickCallParticipant:input_type -> call.v1.KickCallParticipantRequest
+	27, // 34: call.v1.CallService.BanCallParticipant:input_type -> call.v1.BanCallParticipantRequest
+	29, // 35: call.v1.CallService.TransferCallHost:input_type -> call.v1.TransferCallHostRequest
+	31, // 36: call.v1.CallService.EndCall:input_type -> call.v1.EndCallRequest
+	34, // 37: call.v1.CallService.ListCallBans:input_type -> call.v1.ListCallBansRequest
+	36, // 38: call.v1.CallService.UnbanCallParticipant:input_type -> call.v1.UnbanCallParticipantRequest
+	4,  // 39: call.v1.CallService.CreateCall:output_type -> call.v1.CreateCallResponse
+	6,  // 40: call.v1.CallService.GetCall:output_type -> call.v1.GetCallResponse
+	8,  // 41: call.v1.CallService.UpdateCall:output_type -> call.v1.UpdateCallResponse
+	10, // 42: call.v1.CallService.ListPublicCalls:output_type -> call.v1.ListPublicCallsResponse
+	12, // 43: call.v1.CallService.ListFollowingCalls:output_type -> call.v1.ListFollowingCallsResponse
+	14, // 44: call.v1.CallService.GetUserParticipatingCall:output_type -> call.v1.GetUserParticipatingCallResponse
+	16, // 45: call.v1.CallService.JoinCall:output_type -> call.v1.JoinCallResponse
+	18, // 46: call.v1.CallService.HeartbeatCall:output_type -> call.v1.HeartbeatCallResponse
+	20, // 47: call.v1.CallService.LeaveCall:output_type -> call.v1.LeaveCallResponse
+	22, // 48: call.v1.CallService.MuteCallParticipant:output_type -> call.v1.MuteCallParticipantResponse
+	24, // 49: call.v1.CallService.UnmuteCallParticipant:output_type -> call.v1.UnmuteCallParticipantResponse
+	26, // 50: call.v1.CallService.KickCallParticipant:output_type -> call.v1.KickCallParticipantResponse
+	28, // 51: call.v1.CallService.BanCallParticipant:output_type -> call.v1.BanCallParticipantResponse
+	30, // 52: call.v1.CallService.TransferCallHost:output_type -> call.v1.TransferCallHostResponse
+	32, // 53: call.v1.CallService.EndCall:output_type -> call.v1.EndCallResponse
+	35, // 54: call.v1.CallService.ListCallBans:output_type -> call.v1.ListCallBansResponse
+	37, // 55: call.v1.CallService.UnbanCallParticipant:output_type -> call.v1.UnbanCallParticipantResponse
+	39, // [39:56] is the sub-list for method output_type
+	22, // [22:39] is the sub-list for method input_type
+	22, // [22:22] is the sub-list for extension type_name
+	22, // [22:22] is the sub-list for extension extendee
+	0,  // [0:22] is the sub-list for field type_name
 }
 
 func init() { file_call_v1_call_proto_init() }

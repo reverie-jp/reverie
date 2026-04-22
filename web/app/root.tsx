@@ -13,7 +13,8 @@ import { CallProvider } from "~/lib/call-context";
 import { NotificationProvider } from "~/lib/notification-context";
 import { usePresenceHeartbeat } from "~/lib/use-presence-heartbeat";
 import { CallHeader } from "~/components/call-header";
-import { AppHeader } from "~/components/app-header";
+import { AppFooter } from "~/components/app-footer";
+import { FloatingCreateButton } from "~/components/floating-create-button";
 import { Toaster } from "~/components/ui/sonner";
 
 export const links: Route.LinksFunction = () => [
@@ -59,11 +60,15 @@ export default function App() {
     <NotificationProvider>
       <CallProvider>
         <GlobalEffects />
-        <AppHeader />
-        <CallHeader />
+        {/* Scroll container holds the mini call bar as a sticky overlay so
+            the bar's backdrop-filter blur reacts to the content scrolling
+            behind it, instead of sitting on a flat row. */}
         <div className="flex-1 overflow-x-hidden overflow-y-auto">
+          <CallHeader />
           <Outlet />
         </div>
+        <AppFooter />
+        <FloatingCreateButton />
         <Toaster position="top-right" />
       </CallProvider>
     </NotificationProvider>

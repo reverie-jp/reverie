@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"log/slog"
+	"strings"
 
 	"reverie.jp/reverie/internal/domain/entity"
 	callgw "reverie.jp/reverie/internal/modules/call/gateway"
@@ -45,6 +46,7 @@ func (uc *CreateCall) Execute(ctx context.Context, input CreateCallInput) (*Crea
 		ID:         callID,
 		HostUserID: input.RequesterID,
 		Visibility: input.Visibility,
+		Title:      strings.TrimSpace(input.Title),
 	}); err != nil {
 		return nil, xerrors.ErrInternal.WithCause(err)
 	}

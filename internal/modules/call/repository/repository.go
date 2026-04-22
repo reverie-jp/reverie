@@ -12,6 +12,7 @@ type CreateCallParams struct {
 	ID         ulid.ULID
 	HostUserID ulid.ULID
 	Visibility entity.CallVisibility
+	Title      string
 }
 
 type UpsertCallParticipantParams struct {
@@ -35,6 +36,10 @@ type Repository interface {
 	SetCallParticipantMutedByHost(ctx context.Context, callID ulid.ULID, identity string) error
 	ClearCallParticipantMutedByHost(ctx context.Context, callID ulid.ULID, identity string) (int64, error)
 	ListCallParticipants(ctx context.Context, callID ulid.ULID) ([]*entity.CallParticipant, error)
+	// ListActiveParticipantsByCallIDs returns (call_id → []participant) for
+	// currently-connected participants (auth + guests) across the given
+	// calls. Ordered by first_join_time within each call.
+	ListActiveParticipantsByCallIDs(ctx context.Context, callIDs []ulid.ULID, staleSeconds int32) (map[ulid.ULID][]*entity.CallParticipant, error)
 	CreateCallBan(ctx context.Context, callID, userID ulid.ULID) error
 	IsUserBannedFromCall(ctx context.Context, callID, userID ulid.ULID) (bool, error)
 	ListCallBans(ctx context.Context, callID ulid.ULID, cursorUserID string, pageSize int32) ([]*entity.CallBan, error)

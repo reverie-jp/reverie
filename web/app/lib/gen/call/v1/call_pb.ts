@@ -81,6 +81,23 @@ export class Call extends Message<Call> {
    */
   endTime?: Timestamp;
 
+  /**
+   * Host-provided title. May be empty.
+   *
+   * @generated from field: string title = 6;
+   */
+  title = "";
+
+  /**
+   * Currently-connected participants (both authenticated and guests),
+   * ordered by first_join_time ASC. Populated on list endpoints for
+   * avatar stacks on call cards. Callers derive counts from length.
+   * Empty on writes.
+   *
+   * @generated from field: repeated call.v1.CallParticipant active_participants = 7;
+   */
+  activeParticipants: CallParticipant[] = [];
+
   constructor(data?: PartialMessage<Call>) {
     super();
     proto3.util.initPartial(data, this);
@@ -94,6 +111,8 @@ export class Call extends Message<Call> {
     { no: 3, name: "visibility", kind: "enum", T: proto3.getEnumType(CallVisibility) },
     { no: 4, name: "create_time", kind: "message", T: Timestamp },
     { no: 5, name: "end_time", kind: "message", T: Timestamp },
+    { no: 6, name: "title", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 7, name: "active_participants", kind: "message", T: CallParticipant, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Call {
@@ -191,6 +210,13 @@ export class CreateCallRequest extends Message<CreateCallRequest> {
    */
   visibility = CallVisibility.UNSPECIFIED;
 
+  /**
+   * Optional. Max 100 characters. Trimmed server-side.
+   *
+   * @generated from field: string title = 2;
+   */
+  title = "";
+
   constructor(data?: PartialMessage<CreateCallRequest>) {
     super();
     proto3.util.initPartial(data, this);
@@ -200,6 +226,7 @@ export class CreateCallRequest extends Message<CreateCallRequest> {
   static readonly typeName = "call.v1.CreateCallRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "visibility", kind: "enum", T: proto3.getEnumType(CallVisibility) },
+    { no: 2, name: "title", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateCallRequest {

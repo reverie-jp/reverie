@@ -19,6 +19,7 @@ func FromCreateCallRequest(ctx context.Context, req *connect.Request[callv1.Crea
 	return usecase.CreateCallInput{
 		RequesterID: userID,
 		Visibility:  fromProtoVisibility(req.Msg.Visibility),
+		Title:       req.Msg.Title,
 	}, nil
 }
 

@@ -12,6 +12,10 @@ import (
 type CallView struct {
 	Call *entity.Call
 	Host *usergw.UserView
+	// ActiveParticipants is populated on list endpoints for avatar stacks
+	// on call cards. Includes both authenticated participants and guests.
+	// Ordered by first_join_time. Empty on single-call reads.
+	ActiveParticipants []*CallParticipantView
 }
 
 type CallParticipantView struct {

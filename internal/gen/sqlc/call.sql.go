@@ -33,18 +33,24 @@ func (q *Queries) ClearCallParticipantMutedByHost(ctx context.Context, arg Clear
 }
 
 const createCall = `-- name: CreateCall :exec
-INSERT INTO calls (id, host_user_id, visibility)
-VALUES ($1, $2, $3)
+INSERT INTO calls (id, host_user_id, visibility, title)
+VALUES ($1, $2, $3, $4)
 `
 
 type CreateCallParams struct {
 	ID         ulid.ULID      `json:"id"`
 	HostUserID ulid.ULID      `json:"host_user_id"`
 	Visibility CallVisibility `json:"visibility"`
+	Title      string         `json:"title"`
 }
 
 func (q *Queries) CreateCall(ctx context.Context, arg CreateCallParams) error {
-	_, err := q.db.Exec(ctx, createCall, arg.ID, arg.HostUserID, arg.Visibility)
+	_, err := q.db.Exec(ctx, createCall,
+		arg.ID,
+		arg.HostUserID,
+		arg.Visibility,
+		arg.Title,
+	)
 	return err
 }
 
@@ -81,7 +87,7 @@ func (q *Queries) DeleteCallBan(ctx context.Context, arg DeleteCallBanParams) er
 }
 
 const getActiveCallByUser = `-- name: GetActiveCallByUser :one
-SELECT c.id, c.host_user_id, c.visibility, c.end_time, c.create_time, c.update_time FROM calls c
+SELECT c.id, c.host_user_id, c.visibility, c.title, c.end_time, c.create_time, c.update_time FROM calls c
 JOIN call_participants p ON p.call_id = c.id
 WHERE p.user_id = $1::ulid
   AND p.last_seen_time > NOW() - ($2::int || ' seconds')::interval
@@ -102,6 +108,7 @@ func (q *Queries) GetActiveCallByUser(ctx context.Context, arg GetActiveCallByUs
 		&i.ID,
 		&i.HostUserID,
 		&i.Visibility,
+		&i.Title,
 		&i.EndTime,
 		&i.CreateTime,
 		&i.UpdateTime,
@@ -210,6 +217,52 @@ func (q *Queries) ListActiveCallIDsForFollower(ctx context.Context, arg ListActi
 			return nil, err
 		}
 		items = append(items, id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listActiveParticipantsByCallIDs = `-- name: ListActiveParticipantsByCallIDs :many
+SELECT call_id, participant_identity, user_id, display_name, first_join_time, last_seen_time, disconnected_time, muted_by_host FROM call_participants
+WHERE call_id = ANY($1::text[])
+  AND last_seen_time > NOW() - ($2::int || ' seconds')::interval
+  AND disconnected_time IS NULL
+ORDER BY call_id, first_join_time ASC
+`
+
+type ListActiveParticipantsByCallIDsParams struct {
+	CallIds      []string `json:"call_ids"`
+	StaleSeconds int32    `json:"stale_seconds"`
+}
+
+// All currently-connected participants (auth + guests) across the given
+// calls. Used by list endpoints to populate Call.active_participants for
+// avatar stacks. Ordered by (call_id, first_join_time) so the Go layer
+// groups per-call in one pass. Callers count by length.
+func (q *Queries) ListActiveParticipantsByCallIDs(ctx context.Context, arg ListActiveParticipantsByCallIDsParams) ([]CallParticipant, error) {
+	rows, err := q.db.Query(ctx, listActiveParticipantsByCallIDs, arg.CallIds, arg.StaleSeconds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []CallParticipant{}
+	for rows.Next() {
+		var i CallParticipant
+		if err := rows.Scan(
+			&i.CallID,
+			&i.ParticipantIdentity,
+			&i.UserID,
+			&i.DisplayName,
+			&i.FirstJoinTime,
+			&i.LastSeenTime,
+			&i.DisconnectedTime,
+			&i.MutedByHost,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -340,7 +393,7 @@ func (q *Queries) ListCallParticipants(ctx context.Context, callID ulid.ULID) ([
 }
 
 const listCallsByIDs = `-- name: ListCallsByIDs :many
-SELECT id, host_user_id, visibility, end_time, create_time, update_time FROM calls
+SELECT id, host_user_id, visibility, title, end_time, create_time, update_time FROM calls
 WHERE id = ANY($1::text[])
 `
 
@@ -357,6 +410,7 @@ func (q *Queries) ListCallsByIDs(ctx context.Context, ids []string) ([]Call, err
 			&i.ID,
 			&i.HostUserID,
 			&i.Visibility,
+			&i.Title,
 			&i.EndTime,
 			&i.CreateTime,
 			&i.UpdateTime,

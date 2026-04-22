@@ -1,6 +1,6 @@
 -- name: CreateCall :exec
-INSERT INTO calls (id, host_user_id, visibility)
-VALUES ($1, $2, $3);
+INSERT INTO calls (id, host_user_id, visibility, title)
+VALUES ($1, $2, $3, $4);
 
 -- name: ListCallsByIDs :many
 SELECT * FROM calls
@@ -111,6 +111,17 @@ WHERE call_id = sqlc.arg(call_id)::ulid
 SELECT * FROM call_participants
 WHERE call_id = sqlc.arg(call_id)::ulid
 ORDER BY first_join_time ASC;
+
+-- name: ListActiveParticipantsByCallIDs :many
+-- All currently-connected participants (auth + guests) across the given
+-- calls. Used by list endpoints to populate Call.active_participants for
+-- avatar stacks. Ordered by (call_id, first_join_time) so the Go layer
+-- groups per-call in one pass. Callers count by length.
+SELECT * FROM call_participants
+WHERE call_id = ANY(sqlc.arg(call_ids)::text[])
+  AND last_seen_time > NOW() - (sqlc.arg(stale_seconds)::int || ' seconds')::interval
+  AND disconnected_time IS NULL
+ORDER BY call_id, first_join_time ASC;
 
 -- name: GetActiveCallByUser :one
 SELECT c.* FROM calls c

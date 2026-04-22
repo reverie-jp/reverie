@@ -18,6 +18,7 @@ type Call struct {
 	ID         ulid.ULID
 	HostUserID ulid.ULID
 	Visibility CallVisibility
+	Title      string
 	EndTime    *time.Time
 	CreateTime time.Time
 	UpdateTime time.Time

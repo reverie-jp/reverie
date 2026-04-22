@@ -13,6 +13,7 @@ func ToCall(row *sqlc.Call) *entity.Call {
 		ID:         row.ID,
 		HostUserID: row.HostUserID,
 		Visibility: entity.CallVisibility(row.Visibility),
+		Title:      row.Title,
 		EndTime:    row.EndTime,
 		CreateTime: row.CreateTime,
 		UpdateTime: row.UpdateTime,

@@ -6,7 +6,6 @@ import {
   NotificationType,
 } from "~/lib/gen/notification/v1/notification_pb";
 import { parseCall } from "~/lib/resource-name";
-import { Button } from "~/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -56,13 +55,11 @@ function formatRelative(seconds: bigint | undefined): string {
   return `${days}日前`;
 }
 
-export function NotificationBell() {
+export function NotificationNavItem() {
   const { notifications, unreadCount, markAllRead, markRead } =
     useNotifications();
 
   const handleOpenChange = (open: boolean) => {
-    // Mark all shown items as read when panel opens — matches typical bell
-    // behavior (badge goes to 0 as soon as user acknowledges).
     if (open && unreadCount > 0) {
       void markAllRead();
     }
@@ -72,23 +69,28 @@ export function NotificationBell() {
     <DropdownMenu onOpenChange={handleOpenChange}>
       <DropdownMenuTrigger
         render={
-          <Button
-            size="icon"
-            variant="ghost"
+          <button
+            type="button"
             aria-label="通知"
-            className="relative"
+            className="group relative flex flex-col items-center gap-1 px-3 py-1 text-muted-foreground/70 transition-colors hover:text-foreground aria-expanded:text-foreground"
           />
         }
       >
-        <Bell className="size-5" />
-        {unreadCount > 0 && (
-          <span className="absolute top-1 right-1 min-w-4 h-4 px-1 rounded-full bg-destructive text-[10px] leading-4 text-center text-destructive-foreground">
-            {unreadCount > 99 ? "99+" : unreadCount}
-          </span>
-        )}
+        <span className="relative grid place-items-center w-10 h-7 rounded-xl transition-all group-aria-expanded:bg-(--reverie-accent)/15 group-aria-expanded:text-(--reverie-accent)">
+          <Bell className="size-4" />
+          {unreadCount > 0 && (
+            <span className="absolute top-0.5 right-1 min-w-3.5 h-3.5 px-1 rounded-full bg-destructive text-[9px] leading-3.5 text-center font-medium text-destructive-foreground">
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </span>
+          )}
+        </span>
+        <span className="text-[10px] leading-none">通知</span>
       </DropdownMenuTrigger>
+
       <DropdownMenuContent
-        align="end"
+        side="top"
+        align="center"
+        sideOffset={8}
         className="w-80 max-h-96 p-0"
       >
         <div className="flex items-center justify-between px-3 py-2 border-b border-foreground/10">

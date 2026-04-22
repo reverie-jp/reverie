@@ -18,10 +18,19 @@ func ToCall(view *callgw.CallView) *callv1.Call {
 		Name:       resourcename.FormatCall(c.ID),
 		Host:       useradapter.ToUser(view.Host),
 		Visibility: toProtoVisibility(c.Visibility),
+		Title:      c.Title,
 		CreateTime: timestamppb.New(c.CreateTime),
 	}
 	if c.EndTime != nil {
 		out.EndTime = timestamppb.New(*c.EndTime)
+	}
+	if len(view.ActiveParticipants) > 0 {
+		out.ActiveParticipants = make([]*callv1.CallParticipant, 0, len(view.ActiveParticipants))
+		for _, pv := range view.ActiveParticipants {
+			if p := ToCallParticipant(pv); p != nil {
+				out.ActiveParticipants = append(out.ActiveParticipants, p)
+			}
+		}
 	}
 	return out
 }

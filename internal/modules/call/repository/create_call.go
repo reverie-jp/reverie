@@ -11,5 +11,6 @@ func (r *RepositoryImpl) CreateCall(ctx context.Context, params CreateCallParams
 		ID:         params.ID,
 		HostUserID: params.HostUserID,
 		Visibility: sqlc.CallVisibility(params.Visibility),
+		Title:      params.Title,
 	})
 }

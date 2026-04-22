@@ -19,8 +19,14 @@ func (g *gatewayImpl) BuildCallView(ctx context.Context, requesterID, callID uli
 	return views[0], nil
 }
 
-// BuildListCallViews materializes calls for the given IDs and their host user
-// views in two batched queries, preserving the input order.
+// BuildListCallViews materializes calls for the given IDs, their host user
+// views, and a per-call active-participants list (for avatar stacks on call
+// cards). Preserves input order.
+//
+// Query budget: 3 batched queries total — calls, active participants per
+// call, and users for (hosts ∪ authenticated participants). Guests are
+// included in the participant list with a nil User. Frontend derives counts
+// from the returned slice length.
 func (g *gatewayImpl) BuildListCallViews(ctx context.Context, requesterID ulid.ULID, callIDs []ulid.ULID) ([]*CallView, error) {
 	if len(callIDs) == 0 {
 		return []*CallView{}, nil
@@ -31,8 +37,29 @@ func (g *gatewayImpl) BuildListCallViews(ctx context.Context, requesterID ulid.U
 		return nil, err
 	}
 
-	hostIDs := uniqueIDs(calls, func(c *entity.Call) ulid.ULID { return c.HostUserID })
-	hostByID, err := g.buildUserViewMap(ctx, requesterID, hostIDs)
+	participantsByCall, err := g.repo.ListActiveParticipantsByCallIDs(ctx, callIDs, entity.ParticipantStaleSeconds)
+	if err != nil {
+		return nil, err
+	}
+
+	// Batch-fetch every user we'll need (hosts + authenticated participants)
+	// in one call to the user gateway, then slice per-call.
+	userIDSet := make(map[ulid.ULID]struct{}, len(calls)*2)
+	for _, c := range calls {
+		userIDSet[c.HostUserID] = struct{}{}
+	}
+	for _, ps := range participantsByCall {
+		for _, p := range ps {
+			if p.UserID != nil {
+				userIDSet[*p.UserID] = struct{}{}
+			}
+		}
+	}
+	userIDs := make([]ulid.ULID, 0, len(userIDSet))
+	for id := range userIDSet {
+		userIDs = append(userIDs, id)
+	}
+	userByID, err := g.buildUserViewMap(ctx, requesterID, userIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -48,9 +75,23 @@ func (g *gatewayImpl) BuildListCallViews(ctx context.Context, requesterID ulid.U
 		if !ok {
 			continue
 		}
+		ps := participantsByCall[id]
+		pvs := make([]*CallParticipantView, 0, len(ps))
+		for _, p := range ps {
+			var u *usergw.UserView
+			if p.UserID != nil {
+				u = userByID[*p.UserID]
+			}
+			pvs = append(pvs, &CallParticipantView{
+				Participant:          p,
+				User:                 u,
+				IsCurrentlyConnected: true,
+			})
+		}
 		out = append(out, &CallView{
-			Call: c,
-			Host: hostByID[c.HostUserID],
+			Call:               c,
+			Host:               userByID[c.HostUserID],
+			ActiveParticipants: pvs,
 		})
 	}
 	return out, nil

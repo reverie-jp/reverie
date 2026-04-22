@@ -1,71 +1,102 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { CallVisibility, type Call } from "~/lib/gen/call/v1/call_pb";
+import { type Call } from "~/lib/gen/call/v1/call_pb";
 import { callClient, tokenStore } from "~/lib/api-client";
-import { useCall } from "~/lib/call-context";
-import { parseCall } from "~/lib/resource-name";
 import { Button } from "~/components/ui/button";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "~/components/ui/tabs";
+import { CallCard } from "~/components/call-card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 
-type VisibilityChoice = "OPEN" | "USERS_ONLY" | "LOCKED";
-
-const VISIBILITY_LABELS: Record<VisibilityChoice, string> = {
-  OPEN: "オープン",
-  USERS_ONLY: "ユーザーのみ",
-  LOCKED: "非公開",
-};
-
-function toProtoVisibility(v: VisibilityChoice): CallVisibility {
-  switch (v) {
-    case "OPEN":
-      return CallVisibility.OPEN;
-    case "USERS_ONLY":
-      return CallVisibility.USERS_ONLY;
-    case "LOCKED":
-      return CallVisibility.LOCKED;
+function CallList({
+  calls,
+  onJoin,
+  empty,
+}: {
+  calls: Call[];
+  onJoin: (id: string) => void;
+  empty: string;
+}) {
+  if (calls.length === 0) {
+    return <p className="text-xs text-muted-foreground px-1 py-6">{empty}</p>;
   }
+  return (
+    <ul className="flex flex-col gap-3">
+      {calls.map((c) => (
+        <li key={c.name}>
+          <CallCard call={c} onJoin={onJoin} />
+        </li>
+      ))}
+    </ul>
+  );
 }
 
-function CallListItem({
-  call,
-  onJoin,
+function GuestFollowingPlaceholder({
+  peekCalls,
+  onLogin,
 }: {
-  call: Call;
-  onJoin: (id: string) => void;
+  peekCalls: Call[];
+  onLogin: () => void;
 }) {
-  const callId = parseCall(call.name);
+  // Blur the current public feed so the tab has visual weight even for
+  // guests — mirrors the design's "peek under frosted glass" treatment.
+  const peek = peekCalls.slice(0, 4);
   return (
-    <li className="rounded-md border p-3 flex items-center justify-between">
-      <div className="min-w-0">
-        <p className="text-xs font-mono truncate">{callId}</p>
-        <p className="text-[10px] text-muted-foreground truncate">
-          host: {call.host?.displayName ?? "unknown"}
-          {call.host?.customId ? ` @${call.host.customId}` : ""}
-        </p>
+    <div className="relative min-h-90">
+      <div
+        aria-hidden
+        className="pointer-events-none select-none flex flex-col gap-3 blur-[10px] opacity-70"
+      >
+        {peek.length > 0
+          ? peek.map((c) => (
+              <CallCard key={c.name} call={c} onJoin={() => {}} />
+            ))
+          : Array.from({ length: 3 }).map((_, i) => (
+              <div
+                key={i}
+                className="h-28 rounded-2xl border border-white/10 bg-white/5"
+              />
+            ))}
       </div>
-      <Button size="sm" variant="outline" onClick={() => onJoin(callId)}>
-        参加
-      </Button>
-    </li>
+
+      <div className="absolute inset-x-0 top-6 flex justify-center px-2">
+        <div
+          className="w-full max-w-sm rounded-2xl border border-(--reverie-accent)/30 p-5 backdrop-blur-xl"
+          style={{
+            background:
+              "linear-gradient(180deg, rgba(123,92,255,0.18), rgba(255,255,255,0.05))",
+            boxShadow: "0 20px 60px rgba(0,0,0,0.4)",
+          }}
+        >
+          <p className="font-display text-xl leading-tight">
+            フォロー中を見るには
+          </p>
+          <p className="mt-1.5 text-[13px] text-muted-foreground leading-relaxed">
+            アカウントを作ると、気になる人の通話が夢のログのように並びます。
+          </p>
+          <Button
+            size="lg"
+            onClick={onLogin}
+            className="mt-4 w-full h-11 rounded-full font-medium text-[#120a2e]"
+            style={{
+              background:
+                "linear-gradient(180deg, #c9b5ff, var(--reverie-accent))",
+              boxShadow:
+                "0 0 24px var(--reverie-accent-glow), inset 0 1px 0 rgba(255,255,255,0.5)",
+            }}
+          >
+            ログインして続ける
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }
 
 export default function Home() {
   const navigate = useNavigate();
-  const call = useCall();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [visibility, setVisibility] = useState<VisibilityChoice>("OPEN");
-  const [creating, setCreating] = useState(false);
-  const [joinId, setJoinId] = useState("");
   const [publicCalls, setPublicCalls] = useState<Call[]>([]);
   const [followingCalls, setFollowingCalls] = useState<Call[]>([]);
   const [followingLoading, setFollowingLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<"public" | "following">("public");
 
   useEffect(() => {
@@ -105,149 +136,75 @@ export default function Home() {
     void fetchFollowing();
   }, [isAuthenticated, tab, fetchFollowing]);
 
-  const handleCreate = async () => {
-    setCreating(true);
-    setError(null);
-    try {
-      const res = await callClient.createCall({
-        visibility: toProtoVisibility(visibility),
-      });
-      if (!res.call) throw new Error("call was not returned");
-      const newCallId = parseCall(res.call.name);
-      // Host joins immediately so landing on /calls/{id} skips the preview
-      // screen. If a different call was previously joined, leave it first.
-      if (call.callId && call.callId !== newCallId) {
-        await call.leave();
-      }
-      const joinResult = await call.join(newCallId);
-      if (!joinResult.ok) {
-        throw new Error(joinResult.error);
-      }
-      navigate(`/calls/${newCallId}`);
-    } catch (err) {
-      console.error("CreateCall failed:", err);
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setCreating(false);
-    }
-  };
-
-  const handleJoin = () => {
-    if (!joinId.trim()) return;
-    navigate(`/calls/${joinId.trim()}`);
-  };
-
   const handleJoinCall = (id: string) => navigate(`/calls/${id}`);
 
+  const currentCount =
+    tab === "following" ? followingCalls.length : publicCalls.length;
+
   return (
-    <div className="w-full min-h-full flex flex-col items-center px-6 py-8">
-      <div className="w-full max-w-md flex flex-col gap-8">
-        {isAuthenticated && (
-          <div className="flex flex-col gap-3">
-            <p className="text-sm font-medium">新しい通話を作成</p>
-            <div className="flex flex-col gap-2">
-              {(["OPEN", "USERS_ONLY", "LOCKED"] as VisibilityChoice[]).map(
-                (v) => (
-                  <label
-                    key={v}
-                    className="flex items-center gap-2 text-sm cursor-pointer"
-                  >
-                    <input
-                      type="radio"
-                      name="visibility"
-                      value={v}
-                      checked={visibility === v}
-                      onChange={() => setVisibility(v)}
-                    />
-                    {VISIBILITY_LABELS[v]}
-                  </label>
-                ),
-              )}
-            </div>
-            <Button
-              onClick={handleCreate}
-              disabled={creating}
-              className="w-full h-11"
-            >
-              {creating ? "作成中..." : "作成"}
-            </Button>
+    <div className="w-full min-h-full px-6 pt-10 pb-16 flex flex-col items-center">
+      <div className="w-full max-w-xl flex flex-col gap-8">
+        {/* Hero */}
+        <header className="flex flex-col gap-2">
+          <div className="flex items-baseline justify-between gap-3">
+            <h1 className="font-display text-4xl leading-none tracking-tight">
+              Reverie
+            </h1>
+            <span className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/80">
+              {currentCount} rooms
+            </span>
           </div>
-        )}
+        </header>
 
-        <div className="flex flex-col gap-2">
-          <p className="text-sm font-medium">Room ID で参加</p>
-          <input
-            className="w-full h-11 px-3 rounded-md border border-input bg-background text-sm"
-            placeholder="ULID"
-            value={joinId}
-            onChange={(e) => setJoinId(e.target.value)}
-          />
-          <Button
-            variant="outline"
-            onClick={handleJoin}
-            disabled={!joinId.trim()}
-            className="w-full h-11"
-          >
-            参加
-          </Button>
-        </div>
-
-        <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
-          <TabsList className="w-full">
-            <TabsTrigger value="public" className="text-sm">
-              公開中
+        <Tabs
+          value={tab}
+          onValueChange={(v) => setTab(v as typeof tab)}
+          className="gap-6"
+        >
+          <TabsList className="w-full rounded-full bg-white/5 border border-white/10 p-1 h-10">
+            <TabsTrigger
+              value="following"
+              className="rounded-full text-sm h-8 data-active:bg-white/10 data-active:text-foreground"
+            >
+              フォロー中
             </TabsTrigger>
-            {isAuthenticated && (
-              <TabsTrigger value="following" className="text-sm">
-                フォロー中
-              </TabsTrigger>
-            )}
+            <TabsTrigger
+              value="public"
+              className="rounded-full text-sm h-8 data-active:bg-white/10 data-active:text-foreground"
+            >
+              オープン
+            </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="public" className="mt-3">
-            {publicCalls.length === 0 ? (
-              <p className="text-xs text-muted-foreground">
-                現在公開中の通話はありません
-              </p>
-            ) : (
-              <ul className="flex flex-col gap-2">
-                {publicCalls.map((call) => (
-                  <CallListItem
-                    key={call.name}
-                    call={call}
-                    onJoin={handleJoinCall}
-                  />
-                ))}
-              </ul>
-            )}
+          <TabsContent value="public" className="mt-0">
+            <CallList
+              calls={publicCalls}
+              onJoin={handleJoinCall}
+              empty="現在公開中の通話はありません"
+            />
           </TabsContent>
 
-          {isAuthenticated && (
-            <TabsContent value="following" className="mt-3">
-              {followingLoading ? (
-                <p className="text-xs text-muted-foreground">読み込み中...</p>
-              ) : followingCalls.length === 0 ? (
-                <p className="text-xs text-muted-foreground">
-                  フォロー中のユーザーが参加している通話はありません
+          <TabsContent value="following" className="mt-0">
+            {isAuthenticated ? (
+              followingLoading ? (
+                <p className="text-xs text-muted-foreground px-1 py-6">
+                  読み込み中...
                 </p>
               ) : (
-                <ul className="flex flex-col gap-2">
-                  {followingCalls.map((call) => (
-                    <CallListItem
-                      key={call.name}
-                      call={call}
-                      onJoin={handleJoinCall}
-                    />
-                  ))}
-                </ul>
-              )}
-            </TabsContent>
-          )}
+                <CallList
+                  calls={followingCalls}
+                  onJoin={handleJoinCall}
+                  empty="フォロー中のユーザーが参加している通話はありません"
+                />
+              )
+            ) : (
+              <GuestFollowingPlaceholder
+                peekCalls={publicCalls}
+                onLogin={() => navigate("/login")}
+              />
+            )}
+          </TabsContent>
         </Tabs>
-
-        {error && (
-          <p className="text-sm text-destructive text-center">{error}</p>
-        )}
       </div>
     </div>
   );

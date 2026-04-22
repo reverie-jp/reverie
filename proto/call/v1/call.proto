@@ -176,6 +176,13 @@ message Call {
   // Non-null once the call has been ended by the host. No new joins allowed
   // and all participants have been disconnected.
   google.protobuf.Timestamp end_time = 5;
+  // Host-provided title. May be empty.
+  string title = 6;
+  // Currently-connected participants (both authenticated and guests),
+  // ordered by first_join_time ASC. Populated on list endpoints for
+  // avatar stacks on call cards. Callers derive counts from length.
+  // Empty on writes.
+  repeated CallParticipant active_participants = 7;
 }
 
 message CallParticipant {
@@ -192,6 +199,8 @@ message CallParticipant {
 
 message CreateCallRequest {
   CallVisibility visibility = 1;
+  // Optional. Max 100 characters. Trimmed server-side.
+  string title = 2;
 }
 
 message CreateCallResponse {

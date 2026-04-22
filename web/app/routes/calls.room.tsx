@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
-import { ParticipantEvent, Track, type Participant } from "livekit-client";
 import type {
   CallParticipant,
   GetCallResponse,
@@ -15,6 +14,7 @@ import {
 } from "~/lib/call-context";
 import { Button } from "~/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
+import { ParticipantTile } from "~/components/participant-tile";
 import {
   Drawer,
   DrawerContent,
@@ -64,305 +64,6 @@ function formatClockTime(ms: number): string {
   const h = String(d.getHours()).padStart(2, "0");
   const m = String(d.getMinutes()).padStart(2, "0");
   return `${h}:${m}`;
-}
-
-function SpeakerAvatar({
-  participant,
-  avatarUrl,
-  displayName,
-  connected,
-}: {
-  participant: Participant | null;
-  avatarUrl?: string;
-  displayName: string;
-  connected: boolean;
-}) {
-  const avatarRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!participant || !connected) return;
-    const el = avatarRef.current;
-    if (!el) return;
-
-    let audioCtx: AudioContext | null = null;
-    let analyser: AnalyserNode | null = null;
-    let source: MediaStreamAudioSourceNode | null = null;
-    let data: Uint8Array<ArrayBuffer> | null = null;
-    let animationId = 0;
-    let cleaned = false;
-
-    const reset = () => {
-      el.style.transform = "";
-      el.style.boxShadow = "";
-    };
-
-    const tryAttach = () => {
-      if (cleaned || analyser) return;
-      const pub = participant
-        .getTrackPublications()
-        .find((p) => p.kind === Track.Kind.Audio);
-      const mst = pub?.track?.mediaStreamTrack;
-      if (!mst || pub?.isMuted) {
-        reset();
-        return;
-      }
-      audioCtx = new AudioContext();
-      source = audioCtx.createMediaStreamSource(new MediaStream([mst]));
-      analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 256;
-      analyser.smoothingTimeConstant = 0.4;
-      source.connect(analyser);
-      data = new Uint8Array(new ArrayBuffer(analyser.frequencyBinCount));
-
-      const GAIN = 6;
-      const draw = () => {
-        if (cleaned || !analyser || !data) return;
-        animationId = requestAnimationFrame(draw);
-        analyser.getByteTimeDomainData(data);
-        let sum = 0;
-        for (let i = 0; i < data.length; i++) {
-          const v = (data[i] - 128) / 128;
-          sum += v * v;
-        }
-        const rms = Math.sqrt(sum / data.length);
-        const level = Math.min(1, rms * GAIN);
-        el.style.transform = `scale(${(1 + level * 0.18).toFixed(3)})`;
-        if (level > 0.04) {
-          const ringPx = 2 + Math.round(level * 6);
-          const alpha = (0.25 + level * 0.5).toFixed(2);
-          el.style.boxShadow = `0 0 0 ${ringPx}px rgb(34 197 94 / ${alpha})`;
-        } else {
-          el.style.boxShadow = "";
-        }
-      };
-      draw();
-    };
-
-    const teardown = () => {
-      cancelAnimationFrame(animationId);
-      animationId = 0;
-      try {
-        source?.disconnect();
-      } catch {}
-      source = null;
-      analyser = null;
-      data = null;
-      audioCtx?.close().catch(() => undefined);
-      audioCtx = null;
-      reset();
-    };
-
-    const onTrackChanged = () => {
-      const pub = participant
-        .getTrackPublications()
-        .find((p) => p.kind === Track.Kind.Audio);
-      const mst = pub?.track?.mediaStreamTrack;
-      if (!mst || pub?.isMuted) {
-        if (analyser) teardown();
-        else reset();
-        return;
-      }
-      if (!analyser) tryAttach();
-    };
-
-    tryAttach();
-    participant.on(ParticipantEvent.TrackSubscribed, onTrackChanged);
-    participant.on(ParticipantEvent.TrackUnsubscribed, onTrackChanged);
-    participant.on(ParticipantEvent.TrackMuted, onTrackChanged);
-    participant.on(ParticipantEvent.TrackUnmuted, onTrackChanged);
-    participant.on(ParticipantEvent.LocalTrackPublished, onTrackChanged);
-    participant.on(ParticipantEvent.LocalTrackUnpublished, onTrackChanged);
-
-    return () => {
-      cleaned = true;
-      participant.off(ParticipantEvent.TrackSubscribed, onTrackChanged);
-      participant.off(ParticipantEvent.TrackUnsubscribed, onTrackChanged);
-      participant.off(ParticipantEvent.TrackMuted, onTrackChanged);
-      participant.off(ParticipantEvent.TrackUnmuted, onTrackChanged);
-      participant.off(ParticipantEvent.LocalTrackPublished, onTrackChanged);
-      participant.off(ParticipantEvent.LocalTrackUnpublished, onTrackChanged);
-      cancelAnimationFrame(animationId);
-      try {
-        source?.disconnect();
-      } catch {}
-      audioCtx?.close().catch(() => undefined);
-      reset();
-    };
-  }, [participant, connected]);
-
-  return (
-    <div
-      ref={avatarRef}
-      className="rounded-full transition-[transform,box-shadow] duration-75"
-    >
-      <Avatar className="size-12">
-        {avatarUrl && <AvatarImage src={avatarUrl} alt={displayName} />}
-        <AvatarFallback className="text-sm">
-          {displayName.slice(0, 2)}
-        </AvatarFallback>
-      </Avatar>
-    </div>
-  );
-}
-
-function VoiceMeter({ participant }: { participant: Participant | null }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx2d = canvas.getContext("2d");
-    if (!ctx2d) return;
-    if (!participant) {
-      const w = canvas.width;
-      const h = canvas.height;
-      ctx2d.clearRect(0, 0, w, h);
-      return;
-    }
-
-    let audioCtx: AudioContext | null = null;
-    let analyser: AnalyserNode | null = null;
-    let source: MediaStreamAudioSourceNode | null = null;
-    let data: Uint8Array<ArrayBuffer> | null = null;
-    let animationId = 0;
-    let cleaned = false;
-
-    const NUM_BARS = 5;
-    const BAR_GAP = 2;
-    const MIN_BAR_HEIGHT = 2;
-
-    const drawBars = (levels: number[]) => {
-      const w = canvas.width;
-      const h = canvas.height;
-      ctx2d.clearRect(0, 0, w, h);
-      const barWidth = (w - BAR_GAP * (NUM_BARS - 1)) / NUM_BARS;
-      for (let i = 0; i < NUM_BARS; i++) {
-        const level = levels[i] ?? 0;
-        const barHeight = Math.max(MIN_BAR_HEIGHT, level * h);
-        const x = i * (barWidth + BAR_GAP);
-        const y = h - barHeight;
-        ctx2d.fillStyle = level > 0.05 ? "#22c55e" : "#9ca3af";
-        ctx2d.fillRect(x, y, barWidth, barHeight);
-      }
-    };
-
-    const drawFlat = () => {
-      drawBars(new Array(NUM_BARS).fill(0));
-    };
-
-    const tryAttach = () => {
-      if (cleaned || analyser) return;
-      const pub = participant
-        .getTrackPublications()
-        .find((p) => p.kind === Track.Kind.Audio);
-      const mst = pub?.track?.mediaStreamTrack;
-      if (!mst || pub?.isMuted) {
-        drawFlat();
-        return;
-      }
-      audioCtx = new AudioContext();
-      source = audioCtx.createMediaStreamSource(new MediaStream([mst]));
-      analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 256;
-      analyser.smoothingTimeConstant = 0.6;
-      source.connect(analyser);
-      data = new Uint8Array(new ArrayBuffer(analyser.frequencyBinCount));
-
-      const binHz = audioCtx.sampleRate / analyser.fftSize;
-      const minFreq = 150;
-      const maxFreq = 5000;
-      const ratio = maxFreq / minFreq;
-      const barBins: [number, number][] = [];
-      const barCenterHz: number[] = [];
-      for (let b = 0; b < NUM_BARS; b++) {
-        const lo = minFreq * Math.pow(ratio, b / NUM_BARS);
-        const hi = minFreq * Math.pow(ratio, (b + 1) / NUM_BARS);
-        const loBin = Math.max(0, Math.floor(lo / binHz));
-        const hiBin = Math.min(data.length - 1, Math.ceil(hi / binHz));
-        barBins.push([loBin, Math.max(loBin, hiBin)]);
-        barCenterHz.push(Math.sqrt(lo * hi));
-      }
-      const gains = barCenterHz.map((hz) => Math.sqrt(hz / barCenterHz[0]));
-      const SENSITIVITY = 0.55;
-
-      const draw = () => {
-        if (cleaned || !analyser || !data) return;
-        animationId = requestAnimationFrame(draw);
-        analyser.getByteFrequencyData(data);
-        const levels: number[] = [];
-        for (let b = 0; b < NUM_BARS; b++) {
-          const [loBin, hiBin] = barBins[b];
-          let sum = 0;
-          const n = hiBin - loBin + 1;
-          for (let i = loBin; i <= hiBin; i++) sum += data[i];
-          const avg = n > 0 ? sum / n / 255 : 0;
-          levels.push(Math.min(1, avg * gains[b] * SENSITIVITY));
-        }
-        drawBars(levels);
-      };
-      draw();
-    };
-
-    const teardownAnalyser = () => {
-      cancelAnimationFrame(animationId);
-      animationId = 0;
-      try {
-        source?.disconnect();
-      } catch {}
-      source = null;
-      analyser = null;
-      data = null;
-      audioCtx?.close().catch(() => undefined);
-      audioCtx = null;
-      drawFlat();
-    };
-
-    const onTrackChanged = () => {
-      const pub = participant
-        .getTrackPublications()
-        .find((p) => p.kind === Track.Kind.Audio);
-      const mst = pub?.track?.mediaStreamTrack;
-      if (!mst || pub?.isMuted) {
-        if (analyser) teardownAnalyser();
-        else drawFlat();
-        return;
-      }
-      if (!analyser) tryAttach();
-    };
-
-    tryAttach();
-    participant.on(ParticipantEvent.TrackSubscribed, onTrackChanged);
-    participant.on(ParticipantEvent.TrackUnsubscribed, onTrackChanged);
-    participant.on(ParticipantEvent.TrackMuted, onTrackChanged);
-    participant.on(ParticipantEvent.TrackUnmuted, onTrackChanged);
-    participant.on(ParticipantEvent.LocalTrackPublished, onTrackChanged);
-    participant.on(ParticipantEvent.LocalTrackUnpublished, onTrackChanged);
-
-    return () => {
-      cleaned = true;
-      participant.off(ParticipantEvent.TrackSubscribed, onTrackChanged);
-      participant.off(ParticipantEvent.TrackUnsubscribed, onTrackChanged);
-      participant.off(ParticipantEvent.TrackMuted, onTrackChanged);
-      participant.off(ParticipantEvent.TrackUnmuted, onTrackChanged);
-      participant.off(ParticipantEvent.LocalTrackPublished, onTrackChanged);
-      participant.off(ParticipantEvent.LocalTrackUnpublished, onTrackChanged);
-      cancelAnimationFrame(animationId);
-      try {
-        source?.disconnect();
-      } catch {}
-      audioCtx?.close().catch(() => undefined);
-    };
-  }, [participant]);
-
-  return (
-    <canvas
-      ref={canvasRef}
-      width={28}
-      height={14}
-      className="inline-block"
-      aria-hidden
-    />
-  );
 }
 
 export default function CallRoomRoute() {
@@ -821,24 +522,44 @@ export default function CallRoomRoute() {
           </div>
         )}
 
-        <div className="rounded-md border p-4">
-          <p className="text-xs text-muted-foreground mb-2">
-            参加者（接続中: {activeParticipantCount}）
-          </p>
+        <div className="rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.05] to-white/[0.02] backdrop-blur-xl p-4">
+          <div className="mb-4 flex items-baseline justify-between">
+            <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground/80">
+              参加者 {activeParticipantCount}
+            </span>
+            {participants.length > activeParticipantCount && (
+              <span className="text-[10px] text-muted-foreground/60">
+                +{participants.length - activeParticipantCount} オフライン
+              </span>
+            )}
+          </div>
           {participants.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground text-center py-4">
               まだ誰も参加していません
             </p>
           ) : (
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-4 gap-x-2 gap-y-4">
               {participants.map((p) => {
                 const identity = parseCallParticipant(p.name).identity;
                 const muted = call.isParticipantMuted(identity);
                 const displayName = p.user?.displayName || p.displayName;
+                const participantIsHost =
+                  !!callData.host &&
+                  !!p.user &&
+                  p.user.name === callData.host.name;
                 return (
-                  <button
+                  <ParticipantTile
                     key={p.name}
-                    type="button"
+                    displayName={displayName}
+                    avatarUrl={p.user?.avatarUrl}
+                    connected={p.isCurrentlyConnected}
+                    muted={muted}
+                    isHost={participantIsHost}
+                    participant={
+                      p.isCurrentlyConnected && connected
+                        ? call.getLKParticipant(identity)
+                        : null
+                    }
                     onClick={() => {
                       if (!connected && p.user) {
                         navigate(`/@${p.user.customId}`);
@@ -846,40 +567,7 @@ export default function CallRoomRoute() {
                         setDrawerIdentity(identity);
                       }
                     }}
-                    className="flex flex-col items-center gap-1.5 rounded-md p-1 text-center hover:bg-muted/50 transition-colors"
-                  >
-                    <div
-                      className={`relative ${
-                        !p.isCurrentlyConnected ? "opacity-40" : ""
-                      }`}
-                    >
-                      <SpeakerAvatar
-                        participant={
-                          p.isCurrentlyConnected && connected
-                            ? call.getLKParticipant(identity)
-                            : null
-                        }
-                        avatarUrl={p.user?.avatarUrl}
-                        displayName={displayName}
-                        connected={connected && p.isCurrentlyConnected}
-                      />
-                      {p.isCurrentlyConnected && muted && (
-                        <span
-                          className="absolute -bottom-0.5 -right-0.5 text-[10px] leading-none bg-background rounded-full border p-0.5"
-                          title="ミュート中"
-                        >
-                          🔇
-                        </span>
-                      )}
-                    </div>
-                    <span
-                      className={`text-xs leading-tight truncate w-full ${
-                        !p.isCurrentlyConnected ? "text-muted-foreground" : ""
-                      }`}
-                    >
-                      {displayName}
-                    </span>
-                  </button>
+                  />
                 );
               })}
             </div>

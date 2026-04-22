@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router";
 import { Mic, MicOff, PhoneOff } from "lucide-react";
 import {
@@ -9,10 +9,19 @@ import {
   type RemoteTrack,
   type RemoteTrackPublication,
 } from "livekit-client";
-import { useCall } from "~/lib/call-context";
-import { Button } from "~/components/ui/button";
+import { callClient } from "~/lib/api-client";
+import { CALL_UPDATED_EVENT, useCall } from "~/lib/call-context";
+import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
+import { cn } from "~/lib/utils";
+import { formatCall } from "~/lib/resource-name";
+import type { Call } from "~/lib/gen/call/v1/call_pb";
 
-function MixedVoiceMeter() {
+const AVATAR_BACKGROUND =
+  "linear-gradient(160deg, #c9b5ff, #6b4ee0 55%, #4a2d7d)";
+
+// Mixed-audio FFT → 5 bars drawn from center (up+down) in lavender.
+// One canvas, one RAF loop, subscribes to every participant in the room.
+function MiniVoiceMeter() {
   const { connected, getRoom } = useCall();
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -43,9 +52,7 @@ function MixedVoiceMeter() {
         const key = `${p.identity}:${pub.trackSid}`;
         if (sources.has(key)) continue;
         try {
-          const src = audioCtx.createMediaStreamSource(
-            new MediaStream([mst]),
-          );
+          const src = audioCtx.createMediaStreamSource(new MediaStream([mst]));
           src.connect(analyser);
           sources.set(key, src);
         } catch (err) {
@@ -120,14 +127,19 @@ function MixedVoiceMeter() {
     const gains = barCenterHz.map((hz) => Math.sqrt(hz / barCenterHz[0]));
     const SENSITIVITY = 0.55;
 
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = 28 * dpr;
+    canvas.height = 16 * dpr;
+    ctx2d.scale(dpr, dpr);
+
     let animationId = 0;
     let cleaned = false;
     const draw = () => {
       if (cleaned) return;
       animationId = requestAnimationFrame(draw);
       analyser.getByteFrequencyData(data);
-      const w = canvas.width;
-      const h = canvas.height;
+      const w = 28;
+      const h = 16;
       ctx2d.clearRect(0, 0, w, h);
       const barWidth = (w - BAR_GAP * (NUM_BARS - 1)) / NUM_BARS;
       for (let b = 0; b < NUM_BARS; b++) {
@@ -139,8 +151,8 @@ function MixedVoiceMeter() {
         const level = Math.min(1, avg * gains[b] * SENSITIVITY);
         const barH = Math.max(MIN_BAR_HEIGHT, level * h);
         const x = b * (barWidth + BAR_GAP);
-        const y = h - barH;
-        ctx2d.fillStyle = level > 0.05 ? "#22c55e" : "#9ca3af";
+        const y = (h - barH) / 2; // grow from center
+        ctx2d.fillStyle = `rgba(184, 164, 255, ${(0.45 + level * 0.55).toFixed(2)})`;
         ctx2d.fillRect(x, y, barWidth, barH);
       }
     };
@@ -165,42 +177,138 @@ function MixedVoiceMeter() {
   }, [connected, getRoom]);
 
   return (
-    <canvas ref={canvasRef} width={28} height={14} aria-hidden />
+    <canvas ref={canvasRef} style={{ width: 28, height: 16 }} aria-hidden />
   );
 }
 
 export function CallHeader() {
-  const { callId, connected, isSelfMuted, toggleSelfMic, leave } = useCall();
+  const {
+    callId,
+    connected,
+    isSelfMuted,
+    toggleSelfMic,
+    leave,
+    getRoom,
+    participantTick,
+  } = useCall();
   const location = useLocation();
+  const [callInfo, setCallInfo] = useState<Call | null>(null);
+
+  // Fetch call metadata (title, host) once when the mini bar appears.
+  useEffect(() => {
+    if (!connected || !callId) {
+      setCallInfo(null);
+      return;
+    }
+    let cancelled = false;
+    const fetchInfo = async () => {
+      try {
+        const res = await callClient.getCall({ name: formatCall(callId) });
+        if (!cancelled) setCallInfo(res.call ?? null);
+      } catch (err) {
+        console.warn("CallHeader GetCall failed:", err);
+      }
+    };
+    void fetchInfo();
+    const onUpdated = () => void fetchInfo();
+    window.addEventListener(CALL_UPDATED_EVENT, onUpdated);
+    return () => {
+      cancelled = true;
+      window.removeEventListener(CALL_UPDATED_EVENT, onUpdated);
+    };
+  }, [callId, connected]);
+
   if (!connected || !callId) return null;
   if (location.pathname === `/calls/${callId}`) return null;
+
   const muted = isSelfMuted();
+  const room = getRoom();
+  // Recomputed each render (participantTick drives re-render on join/leave).
+  void participantTick;
+  const participantCount = room ? room.remoteParticipants.size + 1 : 1;
+  const hostName = callInfo?.host?.displayName ?? "";
+  const hostAvatar = callInfo?.host?.avatarUrl;
+  const title = callInfo?.title?.trim() || hostName || "通話中";
+  const initials = (hostName || "?").slice(0, 2).toUpperCase();
+
   return (
-    <div className="shrink-0 z-40 bg-green-500/10 border-b border-green-500/30 flex items-center gap-2 px-3 h-11">
-      <span className="size-2 rounded-full bg-green-500 animate-pulse" />
-      <Link
-        to={`/calls/${callId}`}
-        className="text-sm flex-1 truncate hover:underline flex items-center gap-2"
+    <div className="sticky top-4 z-40 px-2.5 pb-1.5 pointer-events-none">
+      <div
+        className={cn(
+          "pointer-events-auto flex items-center gap-2.5 rounded-2xl px-2 py-1.5",
+          "border border-(--reverie-accent)/25",
+        )}
+        style={{
+          background:
+            "linear-gradient(180deg, rgba(123,92,255,0.18), rgba(184,164,255,0.06))",
+          backdropFilter: "blur(20px) saturate(140%)",
+          WebkitBackdropFilter: "blur(20px) saturate(140%)",
+          boxShadow:
+            "0 8px 24px rgba(0,0,0,0.3), 0 0 16px rgba(184,164,255,0.15)",
+        }}
       >
-        <span>通話中 — タップで戻る</span>
-        <MixedVoiceMeter />
-      </Link>
-      <Button
-        size="sm"
-        variant="outline"
-        onClick={() => void toggleSelfMic()}
-        title={muted ? "ミュートを解除" : "ミュート"}
-      >
-        {muted ? <MicOff className="size-4" /> : <Mic className="size-4" />}
-      </Button>
-      <Button
-        size="sm"
-        variant="destructive"
-        onClick={() => void leave()}
-        title="退出"
-      >
-        <PhoneOff className="size-4" />
-      </Button>
+        <Link
+          to={`/calls/${callId}`}
+          className="flex flex-1 min-w-0 items-center gap-2.5"
+          aria-label="通話に戻る"
+        >
+          <div className="reverie-speaking-ring shrink-0">
+            <Avatar
+              className="size-8"
+              style={{ background: AVATAR_BACKGROUND }}
+            >
+              {hostAvatar && <AvatarImage src={hostAvatar} alt={hostName} />}
+              <AvatarFallback className="bg-transparent text-white text-[10px] font-display font-medium">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5">
+              <span className="reverie-live-pill" style={{ fontSize: 9 }}>
+                LIVE
+              </span>
+              <span className="text-[10px] text-muted-foreground/80">
+                {participantCount}人
+              </span>
+            </div>
+            <p className="font-display text-[13px] leading-tight truncate mt-0.5">
+              {title}
+            </p>
+          </div>
+
+          <MiniVoiceMeter />
+        </Link>
+
+        <button
+          type="button"
+          onClick={() => void toggleSelfMic()}
+          title={muted ? "ミュートを解除" : "ミュート"}
+          aria-label={muted ? "ミュートを解除" : "ミュート"}
+          className={cn(
+            "grid place-items-center size-8 rounded-xl shrink-0 transition-colors",
+            "border border-white/20 bg-white/12 hover:bg-white/18",
+            muted && "text-(--reverie-live)",
+          )}
+        >
+          {muted ? <MicOff className="size-4" /> : <Mic className="size-4" />}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => void leave()}
+          title="退出"
+          aria-label="退出"
+          className="grid place-items-center size-8 rounded-xl shrink-0 text-white font-bold transition-colors"
+          style={{
+            background: "rgba(255,90,120,0.85)",
+            boxShadow: "0 0 12px rgba(255,90,120,0.5)",
+          }}
+        >
+          <PhoneOff className="size-4" />
+        </button>
+      </div>
     </div>
   );
 }

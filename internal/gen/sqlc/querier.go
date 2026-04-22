@@ -49,6 +49,11 @@ type Querier interface {
 	// or a currently-connected participant. The follow filter is pushed into SQL
 	// so we never materialize the full follow set in the application layer.
 	ListActiveCallIDsForFollower(ctx context.Context, arg ListActiveCallIDsForFollowerParams) ([]ulid.ULID, error)
+	// All currently-connected participants (auth + guests) across the given
+	// calls. Used by list endpoints to populate Call.active_participants for
+	// avatar stacks. Ordered by (call_id, first_join_time) so the Go layer
+	// groups per-call in one pass. Callers count by length.
+	ListActiveParticipantsByCallIDs(ctx context.Context, arg ListActiveParticipantsByCallIDsParams) ([]CallParticipant, error)
 	// Paginated call IDs for the home screen. Returns active OPEN calls for
 	// everyone; USERS_ONLY is included when include_users_only is true
 	// (authenticated caller). Keyset paginated by ULID (monotonic, DESC).
