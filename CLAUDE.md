@@ -82,9 +82,9 @@ func (h *Handler) GetUser(ctx, req) (resp, err) {
 
 **Gateway**: View 型 (`UserView` / `CallView` / `CallParticipantView` / `CallBanView` / `NotificationView`) の定義と組み立てを担当。List API の典型は 3 クエリ: (1) repo が ID 配列 (2) `gateway.BuildListXxxViews` が entity を fetch (3) 関連 gateway に委譲して合成。
 
-**View ビルダー命名**: 単数 `BuildXxxView` → `*XxxView` / 複数 `BuildListXxxViews` → `[]*XxxView`。`BuildXxxListViews` や `BuildXxxViews` は使わない。
+**View ビルダー命名**: 単数 `BuildXxxView` → `*XxxView` / 複数 `BuildListXxxViews` → `[]*XxxView`。
 
-**Gateway 間の直接依存 OK**: user gateway は follow gateway を import して `RelationshipsByUserIDs` を呼ぶ。Provider interface のような**先回り抽象は作らない**。循環が実際に起きてから対処。
+**Gateway 間の直接依存 OK**: user gateway は follow gateway を import して `RelationshipsByUserIDs` を呼ぶ。
 
 **entity と View の分離**: DB 行由来のものは entity (非正規化カラムも含む)、requester 依存フラグ (`IsMe` / `IsFollowing` など) は View。entity に文脈依存を載せると「同じ id で値が変わる」矛盾になる。
 
@@ -136,11 +136,11 @@ LiveKit の管理 API (ListRooms / ListParticipants) を**使わない**。`call
 
 ## ユーザー presence
 
-- `users.last_seen_time` を真実源とする (`user_presence` のような専用 table は作らない)。`users` は read-heavy だが `last_seen_time` は非 index なので HOT update で index 影響なし
+- `users.last_seen_time` を真実源とする。`users` は read-heavy だが `last_seen_time` は非 index なので HOT update で index 影響なし
 - `PresenceService.Heartbeat` RPC が `UPDATE users SET last_seen_time = NOW()` を叩くだけ
 - `UserView.IsOnline` は `BuildListUserViews` 内で `u.IsCurrentlyOnline()` から導出 — **追加クエリなし**
 - proto の `OnlineStatus` enum は `ONLINE` / `OFFLINE` のみ出し分け (`IDLE` は未使用)。`last_seen_time` も `User` 本体に同梱 (「最終アクティブ N 分前」UI 用)
-- フロントは root で `usePresenceHeartbeat()` を 1 回起動。Page Visibility API で hidden 時は停止
+- フロントは root で `usePresenceHeartbeat()` を 1 回起動。
 
 ## リアルタイムイベント (EventService.StreamEvents)
 

@@ -33,6 +33,23 @@ func (h *Handler) StreamEvents(ctx context.Context, _ *connect.Request[eventv1.S
 	slog.Info("stream opened", slog.String("user", userID.String()))
 	defer slog.Info("stream closed", slog.String("user", userID.String()))
 
+	sendKeepAlive := func(t time.Time) error {
+		return stream.Send(&eventv1.StreamEventsResponse{
+			CreateTime: timestamppb.New(t),
+			Payload: &eventv1.StreamEventsResponse_KeepAlive{
+				KeepAlive: &eventv1.KeepAliveEvent{},
+			},
+		})
+	}
+
+	// Fire one frame immediately so the client's fetch flips out of
+	// "pending" as soon as the handler is reached (nicer DevTools UX, and
+	// confirms for the client that auth/transport are healthy).
+	if err := sendKeepAlive(time.Now()); err != nil {
+		slog.Warn("stream initial keepalive send failed", slog.String("err", err.Error()))
+		return err
+	}
+
 	ticker := time.NewTicker(keepAliveInterval)
 	defer ticker.Stop()
 
@@ -50,12 +67,7 @@ func (h *Handler) StreamEvents(ctx context.Context, _ *connect.Request[eventv1.S
 			}
 		case t := <-ticker.C:
 			slog.Debug("stream keepalive", slog.String("user", userID.String()))
-			if err := stream.Send(&eventv1.StreamEventsResponse{
-				CreateTime: timestamppb.New(t),
-				Payload: &eventv1.StreamEventsResponse_KeepAlive{
-					KeepAlive: &eventv1.KeepAliveEvent{},
-				},
-			}); err != nil {
+			if err := sendKeepAlive(t); err != nil {
 				slog.Warn("stream keepalive send failed", slog.String("err", err.Error()))
 				return err
 			}
