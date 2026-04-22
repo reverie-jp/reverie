@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { CallVisibility, type Call } from "~/lib/gen/call/v1/call_pb";
 import { callClient, tokenStore } from "~/lib/api-client";
+import { useCall } from "~/lib/call-context";
 import { parseCall } from "~/lib/resource-name";
 import { Button } from "~/components/ui/button";
 import {
@@ -56,6 +57,7 @@ function CallListItem({
 
 export default function Home() {
   const navigate = useNavigate();
+  const call = useCall();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [visibility, setVisibility] = useState<VisibilityChoice>("OPEN");
   const [creating, setCreating] = useState(false);
@@ -111,7 +113,17 @@ export default function Home() {
         visibility: toProtoVisibility(visibility),
       });
       if (!res.call) throw new Error("call was not returned");
-      navigate(`/calls/${parseCall(res.call.name)}`);
+      const newCallId = parseCall(res.call.name);
+      // Host joins immediately so landing on /calls/{id} skips the preview
+      // screen. If a different call was previously joined, leave it first.
+      if (call.callId && call.callId !== newCallId) {
+        await call.leave();
+      }
+      const joinResult = await call.join(newCallId);
+      if (!joinResult.ok) {
+        throw new Error(joinResult.error);
+      }
+      navigate(`/calls/${newCallId}`);
     } catch (err) {
       console.error("CreateCall failed:", err);
       setError(err instanceof Error ? err.message : String(err));
