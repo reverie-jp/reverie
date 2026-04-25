@@ -47,6 +47,10 @@ async function request<T>(
   });
 
   if (!res.ok) {
+    if (res.status === 401) {
+      clearTokens();
+      if (isBrowser) window.location.href = "/login";
+    }
     const err = await res.json().catch(() => ({ message: res.statusText }));
     throw new ApiError(res.status, err.message ?? res.statusText);
   }
@@ -207,6 +211,16 @@ export async function unlikePost(postId: string): Promise<{ post: Post }> {
     method: "POST",
     body: "{}",
   });
+}
+
+export async function listPostLikes(
+  postId: string,
+  params?: { pageSize?: number }
+): Promise<{ users: User[]; nextPageToken?: string }> {
+  const qs = new URLSearchParams();
+  if (params?.pageSize) qs.set("page_size", String(params.pageSize));
+  const query = qs.toString() ? `?${qs}` : "";
+  return request(`/v1/posts/${postId}/likes${query}`);
 }
 
 export async function listPostReposts(
