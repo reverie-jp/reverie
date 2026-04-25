@@ -14,7 +14,8 @@ export function apiPostToUiPost(apiPost: ApiPost): PostCardPost {
       id: apiPost.author?.id ?? "",
       name: apiPost.author?.displayName ?? "unknown",
       customId: apiPost.author?.customId ?? "",
-      avatarUrl: undefined, // Assuming avatarUrl is not directly in ApiPost or needs to be fetched separately
+      avatarUrl: undefined,
+      isFollowing: apiPost.author?.isFollowing ?? false,
     },
     content: apiPost.text,
     createdAt: new Date(apiPost.createTime),

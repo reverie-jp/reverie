@@ -15,11 +15,13 @@ import {
   Ellipsis,
   ShieldBan,
   UserMinus,
+  UserPlus,
   Flag,
   Link2,
   ClipboardCopy,
   Trash2,
 } from "lucide-react";
+import { followUser, unfollowUser } from "~/lib/api";
 
 export interface Post {
   id: string;
@@ -28,6 +30,7 @@ export interface Post {
     name: string;
     customId: string;
     avatarUrl?: string;
+    isFollowing?: boolean;
   };
   content: string;
   createdAt: Date;
@@ -74,8 +77,22 @@ export function PostCard({
   const initials = post.author.name.slice(0, 2);
   const [liked, setLiked] = useState(post.isLiked ?? false);
   const [likeCount, setLikeCount] = useState(post.likeCount);
+  const [following, setFollowing] = useState(post.author.isFollowing ?? false);
   const isMe = !!currentUserId && post.author.id === currentUserId;
   const navigate = useNavigate();
+
+  const handleFollowToggle = async () => {
+    if (!post.author.id) return;
+    try {
+      if (following) {
+        await unfollowUser(post.author.id);
+        setFollowing(false);
+      } else {
+        await followUser(post.author.id);
+        setFollowing(true);
+      }
+    } catch {}
+  };
 
   const handleLikeToggle = () => {
     if (liked) {
@@ -203,9 +220,12 @@ export function PostCard({
                 </DropdownMenuItem>
               ) : (
                 <>
-                  <DropdownMenuItem>
-                    <UserMinus className="size-4" />
-                    フォローをやめる
+                  <DropdownMenuItem onClick={handleFollowToggle}>
+                    {following ? (
+                      <><UserMinus className="size-4" />フォローをやめる</>
+                    ) : (
+                      <><UserPlus className="size-4" />フォローする</>
+                    )}
                   </DropdownMenuItem>
                   <DropdownMenuItem>
                     <Flag className="size-4" />
