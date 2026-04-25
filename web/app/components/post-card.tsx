@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import {
@@ -78,6 +78,11 @@ export function PostCard({
   const [liked, setLiked] = useState(post.isLiked ?? false);
   const [likeCount, setLikeCount] = useState(post.likeCount);
   const [following, setFollowing] = useState(post.author.isFollowing ?? false);
+
+  useEffect(() => {
+    setFollowing(post.author.isFollowing ?? false);
+  }, [post.author.isFollowing]);
+
   const isMe = !!currentUserId && post.author.id === currentUserId;
   const navigate = useNavigate();
 

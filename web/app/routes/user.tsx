@@ -595,6 +595,14 @@ export default function User({ params }: Route.ComponentProps) {
                 followsYou={profile.followsYou}
                 size="md"
                 onBlockChange={setIsBlocked}
+                onFollowChange={(following) =>
+                  setPosts((prev) =>
+                    prev.map((p) => ({
+                      ...p,
+                      author: { ...p.author, isFollowing: following },
+                    }))
+                  )
+                }
               />
             </>
           )}
