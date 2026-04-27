@@ -3,20 +3,14 @@ package usecase
 import (
 	"time"
 
+	usergw "reverie.jp/reverie/internal/modules/user/gateway"
 	"reverie.jp/reverie/internal/platform/ulid"
 )
-
-type PostAuthorOutput struct {
-	ID          ulid.ULID
-	CustomID    string
-	DisplayName string
-	IsPrivate   bool
-}
 
 type PostOutput struct {
 	ID            ulid.ULID
 	Text          string
-	Author        *PostAuthorOutput
+	Author        *usergw.UserView
 	ReplyToID     *ulid.ULID
 	RepostID      *ulid.ULID
 	ReplyCount    int64

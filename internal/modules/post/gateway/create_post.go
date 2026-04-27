@@ -17,14 +17,9 @@ func (g *gatewayImpl) CreatePost(ctx context.Context, params CreatePostParams) (
 	if err != nil {
 		return nil, err
 	}
-
-	author, err := g.userGateway.GetUserByID(ctx, params.AuthorID)
+	author, err := g.userGateway.BuildUserView(ctx, params.AuthorID, params.AuthorID)
 	if err != nil {
 		return nil, err
 	}
-
-	return &PostView{
-		Post:   post,
-		Author: author,
-	}, nil
+	return &PostView{Post: post, Author: author}, nil
 }

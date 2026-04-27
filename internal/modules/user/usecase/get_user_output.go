@@ -1,21 +1,7 @@
 package usecase
 
-import (
-	"time"
-
-	"reverie.jp/reverie/internal/platform/ulid"
-)
+import usergw "reverie.jp/reverie/internal/modules/user/gateway"
 
 type GetUserOutput struct {
-	ID             ulid.ULID
-	CustomID       string
-	DisplayName    string
-	Biography      string
-	IsPrivate      bool
-	IsMe           bool
-	IsFollowing    bool
-	IsFollowedBy   bool
-	FollowerCount  int64
-	FollowingCount int64
-	CreateTime     time.Time
+	View *usergw.UserView
 }

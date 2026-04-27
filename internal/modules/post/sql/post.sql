@@ -75,3 +75,20 @@ ON CONFLICT DO NOTHING;
 
 -- name: DeletePostFavorite :exec
 DELETE FROM post_favorites WHERE user_id = $1 AND post_id = $2;
+
+-- name: ListPostLikes :many
+SELECT u.id, u.custom_id, u.custom_id_changed_at, u.display_name, u.biography, u.avatar_media_id, u.banner_media_id, u.is_private, u.birthdate, u.create_time, u.update_time
+FROM users u
+JOIN post_favorites pf ON pf.user_id = u.id
+WHERE pf.post_id = $1
+ORDER BY pf.create_time DESC
+LIMIT $2;
+
+-- name: ListUserLikedPosts :many
+SELECT p.id, p.author_id, p.reply_to_id, p.repost_id, p.text, p.create_time, p.update_time
+FROM posts p
+JOIN post_favorites pf ON pf.post_id = p.id
+WHERE pf.user_id = $1
+  AND ($2::timestamptz IS NULL OR pf.create_time < $2)
+ORDER BY pf.create_time DESC
+LIMIT $3;

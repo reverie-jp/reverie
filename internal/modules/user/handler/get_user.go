@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"connectrpc.com/connect"
-
 	"reverie.jp/reverie/internal/application/server/interceptor"
 	userv1 "reverie.jp/reverie/internal/gen/pb/user/v1"
+	"reverie.jp/reverie/internal/modules/user/adapter"
 	"reverie.jp/reverie/internal/modules/user/usecase"
 	"reverie.jp/reverie/internal/platform/xerrors"
 )
@@ -25,6 +25,6 @@ func (h *Handler) GetUser(ctx context.Context, req *connect.Request[userv1.GetUs
 	}
 
 	return connect.NewResponse(&userv1.GetUserResponse{
-		User: toProtoUser(output),
+		User: adapter.ToUser(output.View),
 	}), nil
 }

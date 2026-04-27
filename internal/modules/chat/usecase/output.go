@@ -5,16 +5,24 @@ import (
 
 	"reverie.jp/reverie/internal/domain/entity"
 	"reverie.jp/reverie/internal/modules/chat/gateway"
-	"reverie.jp/reverie/internal/modules/user/usecase"
 	"reverie.jp/reverie/internal/platform/ulid"
 )
+
+type ChatUserOutput struct {
+	ID          ulid.ULID
+	CustomID    string
+	DisplayName string
+	Biography   string
+	IsPrivate   bool
+	CreateTime  time.Time
+}
 
 type RoomOutput struct {
 	ID                ulid.ULID
 	RoomType          string
 	Name              string
-	OtherUser         *usecase.GetUserOutput
-	Members           []*usecase.GetUserOutput
+	OtherUser         *ChatUserOutput
+	Members           []*ChatUserOutput
 	LastMessageText   string
 	LastMessageAt     *time.Time
 	UnreadCount       int64
@@ -65,8 +73,8 @@ func toRoomOutput(view *gateway.RoomView, requestorID ulid.ULID) *RoomOutput {
 	return out
 }
 
-func entityUserToOutput(u *entity.User) *usecase.GetUserOutput {
-	return &usecase.GetUserOutput{
+func entityUserToOutput(u *entity.User) *ChatUserOutput {
+	return &ChatUserOutput{
 		ID:          u.ID,
 		CustomID:    u.CustomID,
 		DisplayName: u.DisplayName,

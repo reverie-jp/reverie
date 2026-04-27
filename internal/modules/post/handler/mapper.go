@@ -7,6 +7,7 @@ import (
 	postv1 "reverie.jp/reverie/internal/gen/pb/post/v1"
 	userv1 "reverie.jp/reverie/internal/gen/pb/user/v1"
 	"reverie.jp/reverie/internal/modules/post/usecase"
+	usergw "reverie.jp/reverie/internal/modules/user/gateway"
 )
 
 func toProtoPost(out *usecase.PostOutput) *postv1.Post {
@@ -24,12 +25,19 @@ func toProtoPost(out *usecase.PostOutput) *postv1.Post {
 		CreateTime:  timestamppb.New(out.CreateTime),
 	}
 
-	if out.Author != nil {
+	if out.Author != nil && out.Author.User != nil {
+		u := out.Author.User
+		bio := u.Biography
 		p.Author = &userv1.User{
-			Id:          out.Author.ID.String(),
-			CustomId:    out.Author.CustomID,
-			DisplayName: out.Author.DisplayName,
-			IsPrivate:   out.Author.IsPrivate,
+			Id:           u.ID.String(),
+			CustomId:     u.CustomID,
+			DisplayName:  u.DisplayName,
+			Biography:    &bio,
+			IsPrivate:    u.IsPrivate,
+			IsMe:         out.Author.IsMe,
+			IsFollowing:  out.Author.IsFollowing,
+			IsFollowedBy: out.Author.IsFollowedBy,
+			CreateTime:   timestamppb.New(u.CreateTime),
 		}
 	}
 
@@ -50,7 +58,25 @@ func toProtoPost(out *usecase.PostOutput) *postv1.Post {
 	return p
 }
 
-// nextPageToken は最後の投稿の create_time を base64 エンコードしてページトークンにする
+func toProtoUserFromView(v *usergw.UserView) *userv1.User {
+	if v == nil || v.User == nil {
+		return nil
+	}
+	u := v.User
+	bio := u.Biography
+	return &userv1.User{
+		Id:           u.ID.String(),
+		CustomId:     u.CustomID,
+		DisplayName:  u.DisplayName,
+		Biography:    &bio,
+		IsPrivate:    u.IsPrivate,
+		IsMe:         v.IsMe,
+		IsFollowing:  v.IsFollowing,
+		IsFollowedBy: v.IsFollowedBy,
+		CreateTime:   timestamppb.New(u.CreateTime),
+	}
+}
+
 func nextPageToken(posts []*usecase.PostOutput) string {
 	if len(posts) == 0 {
 		return ""

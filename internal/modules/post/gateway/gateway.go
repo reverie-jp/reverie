@@ -13,7 +13,7 @@ import (
 
 type PostView struct {
 	Post          *entity.Post
-	Author        *entity.User
+	Author        *usergw.UserView
 	ReplyCount    int64
 	RepostCount   int64
 	FavoriteCount int64
@@ -58,6 +58,12 @@ type ListPostRepostsParams struct {
 	Limit  int32
 }
 
+type ListUserLikedPostsParams struct {
+	UserID ulid.ULID
+	Cursor *time.Time
+	Limit  int32
+}
+
 type Gateway interface {
 	GetPost(ctx context.Context, postID ulid.ULID, requestorID ulid.ULID) (*PostView, error)
 	CreatePost(ctx context.Context, params CreatePostParams) (*PostView, error)
@@ -69,6 +75,8 @@ type Gateway interface {
 	ListUserPosts(ctx context.Context, params ListUserPostsParams, requestorID ulid.ULID) ([]*PostView, error)
 	ListPostReposts(ctx context.Context, params ListPostRepostsParams, requestorID ulid.ULID) ([]*PostView, error)
 	ListPostReplies(ctx context.Context, params ListPostRepliesParams, requestorID ulid.ULID) ([]*PostView, error)
+	ListPostLikes(ctx context.Context, postID ulid.ULID, requestorID ulid.ULID, limit int32) ([]*usergw.UserView, error)
+	ListUserLikedPosts(ctx context.Context, params ListUserLikedPostsParams, requestorID ulid.ULID) ([]*PostView, error)
 }
 
 type gatewayImpl struct {

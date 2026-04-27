@@ -24,7 +24,7 @@ func NewSearchUsers(userGateway usergw.Gateway) *SearchUsers {
 	return &SearchUsers{userGateway: userGateway}
 }
 
-func (uc *SearchUsers) Execute(ctx context.Context, input SearchUsersInput, requestorID ulid.ULID) ([]*GetUserOutput, error) {
+func (uc *SearchUsers) Execute(ctx context.Context, input SearchUsersInput, requestorID ulid.ULID) ([]*usergw.UserView, error) {
 	if input.Query == "" {
 		return nil, xerrors.ErrInvalidArgument.WithMessage("query is required")
 	}
@@ -52,41 +52,10 @@ func (uc *SearchUsers) Execute(ctx context.Context, input SearchUsersInput, requ
 		return nil, err
 	}
 
-	outputs := make([]*GetUserOutput, len(users))
+	ids := make([]ulid.ULID, len(users))
 	for i, u := range users {
-		isMe := u.ID == requestorID
-		var isFollowing, isFollowedBy bool
-		if !isMe {
-			isFollowing, err = uc.userGateway.IsFollowing(ctx, requestorID, u.ID)
-			if err != nil {
-				return nil, err
-			}
-			isFollowedBy, err = uc.userGateway.IsFollowing(ctx, u.ID, requestorID)
-			if err != nil {
-				return nil, err
-			}
-		}
-		followerCount, err := uc.userGateway.CountFollowers(ctx, u.ID)
-		if err != nil {
-			return nil, err
-		}
-		followingCount, err := uc.userGateway.CountFollowing(ctx, u.ID)
-		if err != nil {
-			return nil, err
-		}
-		outputs[i] = &GetUserOutput{
-			ID:             u.ID,
-			CustomID:       u.CustomID,
-			DisplayName:    u.DisplayName,
-			Biography:      u.Biography,
-			IsPrivate:      u.IsPrivate,
-			IsMe:           isMe,
-			IsFollowing:    isFollowing,
-			IsFollowedBy:   isFollowedBy,
-			FollowerCount:  followerCount,
-			FollowingCount: followingCount,
-			CreateTime:     u.CreateTime,
-		}
+		ids[i] = u.ID
 	}
-	return outputs, nil
+
+	return uc.userGateway.BuildListUserViews(ctx, requestorID, ids)
 }

@@ -5,6 +5,7 @@ import (
 
 	"reverie.jp/reverie/internal/domain/entity"
 	"reverie.jp/reverie/internal/modules/post/repository"
+	usergw "reverie.jp/reverie/internal/modules/user/gateway"
 	"reverie.jp/reverie/internal/platform/ulid"
 )
 
@@ -12,6 +13,18 @@ func (g *gatewayImpl) ListTimeline(ctx context.Context, params ListTimelineParam
 	posts, err := g.repo.ListTimeline(ctx, repository.ListTimelineParams{
 		Cursor: params.Cursor,
 		Limit:  params.Limit,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return g.buildViews(ctx, posts, requestorID)
+}
+
+func (g *gatewayImpl) ListFollowingTimeline(ctx context.Context, params ListFollowingTimelineParams, requestorID ulid.ULID) ([]*PostView, error) {
+	posts, err := g.repo.ListFollowingTimeline(ctx, repository.ListFollowingTimelineParams{
+		FollowerID: params.FollowerID,
+		Cursor:     params.Cursor,
+		Limit:      params.Limit,
 	})
 	if err != nil {
 		return nil, err
@@ -31,17 +44,63 @@ func (g *gatewayImpl) ListUserPosts(ctx context.Context, params ListUserPostsPar
 	return g.buildViews(ctx, posts, requestorID)
 }
 
+func (g *gatewayImpl) ListPostReplies(ctx context.Context, params ListPostRepliesParams, requestorID ulid.ULID) ([]*PostView, error) {
+	posts, err := g.repo.ListPostReplies(ctx, repository.ListPostRepliesParams{
+		PostID: params.PostID,
+		Cursor: params.Cursor,
+		Limit:  params.Limit,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return g.buildViews(ctx, posts, requestorID)
+}
+
+func (g *gatewayImpl) ListPostReposts(ctx context.Context, params ListPostRepostsParams, requestorID ulid.ULID) ([]*PostView, error) {
+	posts, err := g.repo.ListPostReposts(ctx, repository.ListPostRepostsParams{
+		PostID: params.PostID,
+		Cursor: params.Cursor,
+		Limit:  params.Limit,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return g.buildViews(ctx, posts, requestorID)
+}
+
+func (g *gatewayImpl) ListPostLikes(ctx context.Context, postID ulid.ULID, requestorID ulid.ULID, limit int32) ([]*usergw.UserView, error) {
+	users, err := g.repo.ListPostLikes(ctx, postID, limit)
+	if err != nil {
+		return nil, err
+	}
+	ids := make([]ulid.ULID, len(users))
+	for i, u := range users {
+		ids[i] = u.ID
+	}
+	return g.userGateway.BuildListUserViews(ctx, requestorID, ids)
+}
+
+func (g *gatewayImpl) ListUserLikedPosts(ctx context.Context, params ListUserLikedPostsParams, requestorID ulid.ULID) ([]*PostView, error) {
+	posts, err := g.repo.ListUserLikedPosts(ctx, repository.ListUserLikedPostsParams{
+		UserID: params.UserID,
+		Cursor: params.Cursor,
+		Limit:  params.Limit,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return g.buildViews(ctx, posts, requestorID)
+}
+
 func (g *gatewayImpl) buildViews(ctx context.Context, posts []*entity.Post, requestorID ulid.ULID) ([]*PostView, error) {
 	if len(posts) == 0 {
 		return []*PostView{}, nil
 	}
 
-	// collect all author IDs (including repost originals)
 	authorIDs := make([]ulid.ULID, 0, len(posts))
 	seen := map[ulid.ULID]bool{}
-
-	// fetch repost originals
 	repostOriginals := map[ulid.ULID]*entity.Post{}
+
 	for _, p := range posts {
 		if !seen[p.AuthorID] {
 			seen[p.AuthorID] = true
@@ -64,13 +123,15 @@ func (g *gatewayImpl) buildViews(ctx context.Context, posts []*entity.Post, requ
 		}
 	}
 
-	userViews, err := g.userGateway.BuildListViews(ctx, authorIDs)
+	userViews, err := g.userGateway.BuildListUserViews(ctx, requestorID, authorIDs)
 	if err != nil {
 		return nil, err
 	}
-	userMap := map[ulid.ULID]*entity.User{}
+	viewByID := map[ulid.ULID]*usergw.UserView{}
 	for _, uv := range userViews {
-		userMap[uv.User.ID] = uv.User
+		if uv.User != nil {
+			viewByID[uv.User.ID] = uv
+		}
 	}
 
 	buildOne := func(p *entity.Post) (*PostView, error) {
@@ -92,7 +153,7 @@ func (g *gatewayImpl) buildViews(ctx context.Context, posts []*entity.Post, requ
 		}
 		return &PostView{
 			Post:          p,
-			Author:        userMap[p.AuthorID],
+			Author:        viewByID[p.AuthorID],
 			ReplyCount:    replyCount,
 			RepostCount:   repostCount,
 			FavoriteCount: favCount,
@@ -116,6 +177,5 @@ func (g *gatewayImpl) buildViews(ctx context.Context, posts []*entity.Post, requ
 		}
 		views[i] = v
 	}
-
 	return views, nil
 }

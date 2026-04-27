@@ -299,6 +299,96 @@ func (q *Queries) ListPostReplies(ctx context.Context, arg ListPostRepliesParams
 	return items, nil
 }
 
+const listPostLikes = `-- name: ListPostLikes :many
+SELECT u.id, u.custom_id, u.custom_id_changed_at, u.display_name, u.biography, u.avatar_media_id, u.banner_media_id, u.is_private, u.birthdate, u.create_time, u.update_time
+FROM users u
+JOIN post_favorites pf ON pf.user_id = u.id
+WHERE pf.post_id = $1
+ORDER BY pf.create_time DESC
+LIMIT $2
+`
+
+type ListPostLikesParams struct {
+	PostID ulid.ULID `json:"post_id"`
+	Limit  int32     `json:"limit"`
+}
+
+func (q *Queries) ListPostLikes(ctx context.Context, arg ListPostLikesParams) ([]User, error) {
+	rows, err := q.db.Query(ctx, listPostLikes, arg.PostID, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []User{}
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.CustomID,
+			&i.CustomIDChangedAt,
+			&i.DisplayName,
+			&i.Biography,
+			&i.AvatarMediaID,
+			&i.BannerMediaID,
+			&i.IsPrivate,
+			&i.Birthdate,
+			&i.CreateTime,
+			&i.UpdateTime,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listUserLikedPosts = `-- name: ListUserLikedPosts :many
+SELECT p.id, p.author_id, p.reply_to_id, p.repost_id, p.text, p.create_time, p.update_time
+FROM posts p
+JOIN post_favorites pf ON pf.post_id = p.id
+WHERE pf.user_id = $1
+  AND ($2::timestamptz IS NULL OR pf.create_time < $2)
+ORDER BY pf.create_time DESC
+LIMIT $3
+`
+
+type ListUserLikedPostsParams struct {
+	UserID  ulid.ULID `json:"user_id"`
+	Column2 time.Time `json:"column_2"`
+	Limit   int32     `json:"limit"`
+}
+
+func (q *Queries) ListUserLikedPosts(ctx context.Context, arg ListUserLikedPostsParams) ([]Post, error) {
+	rows, err := q.db.Query(ctx, listUserLikedPosts, arg.UserID, arg.Column2, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Post{}
+	for rows.Next() {
+		var i Post
+		if err := rows.Scan(
+			&i.ID,
+			&i.AuthorID,
+			&i.ReplyToID,
+			&i.RepostID,
+			&i.Text,
+			&i.CreateTime,
+			&i.UpdateTime,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listTimeline = `-- name: ListTimeline :many
 SELECT id, author_id, reply_to_id, repost_id, text, create_time, update_time
 FROM posts

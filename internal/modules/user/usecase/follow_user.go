@@ -52,7 +52,11 @@ func (uc *FollowUser) Execute(ctx context.Context, targetUserID string, requesto
 		return nil, err
 	}
 
-	return buildGetUserOutput(ctx, uc.userGateway, target.ID, requestorID)
+	view, err := uc.userGateway.BuildUserView(ctx, requestorID, target.ID)
+	if err != nil {
+		return nil, err
+	}
+	return &GetUserOutput{View: view}, nil
 }
 
 type UnfollowUser struct {
@@ -73,46 +77,9 @@ func (uc *UnfollowUser) Execute(ctx context.Context, targetUserID string, reques
 		return nil, err
 	}
 
-	return buildGetUserOutput(ctx, uc.userGateway, target.ID, requestorID)
-}
-
-func buildGetUserOutput(ctx context.Context, gw usergw.Gateway, targetID, requestorID ulid.ULID) (*GetUserOutput, error) {
-	user, err := gw.GetUserByID(ctx, targetID)
+	view, err := uc.userGateway.BuildUserView(ctx, requestorID, target.ID)
 	if err != nil {
 		return nil, err
 	}
-	if user == nil {
-		return nil, xerrors.ErrUserNotFound  //nolint
-	}
-
-	followerCount, err := gw.CountFollowers(ctx, user.ID)
-	if err != nil {
-		return nil, err
-	}
-	followingCount, err := gw.CountFollowing(ctx, user.ID)
-	if err != nil {
-		return nil, err
-	}
-	isFollowing, err := gw.IsFollowing(ctx, requestorID, user.ID)
-	if err != nil {
-		return nil, err
-	}
-	isFollowedBy, err := gw.IsFollowing(ctx, user.ID, requestorID)
-	if err != nil {
-		return nil, err
-	}
-
-	return &GetUserOutput{
-		ID:             user.ID,
-		CustomID:       user.CustomID,
-		DisplayName:    user.DisplayName,
-		Biography:      user.Biography,
-		IsPrivate:      user.IsPrivate,
-		IsMe:           false,
-		IsFollowing:    isFollowing,
-		IsFollowedBy:   isFollowedBy,
-		FollowerCount:  followerCount,
-		FollowingCount: followingCount,
-		CreateTime:     user.CreateTime,
-	}, nil
+	return &GetUserOutput{View: view}, nil
 }

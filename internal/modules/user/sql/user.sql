@@ -44,6 +44,14 @@ VALUES ($1, $2, $3);
 -- name: DeleteUser :exec
 DELETE FROM users WHERE id = $1;
 
+-- name: ListFollowingEdges :many
+SELECT followed_id FROM user_follows
+WHERE follower_id = $1 AND followed_id = ANY(@ids::text[]);
+
+-- name: ListFollowerEdges :many
+SELECT follower_id FROM user_follows
+WHERE followed_id = $1 AND follower_id = ANY(@ids::text[]);
+
 -- name: CreateUserFollow :exec
 INSERT INTO user_follows (follower_id, followed_id)
 VALUES ($1, $2)

@@ -5,6 +5,7 @@ import (
 
 	usergw "reverie.jp/reverie/internal/modules/user/gateway"
 	"reverie.jp/reverie/internal/platform/ulid"
+	"reverie.jp/reverie/internal/platform/xerrors"
 )
 
 type GetUser struct {
@@ -25,40 +26,13 @@ func (uc *GetUser) Execute(ctx context.Context, input GetUserInput, requestorID 
 		return nil, err
 	}
 
-	isMe := user.ID == requestorID
-
-	followerCount, err := uc.userGateway.CountFollowers(ctx, user.ID)
+	view, err := uc.userGateway.BuildUserView(ctx, requestorID, user.ID)
 	if err != nil {
 		return nil, err
 	}
-	followingCount, err := uc.userGateway.CountFollowing(ctx, user.ID)
-	if err != nil {
-		return nil, err
+	if view == nil {
+		return nil, xerrors.ErrUserNotFound
 	}
 
-	var isFollowing, isFollowedBy bool
-	if !isMe {
-		isFollowing, err = uc.userGateway.IsFollowing(ctx, requestorID, user.ID)
-		if err != nil {
-			return nil, err
-		}
-		isFollowedBy, err = uc.userGateway.IsFollowing(ctx, user.ID, requestorID)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return &GetUserOutput{
-		ID:             user.ID,
-		CustomID:       user.CustomID,
-		DisplayName:    user.DisplayName,
-		Biography:      user.Biography,
-		IsPrivate:      user.IsPrivate,
-		IsMe:           isMe,
-		IsFollowing:    isFollowing,
-		IsFollowedBy:   isFollowedBy,
-		FollowerCount:  followerCount,
-		FollowingCount: followingCount,
-		CreateTime:     user.CreateTime,
-	}, nil
+	return &GetUserOutput{View: view}, nil
 }

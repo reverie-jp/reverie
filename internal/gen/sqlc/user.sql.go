@@ -388,3 +388,45 @@ func (q *Queries) ListFollowing(ctx context.Context, arg ListFollowingParams) ([
 	}
 	return items, nil
 }
+
+const listFollowingEdges = `-- name: ListFollowingEdges :many
+SELECT followed_id FROM user_follows WHERE follower_id = $1 AND followed_id = ANY($2::text[])
+`
+
+func (q *Queries) ListFollowingEdges(ctx context.Context, followerID ulid.ULID, ids []string) ([]ulid.ULID, error) {
+	rows, err := q.db.Query(ctx, listFollowingEdges, followerID, ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ulid.ULID
+	for rows.Next() {
+		var followed_id ulid.ULID
+		if err := rows.Scan(&followed_id); err != nil {
+			return nil, err
+		}
+		items = append(items, followed_id)
+	}
+	return items, rows.Err()
+}
+
+const listFollowerEdges = `-- name: ListFollowerEdges :many
+SELECT follower_id FROM user_follows WHERE followed_id = $1 AND follower_id = ANY($2::text[])
+`
+
+func (q *Queries) ListFollowerEdges(ctx context.Context, followeeID ulid.ULID, ids []string) ([]ulid.ULID, error) {
+	rows, err := q.db.Query(ctx, listFollowerEdges, followeeID, ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ulid.ULID
+	for rows.Next() {
+		var follower_id ulid.ULID
+		if err := rows.Scan(&follower_id); err != nil {
+			return nil, err
+		}
+		items = append(items, follower_id)
+	}
+	return items, rows.Err()
+}

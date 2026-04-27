@@ -4,7 +4,6 @@ import (
 	"context"
 
 	chatgw "reverie.jp/reverie/internal/modules/chat/gateway"
-	userusecase "reverie.jp/reverie/internal/modules/user/usecase"
 	"reverie.jp/reverie/internal/platform/ulid"
 	"reverie.jp/reverie/internal/platform/xerrors"
 )
@@ -17,7 +16,7 @@ func NewListRoomMembers(gateway chatgw.Gateway) *ListRoomMembers {
 	return &ListRoomMembers{gateway: gateway}
 }
 
-func (uc *ListRoomMembers) Execute(ctx context.Context, roomIDStr string) ([]*userusecase.GetUserOutput, error) {
+func (uc *ListRoomMembers) Execute(ctx context.Context, roomIDStr string) ([]*ChatUserOutput, error) {
 	roomID, err := ulid.Parse(roomIDStr)
 	if err != nil {
 		return nil, xerrors.ErrInvalidArgument
@@ -26,7 +25,7 @@ func (uc *ListRoomMembers) Execute(ctx context.Context, roomIDStr string) ([]*us
 	if err != nil {
 		return nil, err
 	}
-	outputs := make([]*userusecase.GetUserOutput, len(members))
+	outputs := make([]*ChatUserOutput, len(members))
 	for i, m := range members {
 		outputs[i] = entityUserToOutput(m)
 	}

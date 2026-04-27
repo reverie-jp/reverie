@@ -9,6 +9,12 @@ import (
 	"reverie.jp/reverie/internal/platform/ulid"
 )
 
+type ListUserLikedPostsParams struct {
+	UserID ulid.ULID
+	Cursor *time.Time
+	Limit  int32
+}
+
 type CreatePostParams struct {
 	ID        ulid.ULID
 	AuthorID  ulid.ULID
@@ -43,6 +49,8 @@ type Repository interface {
 	GetPostFavorite(ctx context.Context, userID ulid.ULID, postID ulid.ULID) (bool, error)
 	CreatePostFavorite(ctx context.Context, userID ulid.ULID, postID ulid.ULID) error
 	DeletePostFavorite(ctx context.Context, userID ulid.ULID, postID ulid.ULID) error
+	ListPostLikes(ctx context.Context, postID ulid.ULID, limit int32) ([]*entity.User, error)
+	ListUserLikedPosts(ctx context.Context, params ListUserLikedPostsParams) ([]*entity.Post, error)
 }
 
 type repositoryImpl struct {

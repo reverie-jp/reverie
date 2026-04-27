@@ -23,19 +23,16 @@ func NewListFollowing(userGateway usergw.Gateway) *ListFollowing {
 	return &ListFollowing{userGateway: userGateway}
 }
 
-func (uc *ListFollowing) Execute(ctx context.Context, input ListFollowingInput, requestorID ulid.ULID) ([]*GetUserOutput, error) {
+func (uc *ListFollowing) Execute(ctx context.Context, input ListFollowingInput, requestorID ulid.ULID) ([]*usergw.UserView, error) {
 	target, err := resolveUser(ctx, uc.userGateway, input.UserID)
 	if err != nil {
 		return nil, err
 	}
-	followerID := target.ID
 
 	var cursor *time.Time
 	if input.PageToken != "" {
-		raw, err := base64.StdEncoding.DecodeString(input.PageToken)
-		if err == nil {
-			t, err := time.Parse("2006-01-02T15:04:05.999999999Z", string(raw))
-			if err == nil {
+		if raw, err := base64.StdEncoding.DecodeString(input.PageToken); err == nil {
+			if t, err := time.Parse("2006-01-02T15:04:05.999999999Z", string(raw)); err == nil {
 				cursor = &t
 			}
 		}
@@ -46,34 +43,15 @@ func (uc *ListFollowing) Execute(ctx context.Context, input ListFollowingInput, 
 		limit = 50
 	}
 
-	users, err := uc.userGateway.ListFollowing(ctx, followerID, cursor, limit)
+	users, err := uc.userGateway.ListFollowing(ctx, target.ID, cursor, limit)
 	if err != nil {
 		return nil, err
 	}
 
-	outputs := make([]*GetUserOutput, len(users))
+	ids := make([]ulid.ULID, len(users))
 	for i, u := range users {
-		isMe := u.ID == requestorID
-		var isFollowing, isFollowedBy bool
-		if !isMe {
-			isFollowing, _ = uc.userGateway.IsFollowing(ctx, requestorID, u.ID)
-			isFollowedBy, _ = uc.userGateway.IsFollowing(ctx, u.ID, requestorID)
-		}
-		followerCount, _ := uc.userGateway.CountFollowers(ctx, u.ID)
-		followingCount, _ := uc.userGateway.CountFollowing(ctx, u.ID)
-		outputs[i] = &GetUserOutput{
-			ID:             u.ID,
-			CustomID:       u.CustomID,
-			DisplayName:    u.DisplayName,
-			Biography:      u.Biography,
-			IsPrivate:      u.IsPrivate,
-			IsMe:           isMe,
-			IsFollowing:    isFollowing,
-			IsFollowedBy:   isFollowedBy,
-			FollowerCount:  followerCount,
-			FollowingCount: followingCount,
-			CreateTime:     u.CreateTime,
-		}
+		ids[i] = u.ID
 	}
-	return outputs, nil
+
+	return uc.userGateway.BuildListUserViews(ctx, requestorID, ids)
 }

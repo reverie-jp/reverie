@@ -27,14 +27,12 @@ func toProtoRoom(out *usecase.RoomOutput) *chatv1.Room {
 	if out.OtherUser != nil {
 		bio := out.OtherUser.Biography
 		r.OtherUser = &userv1.User{
-			Id:             out.OtherUser.ID.String(),
-			CustomId:       out.OtherUser.CustomID,
-			DisplayName:    out.OtherUser.DisplayName,
-			Biography:      &bio,
-			IsPrivate:      out.OtherUser.IsPrivate,
-			FollowerCount:  int32(out.OtherUser.FollowerCount),
-			FollowingCount: int32(out.OtherUser.FollowingCount),
-			CreateTime:     timestamppb.New(out.OtherUser.CreateTime),
+			Id:          out.OtherUser.ID.String(),
+			CustomId:    out.OtherUser.CustomID,
+			DisplayName: out.OtherUser.DisplayName,
+			Biography:   &bio,
+			IsPrivate:   out.OtherUser.IsPrivate,
+			CreateTime:  timestamppb.New(out.OtherUser.CreateTime),
 		}
 	}
 	for _, m := range out.Members {

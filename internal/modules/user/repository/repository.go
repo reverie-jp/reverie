@@ -24,6 +24,8 @@ type Repository interface {
 	IsFollowing(ctx context.Context, followerID, followedID ulid.ULID) (bool, error)
 	CountFollowers(ctx context.Context, userID ulid.ULID) (int64, error)
 	CountFollowing(ctx context.Context, userID ulid.ULID) (int64, error)
+	ListFollowingEdges(ctx context.Context, requesterID ulid.ULID, ids []string) ([]ulid.ULID, error)
+	ListFollowerEdges(ctx context.Context, requesterID ulid.ULID, ids []string) ([]ulid.ULID, error)
 }
 
 type UpdateUserParams struct {

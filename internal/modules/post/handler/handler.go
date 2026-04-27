@@ -7,14 +7,16 @@ import (
 
 type Handler struct {
 	postv1connect.UnimplementedPostServiceHandler
-	getPost         *usecase.GetPost
-	createPost      *usecase.CreatePost
-	deletePost      *usecase.DeletePost
-	likePost        *usecase.LikePost
-	unlikePost      *usecase.UnlikePost
-	listUserPosts   *usecase.ListUserPosts
-	listPostReplies *usecase.ListPostReplies
-	listPostReposts *usecase.ListPostReposts
+	getPost            *usecase.GetPost
+	createPost         *usecase.CreatePost
+	deletePost         *usecase.DeletePost
+	likePost           *usecase.LikePost
+	unlikePost         *usecase.UnlikePost
+	listUserPosts      *usecase.ListUserPosts
+	listPostReplies    *usecase.ListPostReplies
+	listPostReposts    *usecase.ListPostReposts
+	listPostLikes      *usecase.ListPostLikes
+	listUserLikedPosts *usecase.ListUserLikedPosts
 }
 
 func New(
@@ -26,15 +28,19 @@ func New(
 	listUserPosts *usecase.ListUserPosts,
 	listPostReplies *usecase.ListPostReplies,
 	listPostReposts *usecase.ListPostReposts,
+	listPostLikes *usecase.ListPostLikes,
+	listUserLikedPosts *usecase.ListUserLikedPosts,
 ) *Handler {
 	return &Handler{
-		getPost:         getPost,
-		createPost:      createPost,
-		deletePost:      deletePost,
-		likePost:        likePost,
-		unlikePost:      unlikePost,
-		listUserPosts:   listUserPosts,
-		listPostReplies: listPostReplies,
-		listPostReposts: listPostReposts,
+		getPost:            getPost,
+		createPost:         createPost,
+		deletePost:         deletePost,
+		likePost:           likePost,
+		unlikePost:         unlikePost,
+		listUserPosts:      listUserPosts,
+		listPostReplies:    listPostReplies,
+		listPostReposts:    listPostReposts,
+		listPostLikes:      listPostLikes,
+		listUserLikedPosts: listUserLikedPosts,
 	}
 }

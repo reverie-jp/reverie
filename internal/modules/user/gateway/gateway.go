@@ -11,7 +11,12 @@ import (
 )
 
 type UserView struct {
-	User *entity.User
+	User           *entity.User
+	IsMe           bool
+	IsFollowing    bool
+	IsFollowedBy   bool
+	FollowerCount  int64
+	FollowingCount int64
 }
 
 type CreateUserParams struct {
@@ -35,8 +40,8 @@ type Gateway interface {
 	CreateUser(ctx context.Context, params CreateUserParams) error
 	UpdateUser(ctx context.Context, params UpdateUserParams) (*entity.User, error)
 	DeleteUser(ctx context.Context, id ulid.ULID) error
-	BuildView(ctx context.Context, id ulid.ULID) (*UserView, error)
-	BuildListViews(ctx context.Context, ids []ulid.ULID) ([]*UserView, error)
+	BuildUserView(ctx context.Context, requesterID ulid.ULID, id ulid.ULID) (*UserView, error)
+	BuildListUserViews(ctx context.Context, requesterID ulid.ULID, ids []ulid.ULID) ([]*UserView, error)
 	SearchUsers(ctx context.Context, query string, cursor *time.Time, limit int32) ([]*entity.User, error)
 	ListFollowers(ctx context.Context, followedID ulid.ULID, cursor *time.Time, limit int32) ([]*entity.User, error)
 	ListFollowing(ctx context.Context, followerID ulid.ULID, cursor *time.Time, limit int32) ([]*entity.User, error)

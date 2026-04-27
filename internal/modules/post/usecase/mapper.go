@@ -10,6 +10,7 @@ func toPostOutput(view *postgw.PostView) *PostOutput {
 	out := &PostOutput{
 		ID:            view.Post.ID,
 		Text:          view.Post.Text,
+		Author:        view.Author,
 		ReplyToID:     view.Post.ReplyToID,
 		RepostID:      view.Post.RepostID,
 		ReplyCount:    view.ReplyCount,
@@ -17,15 +18,6 @@ func toPostOutput(view *postgw.PostView) *PostOutput {
 		FavoriteCount: view.FavoriteCount,
 		IsFavorited:   view.IsFavorited,
 		CreateTime:    view.Post.CreateTime,
-	}
-
-	if view.Author != nil {
-		out.Author = &PostAuthorOutput{
-			ID:          view.Author.ID,
-			CustomID:    view.Author.CustomID,
-			DisplayName: view.Author.DisplayName,
-			IsPrivate:   view.Author.IsPrivate,
-		}
 	}
 
 	if view.RepostOf != nil {

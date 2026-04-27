@@ -14,13 +14,11 @@ func (g *gatewayImpl) LikePost(ctx context.Context, postID ulid.ULID, userID uli
 		return nil, err
 	}
 	if post == nil {
-		return nil, xerrors.ErrPostNotFound
+		return nil, xerrors.ErrNotFound
 	}
-
 	if err := g.repo.CreatePostFavorite(ctx, userID, postID); err != nil {
 		return nil, err
 	}
-
 	views, err := g.buildViews(ctx, []*entity.Post{post}, userID)
 	if err != nil {
 		return nil, err
@@ -34,13 +32,11 @@ func (g *gatewayImpl) UnlikePost(ctx context.Context, postID ulid.ULID, userID u
 		return nil, err
 	}
 	if post == nil {
-		return nil, xerrors.ErrPostNotFound
+		return nil, xerrors.ErrNotFound
 	}
-
 	if err := g.repo.DeletePostFavorite(ctx, userID, postID); err != nil {
 		return nil, err
 	}
-
 	views, err := g.buildViews(ctx, []*entity.Post{post}, userID)
 	if err != nil {
 		return nil, err
