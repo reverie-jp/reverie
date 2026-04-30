@@ -12,8 +12,8 @@ type PostOutput struct {
 	ShortID       string
 	Text          string
 	Author        *usergw.UserView
-	ReplyToID     *ulid.ULID
-	RepostID      *ulid.ULID
+	ReplyToPostID     *ulid.ULID
+	RepostPostID      *ulid.ULID
 	ReplyCount    int64
 	RepostCount   int64
 	FavoriteCount int64

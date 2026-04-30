@@ -19,8 +19,8 @@ func FromCreatePostRequest(ctx context.Context, req *connect.Request[postv1.Crea
 	}
 	return usecase.CreatePostInput{
 		Text:      req.Msg.Text,
-		ReplyToID: req.Msg.ReplyToId,
-		RepostID:  req.Msg.RepostId,
+		ReplyToPostID: req.Msg.ReplyToPostId,
+		RepostPostID:  req.Msg.RepostPostId,
 	}, userID, nil
 }
 

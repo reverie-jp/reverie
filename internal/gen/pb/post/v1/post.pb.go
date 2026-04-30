@@ -30,8 +30,8 @@ type Post struct {
 	ShortId       string                 `protobuf:"bytes,2,opt,name=short_id,json=shortId,proto3" json:"short_id,omitempty"`
 	Text          string                 `protobuf:"bytes,3,opt,name=text,proto3" json:"text,omitempty"`
 	Author        *v1.User               `protobuf:"bytes,4,opt,name=author,proto3" json:"author,omitempty"`
-	ReplyToId     *string                `protobuf:"bytes,5,opt,name=reply_to_id,json=replyToId,proto3,oneof" json:"reply_to_id,omitempty"`
-	RepostId      *string                `protobuf:"bytes,6,opt,name=repost_id,json=repostId,proto3,oneof" json:"repost_id,omitempty"`
+	ReplyToPostId *string                `protobuf:"bytes,5,opt,name=reply_to_post_id,json=replyToPostId,proto3,oneof" json:"reply_to_post_id,omitempty"`
+	RepostPostId  *string                `protobuf:"bytes,6,opt,name=repost_post_id,json=repostPostId,proto3,oneof" json:"repost_post_id,omitempty"`
 	ReplyCount    int32                  `protobuf:"varint,7,opt,name=reply_count,json=replyCount,proto3" json:"reply_count,omitempty"`
 	RepostCount   int32                  `protobuf:"varint,8,opt,name=repost_count,json=repostCount,proto3" json:"repost_count,omitempty"`
 	LikeCount     int32                  `protobuf:"varint,9,opt,name=like_count,json=likeCount,proto3" json:"like_count,omitempty"`
@@ -100,16 +100,16 @@ func (x *Post) GetAuthor() *v1.User {
 	return nil
 }
 
-func (x *Post) GetReplyToId() string {
-	if x != nil && x.ReplyToId != nil {
-		return *x.ReplyToId
+func (x *Post) GetReplyToPostId() string {
+	if x != nil && x.ReplyToPostId != nil {
+		return *x.ReplyToPostId
 	}
 	return ""
 }
 
-func (x *Post) GetRepostId() string {
-	if x != nil && x.RepostId != nil {
-		return *x.RepostId
+func (x *Post) GetRepostPostId() string {
+	if x != nil && x.RepostPostId != nil {
+		return *x.RepostPostId
 	}
 	return ""
 }
@@ -255,8 +255,8 @@ func (x *GetPostResponse) GetPost() *Post {
 type CreatePostRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Text          string                 `protobuf:"bytes,1,opt,name=text,proto3" json:"text,omitempty"`
-	ReplyToId     *string                `protobuf:"bytes,2,opt,name=reply_to_id,json=replyToId,proto3,oneof" json:"reply_to_id,omitempty"`
-	RepostId      *string                `protobuf:"bytes,3,opt,name=repost_id,json=repostId,proto3,oneof" json:"repost_id,omitempty"`
+	ReplyToPostId *string                `protobuf:"bytes,2,opt,name=reply_to_post_id,json=replyToPostId,proto3,oneof" json:"reply_to_post_id,omitempty"`
+	RepostPostId  *string                `protobuf:"bytes,3,opt,name=repost_post_id,json=repostPostId,proto3,oneof" json:"repost_post_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -298,16 +298,16 @@ func (x *CreatePostRequest) GetText() string {
 	return ""
 }
 
-func (x *CreatePostRequest) GetReplyToId() string {
-	if x != nil && x.ReplyToId != nil {
-		return *x.ReplyToId
+func (x *CreatePostRequest) GetReplyToPostId() string {
+	if x != nil && x.ReplyToPostId != nil {
+		return *x.ReplyToPostId
 	}
 	return ""
 }
 
-func (x *CreatePostRequest) GetRepostId() string {
-	if x != nil && x.RepostId != nil {
-		return *x.RepostId
+func (x *CreatePostRequest) GetRepostPostId() string {
+	if x != nil && x.RepostPostId != nil {
+		return *x.RepostPostId
 	}
 	return ""
 }
@@ -1216,14 +1216,14 @@ var File_post_v1_post_proto protoreflect.FileDescriptor
 
 const file_post_v1_post_proto_rawDesc = "" +
 	"\n" +
-	"\x12post/v1/post.proto\x12\apost.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x12user/v1/user.proto\"\xcb\x03\n" +
+	"\x12post/v1/post.proto\x12\apost.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x12user/v1/user.proto\"\xe7\x03\n" +
 	"\x04Post\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x19\n" +
 	"\bshort_id\x18\x02 \x01(\tR\ashortId\x12\x12\n" +
 	"\x04text\x18\x03 \x01(\tR\x04text\x12%\n" +
-	"\x06author\x18\x04 \x01(\v2\r.user.v1.UserR\x06author\x12#\n" +
-	"\vreply_to_id\x18\x05 \x01(\tH\x00R\treplyToId\x88\x01\x01\x12 \n" +
-	"\trepost_id\x18\x06 \x01(\tH\x01R\brepostId\x88\x01\x01\x12\x1f\n" +
+	"\x06author\x18\x04 \x01(\v2\r.user.v1.UserR\x06author\x12,\n" +
+	"\x10reply_to_post_id\x18\x05 \x01(\tH\x00R\rreplyToPostId\x88\x01\x01\x12)\n" +
+	"\x0erepost_post_id\x18\x06 \x01(\tH\x01R\frepostPostId\x88\x01\x01\x12\x1f\n" +
 	"\vreply_count\x18\a \x01(\x05R\n" +
 	"replyCount\x12!\n" +
 	"\frepost_count\x18\b \x01(\x05R\vrepostCount\x12\x1d\n" +
@@ -1233,24 +1233,22 @@ const file_post_v1_post_proto_rawDesc = "" +
 	" \x01(\bR\aisLiked\x12;\n" +
 	"\vcreate_time\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"createTime\x12/\n" +
-	"\trepost_of\x18\f \x01(\v2\r.post.v1.PostH\x02R\brepostOf\x88\x01\x01B\x0e\n" +
-	"\f_reply_to_idB\f\n" +
-	"\n" +
-	"_repost_idB\f\n" +
+	"\trepost_of\x18\f \x01(\v2\r.post.v1.PostH\x02R\brepostOf\x88\x01\x01B\x13\n" +
+	"\x11_reply_to_post_idB\x11\n" +
+	"\x0f_repost_post_idB\f\n" +
 	"\n" +
 	"_repost_of\"H\n" +
 	"\x0eGetPostRequest\x12\x1b\n" +
 	"\tauthor_id\x18\x01 \x01(\tR\bauthorId\x12\x19\n" +
 	"\bshort_id\x18\x02 \x01(\tR\ashortId\"4\n" +
 	"\x0fGetPostResponse\x12!\n" +
-	"\x04post\x18\x01 \x01(\v2\r.post.v1.PostR\x04post\"\x8c\x01\n" +
+	"\x04post\x18\x01 \x01(\v2\r.post.v1.PostR\x04post\"\xa8\x01\n" +
 	"\x11CreatePostRequest\x12\x12\n" +
-	"\x04text\x18\x01 \x01(\tR\x04text\x12#\n" +
-	"\vreply_to_id\x18\x02 \x01(\tH\x00R\treplyToId\x88\x01\x01\x12 \n" +
-	"\trepost_id\x18\x03 \x01(\tH\x01R\brepostId\x88\x01\x01B\x0e\n" +
-	"\f_reply_to_idB\f\n" +
-	"\n" +
-	"_repost_id\"7\n" +
+	"\x04text\x18\x01 \x01(\tR\x04text\x12,\n" +
+	"\x10reply_to_post_id\x18\x02 \x01(\tH\x00R\rreplyToPostId\x88\x01\x01\x12)\n" +
+	"\x0erepost_post_id\x18\x03 \x01(\tH\x01R\frepostPostId\x88\x01\x01B\x13\n" +
+	"\x11_reply_to_post_idB\x11\n" +
+	"\x0f_repost_post_id\"7\n" +
 	"\x12CreatePostResponse\x12!\n" +
 	"\x04post\x18\x01 \x01(\v2\r.post.v1.PostR\x04post\"K\n" +
 	"\x11DeletePostRequest\x12\x1b\n" +

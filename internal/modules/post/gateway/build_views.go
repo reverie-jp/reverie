@@ -131,14 +131,14 @@ func (g *gatewayImpl) buildViews(ctx context.Context, posts []*entity.Post, requ
 			seen[p.AuthorID] = true
 			authorIDs = append(authorIDs, p.AuthorID)
 		}
-		if p.RepostID != nil {
-			if _, ok := repostOriginals[*p.RepostID]; !ok {
-				orig, err := g.repo.GetPostByID(ctx, *p.RepostID)
+		if p.RepostPostID != nil {
+			if _, ok := repostOriginals[*p.RepostPostID]; !ok {
+				orig, err := g.repo.GetPostByID(ctx, *p.RepostPostID)
 				if err != nil {
 					return nil, err
 				}
 				if orig != nil {
-					repostOriginals[*p.RepostID] = orig
+					repostOriginals[*p.RepostPostID] = orig
 					if !seen[orig.AuthorID] {
 						seen[orig.AuthorID] = true
 						authorIDs = append(authorIDs, orig.AuthorID)
@@ -193,8 +193,8 @@ func (g *gatewayImpl) buildViews(ctx context.Context, posts []*entity.Post, requ
 		if err != nil {
 			return nil, err
 		}
-		if p.RepostID != nil {
-			if orig, ok := repostOriginals[*p.RepostID]; ok {
+		if p.RepostPostID != nil {
+			if orig, ok := repostOriginals[*p.RepostPostID]; ok {
 				v.RepostOf, err = buildOne(orig)
 				if err != nil {
 					return nil, err

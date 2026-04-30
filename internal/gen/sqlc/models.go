@@ -219,8 +219,8 @@ type Post struct {
 	ID         ulid.ULID  `json:"id"`
 	AuthorID   ulid.ULID  `json:"author_id"`
 	ShortID    string     `json:"short_id"`
-	ReplyToID  *ulid.ULID `json:"reply_to_id"`
-	RepostID   *ulid.ULID `json:"repost_id"`
+	ReplyToPostID  *ulid.ULID `json:"reply_to_post_id"`
+	RepostPostID   *ulid.ULID `json:"repost_post_id"`
 	Text       string     `json:"text"`
 	CreateTime time.Time  `json:"create_time"`
 	UpdateTime time.Time  `json:"update_time"`

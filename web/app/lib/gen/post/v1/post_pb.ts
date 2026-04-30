@@ -32,14 +32,14 @@ export class Post extends Message<Post> {
   author?: User;
 
   /**
-   * @generated from field: optional string reply_to_id = 5;
+   * @generated from field: optional string reply_to_post_id = 5;
    */
-  replyToId?: string;
+  replyToPostId?: string;
 
   /**
-   * @generated from field: optional string repost_id = 6;
+   * @generated from field: optional string repost_post_id = 6;
    */
-  repostId?: string;
+  repostPostId?: string;
 
   /**
    * @generated from field: int32 reply_count = 7;
@@ -83,8 +83,8 @@ export class Post extends Message<Post> {
     { no: 2, name: "short_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 3, name: "text", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 4, name: "author", kind: "message", T: User },
-    { no: 5, name: "reply_to_id", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
-    { no: 6, name: "repost_id", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 5, name: "reply_to_post_id", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 6, name: "repost_post_id", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
     { no: 7, name: "reply_count", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
     { no: 8, name: "repost_count", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
     { no: 9, name: "like_count", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
@@ -200,14 +200,14 @@ export class CreatePostRequest extends Message<CreatePostRequest> {
   text = "";
 
   /**
-   * @generated from field: optional string reply_to_id = 2;
+   * @generated from field: optional string reply_to_post_id = 2;
    */
-  replyToId?: string;
+  replyToPostId?: string;
 
   /**
-   * @generated from field: optional string repost_id = 3;
+   * @generated from field: optional string repost_post_id = 3;
    */
-  repostId?: string;
+  repostPostId?: string;
 
   constructor(data?: PartialMessage<CreatePostRequest>) {
     super();
@@ -218,8 +218,8 @@ export class CreatePostRequest extends Message<CreatePostRequest> {
   static readonly typeName = "post.v1.CreatePostRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "text", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "reply_to_id", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
-    { no: 3, name: "repost_id", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 2, name: "reply_to_post_id", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
+    { no: 3, name: "repost_post_id", kind: "scalar", T: 9 /* ScalarType.STRING */, opt: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreatePostRequest {

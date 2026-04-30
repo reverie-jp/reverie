@@ -6,8 +6,8 @@ import (
 
 type CreatePostInput struct {
 	Text      string  `validate:"required,min=1,max=500"`
-	ReplyToID *string `validate:"omitempty"`
-	RepostID  *string `validate:"omitempty"`
+	ReplyToPostID *string `validate:"omitempty"`
+	RepostPostID  *string `validate:"omitempty"`
 }
 
 func (i CreatePostInput) Validate() error {

@@ -88,8 +88,8 @@ message Post {
   string short_id = 2;
   string text = 3;
   user.v1.User author = 4;
-  optional string reply_to_id = 5;
-  optional string repost_id = 6;
+  optional string reply_to_post_id = 5;
+  optional string repost_post_id = 6;
   int32 reply_count = 7;
   int32 repost_count = 8;
   int32 like_count = 9;
@@ -111,8 +111,8 @@ message GetPostResponse {
 
 message CreatePostRequest {
   string text = 1;
-  optional string reply_to_id = 2;
-  optional string repost_id = 3;
+  optional string reply_to_post_id = 2;
+  optional string repost_post_id = 3;
 }
 
 message CreatePostResponse {

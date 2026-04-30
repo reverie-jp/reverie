@@ -27,20 +27,20 @@ func (uc *CreatePost) Execute(ctx context.Context, input CreatePostInput, author
 		Text:     input.Text,
 	}
 
-	if input.ReplyToID != nil {
-		id, err := ulid.Parse(*input.ReplyToID)
+	if input.ReplyToPostID != nil {
+		id, err := ulid.Parse(*input.ReplyToPostID)
 		if err != nil {
 			return nil, xerrors.ErrInvalidArgument.WithMessage("invalid reply_to_id")
 		}
-		params.ReplyToID = &id
+		params.ReplyToPostID = &id
 	}
 
-	if input.RepostID != nil {
-		id, err := ulid.Parse(*input.RepostID)
+	if input.RepostPostID != nil {
+		id, err := ulid.Parse(*input.RepostPostID)
 		if err != nil {
 			return nil, xerrors.ErrInvalidArgument.WithMessage("invalid repost_id")
 		}
-		params.RepostID = &id
+		params.RepostPostID = &id
 	}
 
 	view, err := uc.postGateway.CreatePost(ctx, params)

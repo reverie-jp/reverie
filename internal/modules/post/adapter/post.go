@@ -26,13 +26,13 @@ func ToPost(out *usecase.PostOutput) *postv1.Post {
 		IsLiked:     out.IsFavorited,
 		CreateTime:  timestamppb.New(out.CreateTime),
 	}
-	if out.ReplyToID != nil {
-		s := out.ReplyToID.String()
-		p.ReplyToId = &s
+	if out.ReplyToPostID != nil {
+		s := out.ReplyToPostID.String()
+		p.ReplyToPostId = &s
 	}
-	if out.RepostID != nil {
-		s := out.RepostID.String()
-		p.RepostId = &s
+	if out.RepostPostID != nil {
+		s := out.RepostPostID.String()
+		p.RepostPostId = &s
 	}
 	if out.RepostOf != nil {
 		p.RepostOf = ToPost(out.RepostOf)

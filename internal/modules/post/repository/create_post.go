@@ -13,8 +13,8 @@ func (r *repositoryImpl) CreatePost(ctx context.Context, params CreatePostParams
 		ID:        params.ID,
 		AuthorID:  params.AuthorID,
 		ShortID:   params.ShortID,
-		ReplyToID: params.ReplyToID,
-		RepostID:  params.RepostID,
+		ReplyToPostID: params.ReplyToPostID,
+		RepostPostID:  params.RepostPostID,
 		Text:      params.Text,
 	})
 	if err != nil {

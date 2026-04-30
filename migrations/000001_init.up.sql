@@ -141,8 +141,8 @@ CREATE TABLE IF NOT EXISTS posts (
     id          ulid PRIMARY KEY,
     author_id   ulid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     short_id    VARCHAR(8) NOT NULL UNIQUE,
-    reply_to_id ulid DEFAULT NULL REFERENCES posts(id) ON DELETE SET NULL,
-    repost_id   ulid DEFAULT NULL REFERENCES posts(id) ON DELETE SET NULL,
+    reply_to_post_id ulid DEFAULT NULL REFERENCES posts(id) ON DELETE SET NULL,
+    repost_post_id   ulid DEFAULT NULL REFERENCES posts(id) ON DELETE SET NULL,
     text        TEXT NOT NULL DEFAULT '',
     create_time TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     update_time TIMESTAMPTZ NOT NULL DEFAULT NOW()

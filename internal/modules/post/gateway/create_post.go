@@ -36,8 +36,8 @@ func (g *gatewayImpl) createWithShortID(ctx context.Context, params CreatePostPa
 			ID:        params.ID,
 			AuthorID:  params.AuthorID,
 			ShortID:   sid,
-			ReplyToID: params.ReplyToID,
-			RepostID:  params.RepostID,
+			ReplyToPostID: params.ReplyToPostID,
+			RepostPostID:  params.RepostPostID,
 			Text:      params.Text,
 		})
 		if err != nil {

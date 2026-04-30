@@ -13,8 +13,8 @@ type CreatePostParams struct {
 	ID        ulid.ULID
 	AuthorID  ulid.ULID
 	ShortID   string
-	ReplyToID *ulid.ULID
-	RepostID  *ulid.ULID
+	ReplyToPostID *ulid.ULID
+	RepostPostID  *ulid.ULID
 	Text      string
 }
 

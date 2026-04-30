@@ -28,7 +28,7 @@ func (r *repositoryImpl) ListPostReplies(ctx context.Context, params ListPostRep
 	}
 
 	rows, err := r.q.ListPostReplies(ctx, sqlc.ListPostRepliesParams{
-		ReplyToID: &params.PostID,
+		ReplyToPostID: &params.PostID,
 		Column2:   cursor,
 		Limit:     limit,
 	})

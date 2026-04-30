@@ -24,8 +24,8 @@ type PostView struct {
 type CreatePostParams struct {
 	ID        ulid.ULID
 	AuthorID  ulid.ULID
-	ReplyToID *ulid.ULID
-	RepostID  *ulid.ULID
+	ReplyToPostID *ulid.ULID
+	RepostPostID  *ulid.ULID
 	Text      string
 }
 

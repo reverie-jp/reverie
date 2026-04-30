@@ -28,7 +28,7 @@ func (r *repositoryImpl) ListPostReposts(ctx context.Context, params ListPostRep
 	}
 
 	rows, err := r.q.ListPostReposts(ctx, sqlc.ListPostRepostsParams{
-		RepostID: &params.PostID,
+		RepostPostID: &params.PostID,
 		Column2:  cursor,
 		Limit:    limit,
 	})

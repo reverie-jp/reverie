@@ -13,17 +13,17 @@ import (
 )
 
 const createPost = `-- name: CreatePost :one
-INSERT INTO posts (id, author_id, short_id, reply_to_id, repost_id, text)
+INSERT INTO posts (id, author_id, short_id, reply_to_post_id, repost_post_id, text)
 VALUES ($1, $2, $3, $4, $5, $6)
-RETURNING id, author_id, short_id, reply_to_id, repost_id, text, create_time, update_time
+RETURNING id, author_id, short_id, reply_to_post_id, repost_post_id, text, create_time, update_time
 `
 
 type CreatePostParams struct {
 	ID        ulid.ULID  `json:"id"`
 	AuthorID  ulid.ULID  `json:"author_id"`
 	ShortID   string     `json:"short_id"`
-	ReplyToID *ulid.ULID `json:"reply_to_id"`
-	RepostID  *ulid.ULID `json:"repost_id"`
+	ReplyToPostID *ulid.ULID `json:"reply_to_post_id"`
+	RepostPostID  *ulid.ULID `json:"repost_post_id"`
 	Text      string     `json:"text"`
 }
 
@@ -32,8 +32,8 @@ func (q *Queries) CreatePost(ctx context.Context, arg CreatePostParams) (Post, e
 		arg.ID,
 		arg.AuthorID,
 		arg.ShortID,
-		arg.ReplyToID,
-		arg.RepostID,
+		arg.ReplyToPostID,
+		arg.RepostPostID,
 		arg.Text,
 	)
 	var i Post
@@ -41,8 +41,8 @@ func (q *Queries) CreatePost(ctx context.Context, arg CreatePostParams) (Post, e
 		&i.ID,
 		&i.AuthorID,
 		&i.ShortID,
-		&i.ReplyToID,
-		&i.RepostID,
+		&i.ReplyToPostID,
+		&i.RepostPostID,
 		&i.Text,
 		&i.CreateTime,
 		&i.UpdateTime,
@@ -65,7 +65,7 @@ func (q *Queries) DeletePost(ctx context.Context, arg DeletePostParams) error {
 }
 
 const getPostByID = `-- name: GetPostByID :one
-SELECT id, author_id, short_id, reply_to_id, repost_id, text, create_time, update_time
+SELECT id, author_id, short_id, reply_to_post_id, repost_post_id, text, create_time, update_time
 FROM posts
 WHERE id = $1
 `
@@ -77,8 +77,8 @@ func (q *Queries) GetPostByID(ctx context.Context, id ulid.ULID) (Post, error) {
 		&i.ID,
 		&i.AuthorID,
 		&i.ShortID,
-		&i.ReplyToID,
-		&i.RepostID,
+		&i.ReplyToPostID,
+		&i.RepostPostID,
 		&i.Text,
 		&i.CreateTime,
 		&i.UpdateTime,
@@ -87,7 +87,7 @@ func (q *Queries) GetPostByID(ctx context.Context, id ulid.ULID) (Post, error) {
 }
 
 const getPostByShortID = `-- name: GetPostByShortID :one
-SELECT p.id, p.author_id, p.short_id, p.reply_to_id, p.repost_id, p.text, p.create_time, p.update_time
+SELECT p.id, p.author_id, p.short_id, p.reply_to_post_id, p.repost_post_id, p.text, p.create_time, p.update_time
 FROM posts p
 JOIN users u ON u.id = p.author_id
 WHERE u.custom_id = $1
@@ -106,8 +106,8 @@ func (q *Queries) GetPostByShortID(ctx context.Context, arg GetPostByShortIDPara
 		&i.ID,
 		&i.AuthorID,
 		&i.ShortID,
-		&i.ReplyToID,
-		&i.RepostID,
+		&i.ReplyToPostID,
+		&i.RepostPostID,
 		&i.Text,
 		&i.CreateTime,
 		&i.UpdateTime,
@@ -116,9 +116,9 @@ func (q *Queries) GetPostByShortID(ctx context.Context, arg GetPostByShortIDPara
 }
 
 const listTimeline = `-- name: ListTimeline :many
-SELECT id, author_id, short_id, reply_to_id, repost_id, text, create_time, update_time
+SELECT id, author_id, short_id, reply_to_post_id, repost_post_id, text, create_time, update_time
 FROM posts
-WHERE reply_to_id IS NULL
+WHERE reply_to_post_id IS NULL
   AND ($1::timestamptz IS NULL OR create_time < $1)
 ORDER BY create_time DESC
 LIMIT $2
@@ -142,8 +142,8 @@ func (q *Queries) ListTimeline(ctx context.Context, arg ListTimelineParams) ([]P
 			&i.ID,
 			&i.AuthorID,
 			&i.ShortID,
-			&i.ReplyToID,
-			&i.RepostID,
+			&i.ReplyToPostID,
+			&i.RepostPostID,
 			&i.Text,
 			&i.CreateTime,
 			&i.UpdateTime,
@@ -156,9 +156,9 @@ func (q *Queries) ListTimeline(ctx context.Context, arg ListTimelineParams) ([]P
 }
 
 const listFollowingTimeline = `-- name: ListFollowingTimeline :many
-SELECT id, author_id, short_id, reply_to_id, repost_id, text, create_time, update_time
+SELECT id, author_id, short_id, reply_to_post_id, repost_post_id, text, create_time, update_time
 FROM posts
-WHERE reply_to_id IS NULL
+WHERE reply_to_post_id IS NULL
   AND (
     author_id IN (SELECT followee_id FROM user_follows WHERE follower_id = $1)
     OR author_id = $1
@@ -187,8 +187,8 @@ func (q *Queries) ListFollowingTimeline(ctx context.Context, arg ListFollowingTi
 			&i.ID,
 			&i.AuthorID,
 			&i.ShortID,
-			&i.ReplyToID,
-			&i.RepostID,
+			&i.ReplyToPostID,
+			&i.RepostPostID,
 			&i.Text,
 			&i.CreateTime,
 			&i.UpdateTime,
@@ -201,10 +201,10 @@ func (q *Queries) ListFollowingTimeline(ctx context.Context, arg ListFollowingTi
 }
 
 const listUserPosts = `-- name: ListUserPosts :many
-SELECT id, author_id, short_id, reply_to_id, repost_id, text, create_time, update_time
+SELECT id, author_id, short_id, reply_to_post_id, repost_post_id, text, create_time, update_time
 FROM posts
 WHERE author_id = $1
-  AND reply_to_id IS NULL
+  AND reply_to_post_id IS NULL
   AND ($2::timestamptz IS NULL OR create_time < $2)
 ORDER BY create_time DESC
 LIMIT $3
@@ -229,8 +229,8 @@ func (q *Queries) ListUserPosts(ctx context.Context, arg ListUserPostsParams) ([
 			&i.ID,
 			&i.AuthorID,
 			&i.ShortID,
-			&i.ReplyToID,
-			&i.RepostID,
+			&i.ReplyToPostID,
+			&i.RepostPostID,
 			&i.Text,
 			&i.CreateTime,
 			&i.UpdateTime,
@@ -243,22 +243,22 @@ func (q *Queries) ListUserPosts(ctx context.Context, arg ListUserPostsParams) ([
 }
 
 const listPostReplies = `-- name: ListPostReplies :many
-SELECT id, author_id, short_id, reply_to_id, repost_id, text, create_time, update_time
+SELECT id, author_id, short_id, reply_to_post_id, repost_post_id, text, create_time, update_time
 FROM posts
-WHERE reply_to_id = $1
+WHERE reply_to_post_id = $1
   AND ($2::timestamptz IS NULL OR create_time < $2)
 ORDER BY create_time DESC
 LIMIT $3
 `
 
 type ListPostRepliesParams struct {
-	ReplyToID *ulid.ULID `json:"reply_to_id"`
+	ReplyToPostID *ulid.ULID `json:"reply_to_post_id"`
 	Column2   time.Time  `json:"column_2"`
 	Limit     int32      `json:"limit"`
 }
 
 func (q *Queries) ListPostReplies(ctx context.Context, arg ListPostRepliesParams) ([]Post, error) {
-	rows, err := q.db.Query(ctx, listPostReplies, arg.ReplyToID, arg.Column2, arg.Limit)
+	rows, err := q.db.Query(ctx, listPostReplies, arg.ReplyToPostID, arg.Column2, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -270,8 +270,8 @@ func (q *Queries) ListPostReplies(ctx context.Context, arg ListPostRepliesParams
 			&i.ID,
 			&i.AuthorID,
 			&i.ShortID,
-			&i.ReplyToID,
-			&i.RepostID,
+			&i.ReplyToPostID,
+			&i.RepostPostID,
 			&i.Text,
 			&i.CreateTime,
 			&i.UpdateTime,
@@ -284,7 +284,7 @@ func (q *Queries) ListPostReplies(ctx context.Context, arg ListPostRepliesParams
 }
 
 const countPostReplies = `-- name: CountPostReplies :one
-SELECT COUNT(*) FROM posts WHERE reply_to_id = $1
+SELECT COUNT(*) FROM posts WHERE reply_to_post_id = $1
 `
 
 func (q *Queries) CountPostReplies(ctx context.Context, replyToID *ulid.ULID) (int64, error) {
@@ -295,22 +295,22 @@ func (q *Queries) CountPostReplies(ctx context.Context, replyToID *ulid.ULID) (i
 }
 
 const listPostReposts = `-- name: ListPostReposts :many
-SELECT id, author_id, short_id, reply_to_id, repost_id, text, create_time, update_time
+SELECT id, author_id, short_id, reply_to_post_id, repost_post_id, text, create_time, update_time
 FROM posts
-WHERE repost_id = $1
+WHERE repost_post_id = $1
   AND ($2::timestamptz IS NULL OR create_time < $2)
 ORDER BY create_time DESC
 LIMIT $3
 `
 
 type ListPostRepostsParams struct {
-	RepostID *ulid.ULID `json:"repost_id"`
+	RepostPostID *ulid.ULID `json:"repost_post_id"`
 	Column2  time.Time  `json:"column_2"`
 	Limit    int32      `json:"limit"`
 }
 
 func (q *Queries) ListPostReposts(ctx context.Context, arg ListPostRepostsParams) ([]Post, error) {
-	rows, err := q.db.Query(ctx, listPostReposts, arg.RepostID, arg.Column2, arg.Limit)
+	rows, err := q.db.Query(ctx, listPostReposts, arg.RepostPostID, arg.Column2, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -322,8 +322,8 @@ func (q *Queries) ListPostReposts(ctx context.Context, arg ListPostRepostsParams
 			&i.ID,
 			&i.AuthorID,
 			&i.ShortID,
-			&i.ReplyToID,
-			&i.RepostID,
+			&i.ReplyToPostID,
+			&i.RepostPostID,
 			&i.Text,
 			&i.CreateTime,
 			&i.UpdateTime,
@@ -336,7 +336,7 @@ func (q *Queries) ListPostReposts(ctx context.Context, arg ListPostRepostsParams
 }
 
 const countPostReposts = `-- name: CountPostReposts :one
-SELECT COUNT(*) FROM posts WHERE repost_id = $1
+SELECT COUNT(*) FROM posts WHERE repost_post_id = $1
 `
 
 func (q *Queries) CountPostReposts(ctx context.Context, repostID *ulid.ULID) (int64, error) {
@@ -404,7 +404,7 @@ func (q *Queries) DeletePostFavorite(ctx context.Context, arg DeletePostFavorite
 }
 
 const listUserLikedPosts = `-- name: ListUserLikedPosts :many
-SELECT p.id, p.author_id, p.short_id, p.reply_to_id, p.repost_id, p.text, p.create_time, p.update_time
+SELECT p.id, p.author_id, p.short_id, p.reply_to_post_id, p.repost_post_id, p.text, p.create_time, p.update_time
 FROM post_favorites pf
 JOIN posts p ON p.id = pf.post_id
 WHERE pf.user_id = $1
@@ -432,8 +432,8 @@ func (q *Queries) ListUserLikedPosts(ctx context.Context, arg ListUserLikedPosts
 			&i.ID,
 			&i.AuthorID,
 			&i.ShortID,
-			&i.ReplyToID,
-			&i.RepostID,
+			&i.ReplyToPostID,
+			&i.RepostPostID,
 			&i.Text,
 			&i.CreateTime,
 			&i.UpdateTime,
