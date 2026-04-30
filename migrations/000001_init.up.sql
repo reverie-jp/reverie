@@ -132,3 +132,30 @@ CREATE INDEX idx_notifications_recipient_unread ON notifications (recipient_user
 -- still coexist via different resource_name.
 CREATE UNIQUE INDEX idx_notifications_dedup
     ON notifications (recipient_user_id, type, COALESCE(actor_user_id::text, ''), resource_name);
+
+-- ================================================================
+-- posts
+-- ================================================================
+
+CREATE TABLE IF NOT EXISTS posts (
+    id          ulid PRIMARY KEY,
+    author_id   ulid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    short_id    VARCHAR(8) NOT NULL UNIQUE,
+    reply_to_id ulid DEFAULT NULL REFERENCES posts(id) ON DELETE SET NULL,
+    repost_id   ulid DEFAULT NULL REFERENCES posts(id) ON DELETE SET NULL,
+    text        TEXT NOT NULL DEFAULT '',
+    create_time TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    update_time TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_posts_author_id   ON posts(author_id);
+CREATE INDEX idx_posts_create_time ON posts(create_time DESC);
+
+CREATE TABLE IF NOT EXISTS post_favorites (
+    user_id     ulid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    post_id     ulid NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+    create_time TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (user_id, post_id)
+);
+
+CREATE INDEX idx_post_favorites_post_id ON post_favorites(post_id);

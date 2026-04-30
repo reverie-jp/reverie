@@ -1,0 +1,202 @@
+syntax = "proto3";
+
+package post.v1;
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+import "user/v1/user.proto";
+
+service PostService {
+  // Get post by author custom_id and short_id.
+  rpc GetPost(GetPostRequest) returns (GetPostResponse) {
+    option (google.api.http) = {
+      get: "/v1/users/{author_id}/posts/{short_id}"
+    };
+  }
+
+  // Create a new post.
+  rpc CreatePost(CreatePostRequest) returns (CreatePostResponse) {
+    option (google.api.http) = {
+      post: "/v1/posts"
+      body: "*"
+    };
+  }
+
+  // Delete a post (only the author can delete).
+  rpc DeletePost(DeletePostRequest) returns (DeletePostResponse) {
+    option (google.api.http) = {
+      delete: "/v1/users/{author_id}/posts/{short_id}"
+    };
+  }
+
+  // Like a post.
+  rpc LikePost(LikePostRequest) returns (LikePostResponse) {
+    option (google.api.http) = {
+      post: "/v1/users/{author_id}/posts/{short_id}:like"
+      body: "*"
+    };
+  }
+
+  // Unlike a post.
+  rpc UnlikePost(UnlikePostRequest) returns (UnlikePostResponse) {
+    option (google.api.http) = {
+      post: "/v1/users/{author_id}/posts/{short_id}:unlike"
+      body: "*"
+    };
+  }
+
+  // List replies to a post.
+  rpc ListPostReplies(ListPostRepliesRequest) returns (ListPostRepliesResponse) {
+    option (google.api.http) = {
+      get: "/v1/users/{author_id}/posts/{short_id}/replies"
+    };
+  }
+
+  // List reposts of a post.
+  rpc ListPostReposts(ListPostRepostsRequest) returns (ListPostRepostsResponse) {
+    option (google.api.http) = {
+      get: "/v1/users/{author_id}/posts/{short_id}/reposts"
+    };
+  }
+
+  // List users who liked a post.
+  rpc ListPostLikes(ListPostLikesRequest) returns (ListPostLikesResponse) {
+    option (google.api.http) = {
+      get: "/v1/users/{author_id}/posts/{short_id}/likes"
+    };
+  }
+
+  // List posts by a specific user.
+  rpc ListUserPosts(ListUserPostsRequest) returns (ListUserPostsResponse) {
+    option (google.api.http) = {
+      get: "/v1/users/{user_id}/posts"
+    };
+  }
+
+  // List posts liked by a specific user.
+  rpc ListUserLikedPosts(ListUserLikedPostsRequest) returns (ListUserLikedPostsResponse) {
+    option (google.api.http) = {
+      get: "/v1/users/{user_id}/liked_posts"
+    };
+  }
+}
+
+// Resources
+
+message Post {
+  string id = 1;
+  string short_id = 2;
+  string text = 3;
+  user.v1.User author = 4;
+  optional string reply_to_id = 5;
+  optional string repost_id = 6;
+  int32 reply_count = 7;
+  int32 repost_count = 8;
+  int32 like_count = 9;
+  bool is_liked = 10;
+  google.protobuf.Timestamp create_time = 11;
+  optional Post repost_of = 12;
+}
+
+// Request / Response
+
+message GetPostRequest {
+  string author_id = 1;
+  string short_id = 2;
+}
+
+message GetPostResponse {
+  Post post = 1;
+}
+
+message CreatePostRequest {
+  string text = 1;
+  optional string reply_to_id = 2;
+  optional string repost_id = 3;
+}
+
+message CreatePostResponse {
+  Post post = 1;
+}
+
+message DeletePostRequest {
+  string author_id = 1;
+  string short_id = 2;
+}
+
+message DeletePostResponse {}
+
+message LikePostRequest {
+  string author_id = 1;
+  string short_id = 2;
+}
+
+message LikePostResponse {
+  Post post = 1;
+}
+
+message UnlikePostRequest {
+  string author_id = 1;
+  string short_id = 2;
+}
+
+message UnlikePostResponse {
+  Post post = 1;
+}
+
+message ListPostRepliesRequest {
+  string author_id = 1;
+  string short_id = 2;
+  int32 page_size = 3;
+  string page_token = 4;
+}
+
+message ListPostRepliesResponse {
+  repeated Post posts = 1;
+  string next_page_token = 2;
+}
+
+message ListPostRepostsRequest {
+  string author_id = 1;
+  string short_id = 2;
+  int32 page_size = 3;
+  string page_token = 4;
+}
+
+message ListPostRepostsResponse {
+  repeated Post posts = 1;
+  string next_page_token = 2;
+}
+
+message ListPostLikesRequest {
+  string author_id = 1;
+  string short_id = 2;
+  int32 page_size = 3;
+}
+
+message ListPostLikesResponse {
+  repeated user.v1.User users = 1;
+  string next_page_token = 2;
+}
+
+message ListUserPostsRequest {
+  string user_id = 1;
+  int32 page_size = 2;
+  string page_token = 3;
+}
+
+message ListUserPostsResponse {
+  repeated Post posts = 1;
+  string next_page_token = 2;
+}
+
+message ListUserLikedPostsRequest {
+  string user_id = 1;
+  int32 page_size = 2;
+  string page_token = 3;
+}
+
+message ListUserLikedPostsResponse {
+  repeated Post posts = 1;
+  string next_page_token = 2;
+}
