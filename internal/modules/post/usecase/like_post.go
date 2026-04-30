@@ -38,7 +38,7 @@ func (uc *LikePost) Execute(ctx context.Context, input LikePostInput, userID uli
 	if err != nil {
 		return nil, err
 	}
-	return toPostOutput(view), nil
+	return ToPostOutput(view), nil
 }
 
 func (uc *UnlikePost) Execute(ctx context.Context, input UnlikePostInput, userID ulid.ULID) (*PostOutput, error) {
@@ -46,5 +46,5 @@ func (uc *UnlikePost) Execute(ctx context.Context, input UnlikePostInput, userID
 	if err != nil {
 		return nil, err
 	}
-	return toPostOutput(view), nil
+	return ToPostOutput(view), nil
 }

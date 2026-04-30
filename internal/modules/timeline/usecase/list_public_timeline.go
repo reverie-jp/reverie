@@ -6,32 +6,26 @@ import (
 	"reverie.jp/reverie/internal/platform/pagetoken"
 
 	postgw "reverie.jp/reverie/internal/modules/post/gateway"
+	postusecase "reverie.jp/reverie/internal/modules/post/usecase"
 	"reverie.jp/reverie/internal/platform/ulid"
 	"reverie.jp/reverie/internal/platform/xerrors"
 )
 
-type ListPostRepliesInput struct {
-	AuthorCustomID string
-	ShortID        string
-	PageToken      string
-	PageSize       int32
-}
-
-type ListPostReplies struct {
+type ListPublicTimeline struct {
 	postGateway postgw.Gateway
 }
 
-func NewListPostReplies(postGateway postgw.Gateway) *ListPostReplies {
-	return &ListPostReplies{postGateway: postGateway}
+func NewListPublicTimeline(postGateway postgw.Gateway) *ListPublicTimeline {
+	return &ListPublicTimeline{postGateway: postGateway}
 }
 
-func (uc *ListPostReplies) Execute(ctx context.Context, input ListPostRepliesInput, requestorID ulid.ULID) ([]*PostOutput, error) {
+func (uc *ListPublicTimeline) Execute(ctx context.Context, input ListTimelineInput, requestorID ulid.ULID) ([]*postusecase.PostOutput, error) {
 	cursor, err := pagetoken.Decode(input.PageToken)
 	if err != nil {
 		return nil, xerrors.ErrInvalidArgument.WithMessage("invalid page_token")
 	}
 
-	views, err := uc.postGateway.ListPostReplies(ctx, input.AuthorCustomID, input.ShortID, postgw.ListPostRepliesParams{
+	views, err := uc.postGateway.ListTimeline(ctx, postgw.ListTimelineParams{
 		Cursor: cursor,
 		Limit:  pagetoken.NormalizePageSize(input.PageSize),
 	}, requestorID)
@@ -39,9 +33,9 @@ func (uc *ListPostReplies) Execute(ctx context.Context, input ListPostRepliesInp
 		return nil, err
 	}
 
-	outputs := make([]*PostOutput, len(views))
+	outputs := make([]*postusecase.PostOutput, len(views))
 	for i, v := range views {
-		outputs[i] = ToPostOutput(v)
+		outputs[i] = postusecase.ToPostOutput(v)
 	}
 	return outputs, nil
 }

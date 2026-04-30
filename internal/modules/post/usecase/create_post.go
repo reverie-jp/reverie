@@ -48,5 +48,5 @@ func (uc *CreatePost) Execute(ctx context.Context, input CreatePostInput, author
 		return nil, err
 	}
 
-	return toPostOutput(view), nil
+	return ToPostOutput(view), nil
 }

@@ -3,6 +3,8 @@ package usecase
 import (
 	"context"
 
+	"reverie.jp/reverie/internal/platform/pagetoken"
+
 	postgw "reverie.jp/reverie/internal/modules/post/gateway"
 	"reverie.jp/reverie/internal/platform/ulid"
 	"reverie.jp/reverie/internal/platform/xerrors"
@@ -26,7 +28,7 @@ func (uc *ListUserPosts) Execute(ctx context.Context, input ListUserPostsInput, 
 		return nil, xerrors.ErrInvalidArgument.WithMessage("invalid user_id")
 	}
 
-	cursor, err := decodePageToken(input.PageToken)
+	cursor, err := pagetoken.Decode(input.PageToken)
 	if err != nil {
 		return nil, xerrors.ErrInvalidArgument.WithMessage("invalid page_token")
 	}
@@ -34,7 +36,7 @@ func (uc *ListUserPosts) Execute(ctx context.Context, input ListUserPostsInput, 
 	views, err := uc.postGateway.ListUserPosts(ctx, postgw.ListUserPostsParams{
 		AuthorID: targetID,
 		Cursor:   cursor,
-		Limit:    normalizePageSize(input.PageSize),
+		Limit:    pagetoken.NormalizePageSize(input.PageSize),
 	}, requestorID)
 	if err != nil {
 		return nil, err
@@ -42,7 +44,7 @@ func (uc *ListUserPosts) Execute(ctx context.Context, input ListUserPostsInput, 
 
 	outputs := make([]*PostOutput, len(views))
 	for i, v := range views {
-		outputs[i] = toPostOutput(v)
+		outputs[i] = ToPostOutput(v)
 	}
 	return outputs, nil
 }

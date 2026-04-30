@@ -2,7 +2,7 @@ package usecase
 
 import postgw "reverie.jp/reverie/internal/modules/post/gateway"
 
-func toPostOutput(view *postgw.PostView) *PostOutput {
+func ToPostOutput(view *postgw.PostView) *PostOutput {
 	if view == nil {
 		return nil
 	}
@@ -22,7 +22,7 @@ func toPostOutput(view *postgw.PostView) *PostOutput {
 	}
 
 	if view.RepostOf != nil {
-		out.RepostOf = toPostOutput(view.RepostOf)
+		out.RepostOf = ToPostOutput(view.RepostOf)
 	}
 
 	return out

@@ -29,5 +29,5 @@ func (uc *GetPost) Execute(ctx context.Context, input GetPostInput, requestorID 
 		return nil, xerrors.ErrNotFound
 	}
 
-	return toPostOutput(view), nil
+	return ToPostOutput(view), nil
 }
