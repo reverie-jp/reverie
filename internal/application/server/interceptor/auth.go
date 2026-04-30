@@ -12,6 +12,8 @@ import (
 	"reverie.jp/reverie/internal/gen/pb/account/v1/accountv1connect"
 	"reverie.jp/reverie/internal/gen/pb/call/v1/callv1connect"
 	"reverie.jp/reverie/internal/gen/pb/follow/v1/followv1connect"
+	"reverie.jp/reverie/internal/gen/pb/post/v1/postv1connect"
+	"reverie.jp/reverie/internal/gen/pb/timeline/v1/timelinev1connect"
 	"reverie.jp/reverie/internal/gen/pb/user/v1/userv1connect"
 	"reverie.jp/reverie/internal/platform/jwt"
 	"reverie.jp/reverie/internal/platform/ulid"
@@ -54,6 +56,12 @@ var optionalAuthProcedures = map[string]bool{
 	userv1connect.UserServiceGetUserProcedure:                  true,
 	followv1connect.FollowServiceListFollowingUsersProcedure:   true,
 	followv1connect.FollowServiceListUserFollowersProcedure:    true,
+	postv1connect.PostServiceGetPostProcedure:                  true,
+	postv1connect.PostServiceListPostRepliesProcedure:          true,
+	postv1connect.PostServiceListPostRepostsProcedure:          true,
+	postv1connect.PostServiceListPostLikesProcedure:            true,
+	postv1connect.PostServiceListUserPostsProcedure:            true,
+	timelinev1connect.TimelineServiceListPublicTimelineProcedure: true,
 }
 
 type authInterceptor struct {

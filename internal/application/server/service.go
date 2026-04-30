@@ -21,8 +21,12 @@ import (
 	"reverie.jp/reverie/internal/gen/pb/follow/v1/followv1connect"
 	notificationv1 "reverie.jp/reverie/internal/gen/pb/notification/v1"
 	"reverie.jp/reverie/internal/gen/pb/notification/v1/notificationv1connect"
+	postv1 "reverie.jp/reverie/internal/gen/pb/post/v1"
+	"reverie.jp/reverie/internal/gen/pb/post/v1/postv1connect"
 	presencev1 "reverie.jp/reverie/internal/gen/pb/presence/v1"
 	"reverie.jp/reverie/internal/gen/pb/presence/v1/presencev1connect"
+	timelinev1 "reverie.jp/reverie/internal/gen/pb/timeline/v1"
+	"reverie.jp/reverie/internal/gen/pb/timeline/v1/timelinev1connect"
 	userv1 "reverie.jp/reverie/internal/gen/pb/user/v1"
 	"reverie.jp/reverie/internal/gen/pb/user/v1/userv1connect"
 	"reverie.jp/reverie/internal/gen/sqlc"
@@ -34,7 +38,9 @@ import (
 	"reverie.jp/reverie/internal/modules/notification"
 	notificationgw "reverie.jp/reverie/internal/modules/notification/gateway"
 	notificationrepo "reverie.jp/reverie/internal/modules/notification/repository"
+	"reverie.jp/reverie/internal/modules/post"
 	"reverie.jp/reverie/internal/modules/presence"
+	"reverie.jp/reverie/internal/modules/timeline"
 	"reverie.jp/reverie/internal/modules/user"
 	usergw "reverie.jp/reverie/internal/modules/user/gateway"
 	"reverie.jp/reverie/internal/platform/events"
@@ -69,6 +75,8 @@ func initServices(cfg *config.Config, db *pgxpool.Pool, jwtManager *jwt.Manager,
 	notificationService := notification.InitModule(notificationGateway)
 	presenceService := presence.InitModule(userGateway)
 	eventService := event.InitModule(eventBus)
+	postService := post.InitModule(q, userGateway)
+	timelineService := timeline.InitModule(q, userGateway)
 
 	return []Service{
 		{
@@ -152,6 +160,30 @@ func initServices(cfg *config.Config, db *pgxpool.Pool, jwtManager *jwt.Manager,
 					eventService,
 					connect.WithInterceptors(errorInterceptor, authInterceptor),
 				))
+			},
+		},
+		{
+			Name: postv1connect.PostServiceName,
+			RegisterConnectHandler: func(mux *http.ServeMux) {
+				mux.Handle(postv1connect.NewPostServiceHandler(
+					postService,
+					connect.WithInterceptors(errorInterceptor, authInterceptor),
+				))
+			},
+			RegisterGatewayHandler: func(ctx context.Context, mux *runtime.ServeMux, addr string, opts []grpc.DialOption) error {
+				return postv1.RegisterPostServiceHandlerFromEndpoint(ctx, mux, addr, opts)
+			},
+		},
+		{
+			Name: timelinev1connect.TimelineServiceName,
+			RegisterConnectHandler: func(mux *http.ServeMux) {
+				mux.Handle(timelinev1connect.NewTimelineServiceHandler(
+					timelineService,
+					connect.WithInterceptors(errorInterceptor, authInterceptor),
+				))
+			},
+			RegisterGatewayHandler: func(ctx context.Context, mux *runtime.ServeMux, addr string, opts []grpc.DialOption) error {
+				return timelinev1.RegisterTimelineServiceHandlerFromEndpoint(ctx, mux, addr, opts)
 			},
 		},
 	}
